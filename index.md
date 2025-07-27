@@ -28,6 +28,6 @@ Cuando la ventana es estrecha y el resultado, irreversible.
 
 ---
 
-**Acceso Técnico:** [Documentación Completa](./technical)
+**Acceso Técnico:** [Documentación Completa](./tecnico)
 
 **Contacto Estratégico:** contacto@obsestra.com
