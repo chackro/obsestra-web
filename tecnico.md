@@ -771,3 +771,13 @@ Basado en pruebas exhaustivas basadas en SQL de 16,424,006 registros en 7 tablas
 
 
 *Documentación generada: 27 de Julio, 2025*
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose'
+  });
+});
+</script>
