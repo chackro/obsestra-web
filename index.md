@@ -3,6 +3,10 @@ layout: default
 title: "OBSESTRA"
 ---
 
+<div style="text-align: center; margin-bottom: 2rem;">
+  <img src="/obsestra-web/obsestra.png" alt="OBSESTRA" style="max-width: 300px; height: auto;">
+</div>
+
 # OBSESTRA
 **Observatorio Estratégico de Inteligencia Logística**
 
