@@ -12,8 +12,6 @@ OBSESTRA existe para las otras cinco.
 
 ---
 
-No somos consultores. No vendemos reportes. No ofrecemos dashboards.
-
 Desarrollamos inteligencia estratégica para aliados que entienden que hay momentos donde la información correcta, en las manos correctas, en el momento preciso, vale más que años de análisis posteriores.
 
 **19+ millones de registros especializados**  
