@@ -2,5 +2,7 @@ theme: jekyll-theme-slate
 title: "OBSESTRA"
 description: "Observatorio Estratégico"
 show_downloads: false
+plugins:
+  - jekyll-mermaid
 github:
   is_project_page: false
