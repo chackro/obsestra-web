@@ -1,5 +1,5 @@
 ---
-layout: home
+layout: default
 title: "OBSESTRA"
 ---
 
@@ -24,6 +24,6 @@ Cuando la ventana es estrecha y el resultado, irreversible.
 
 ---
 
-**Acceso Técnico:** [Documentación Completa](/technical)
+**Acceso Técnico:** [Documentación Completa](./technical)
 
 **Contacto Estratégico:** contacto@obsestra.com
