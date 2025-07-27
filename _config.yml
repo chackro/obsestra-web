@@ -1,7 +1,4 @@
-remote_theme: mmistakes/minimal-mistakes
-minimal_mistakes_skin: "dark"
+theme: jekyll-theme-cayman
 title: "OBSESTRA"
-tagline: "Observatorio Estratégico de Inteligencia Logística"
-description: "Análisis de infraestructura fronteriza México-Estados Unidos"
-url: "https://chackro.github.io"
-baseurl: "/obsestra-web"
+description: "Observatorio Estratégico"
+show_downloads: false
