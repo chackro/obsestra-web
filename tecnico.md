@@ -26,7 +26,7 @@ México y Estados Unidos se encuentran ante una coyuntura sin precedentes y la c
 
 ## Arquitectura del Sistema {#arquitectura}
 
-```mermaid
+<div class="mermaid">
 ---
 config:
   layout: fixed
@@ -237,7 +237,8 @@ flowchart TD
     classDef error fill:#D32F2F,stroke:#B71C1C,stroke-width:3px,color:#FFFFFF
     classDef dependency stroke:#FF5722,stroke-width:3px,stroke-dasharray:5 5
     classDef mapeo100 fill:#4CAF50,stroke:#2E7D32,stroke-width:2px,color:#FFFFFF
-```
+</div>
+
 
 ---
 
