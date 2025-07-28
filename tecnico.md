@@ -1,6 +1,6 @@
 ---
 layout: page
-title: "CIEN - Documentación Técnica"
+title: "Documentación Técnica"
 ---
 [← Inicio](./)
 
