@@ -90,7 +90,7 @@ El modelo simplemente consulta la tabla de BTS con los filtros precisos necesari
 
 ### Desagregación FAF y Asignación Bayesiana
 
-Despues, para lograr una mucho mayor precisión en la asignación de flujos o/d, usamos los datos de FAF para desaggregar los flujos de nivel estado a nivel ciudad/region. Esto es especialmente relevante dado que Houston y Dallas son los dos principales destinos desde Tamaulipas (y en general), y juntarlos en un solo centroide oculta diferencias clave.
+Despues, para lograr una mucho mayor precisión en la asignación de flujos o/d, usamos los datos de FAF para desaggregar los flujos de nivel estado a nivel ciudad/region. Esto es especialmente relevante dado que Houston y Dallas son los dos principales destinos desde Tamaulipas (y en general), y juntarlos en un solo centroide de Texas oculta diferencias clave.
 
 El sistema reconcilia dos fuentes de datos distintas a través de un proceso de asignación Bayesiana que se ejecuta directamente en la base de datos. Por un lado, tenemos los datos de BTS, que nos dan el qué (HS2) y el cuánto (kg). Por otro, tenemos los datos de FAF, que nos dan el dónde (la distribución espacial a regiones FAF específicas como 'Houston' o 'Dallas'), aunque con una clasificación de productos menos granular (códigos SCTG).
 
@@ -119,6 +119,7 @@ El modelo verifica si existen flujos calculados para el escenario de infraestruc
 
 **Etapa 2: Generación de Matriz Semilla mediante Modelo de Gravedad**
 El modelo crea una estimación inicial de flujos usando la fórmula de gravedad:
+
 ```
 Flujo = (Producción × Demanda) / (Costo ^ Beta)
 ```
@@ -174,7 +175,7 @@ El estudio principal se estructura en tres capas que buscan aislar los factores 
 
 En esta capa, el modelo determina el costo economico (distancia + peaje + tiempo) de cada ruta posible entre un origen en México y un destino en Estados Unidos.
 
-La representación de la infraestructura vial constituye la base física sobre la cual operan todos los análisis posteriores. El modelo construye una red de 399,972 km mediante consultas sistemáticas a la API de HERE, **HERE Technologies es la empresa europea de cartografía digital surgida de NAVTEQ y ahora participada por Audi-BMW-Daimler**, proveedor líder de mapas a nivel OEM, con cobertura verificable en Norteamérica y auditorías de precisión anualizadas (<3 m CEP en autopistas). HERE Technologies mantiene convenios con departamentos de transporte (DOTs) estatales y proveedores de telemetría de flotas, lo que garantiza datos de peajes, restricciones para camión y tiempos de recorrido que superan estándares FHWA, otorgándole credibilidad institucional para decisiones de infraestructura pública.
+La representación de la infraestructura vial constituye la base física sobre la cual operan todos los análisis posteriores. El modelo construye una red de 399,972 km mediante consultas sistemáticas a la API de HERE, **HERE Technologies es la empresa europea de cartografía digital surgida de NAVTEQ y ahora participada por Audi-BMW-Daimler**, proveedor líder de mapas a nivel OEM, con cobertura verificable en Norteamérica y auditorías de precisión. HERE Technologies mantiene convenios con departamentos de transporte (DOTs) estatales y proveedores de telemetría de flotas, lo que garantiza datos de peajes, restricciones para camión y tiempos de recorrido que superan estándares FHWA, otorgándole credibilidad institucional para decisiones de infraestructura pública.
 
 El análisis utiliza un camión de carga pesada con especificaciones definidas:
 - Peso bruto: 40 toneladas
@@ -190,6 +191,8 @@ Los tiempos de viaje no asumen condiciones estáticas. El modelo consulta condic
 El sistema prioriza rutas por tiempo de viaje (`routingMode: 'fast'`), no por distancia mínima ni costo mínimo de peajes. Para cada par origen-destino solicita **una ruta principal y una alternativa**; con ello captura trayectos secundarios que podrían volverse competitivos si cambian las condiciones de congestión o el parámetro de Valor del Tiempo (VOT).
 
 Los costos de peaje se asignan mediante geolocalización exacta de casetas de cobro. El sistema utiliza coordenadas precisas de `tollCollectionLocations` del API y asigna peajes al segmento donde se encuentra la caseta. Esto vincula costos directamente a infraestructura física de cobro con precision.
+
+![Metodología Completa](grafo.png)
 
 Posteriormente a la carga de los datos a la BD de OBSESTRA, los flujos se despliegan sobre el universo de Rutas (REF) utilizando el *algoritmo de la ruta mas corta de Dijkstra (1)*. El universo geometrico es un grafo cerrado de 399,972 km de rutas en ambos paises, conformado por segmentos que contienen datos de distancia, tiempo de recorrido y peajes para el vehiculo de diseno. El grafo conecta a los 32 estados mexicanos y todas las 140 regiones estadounidenses (FAF) mediante 21 cruces habilitados para carga comercial. Estos representan la totalidad de opciones para un camion de carga pesada para cruzar la frontera. Ninguna carretera ni puente queda fuera del modelo.
 
