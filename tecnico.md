@@ -339,7 +339,45 @@ El ASC resultante del Paso B entonces captura los factores institucionales siste
 
 [AGREGAR: Tabla de resultados de calibración del Modelo de Comportamiento (parámetros βc y ASCj). Incluir métricas de bondad de ajuste (ej. Log-Likelihood) y una muestra de los parámetros calibrados por clúster de producto.]
 
-Estas proyecciones validan decisiones de despliuege capital real y se convierten en plataforma para implementar política de comercio exterior.
+# Predicción Calibrada de Escenarios
+
+## Metodología para Análisis Predictivo
+
+Una vez completada la descomposición causal de la línea base actual, el sistema evalúa escenarios futuros de infraestructura aplicando cambios únicamente a las capas causalmente relevantes. Esta metodología preserva la precisión de atribución causal mientras genera predicciones calibradas contra la realidad observada.
+
+### Impacto de Nuevos Segmentos Carreteros
+
+**Cambios en Red Vial** (nuevos puentes, autopistas, modificaciones de conectividad): El sistema recalcula la Capa A para determinar nuevas rutas óptimas y costos geométricos actualizados.
+
+La Capa A actualizada alimenta directamente a las Capas B y C, propagando el impacto geométrico a través del equilibrio de colas y las decisiones comportamentales. Los parámetros βc y ASCj calibrados se mantienen constantes—la sensibilidad al costo y las preferencias institucionales no cambian por nueva infraestructura—pero operan sobre una matriz de costos fundamentalmente diferente.
+
+### Impacto de Expansión de Capacidad Portuaria
+
+**Adición de Carriles CBP** (duplicar carriles en Pharr, nuevos booths FAST, modificaciones operativas): El sistema mantiene los costos geométricos existentes de la Capa A y recalcula únicamente la Capa B. El equilibrio incremental de colas se re-ejecuta con parámetros actualizados: mayor número de carriles (s↑), misma tasa de servicio calibrada (μ), misma distribución horaria de llegadas (λ₀).
+
+**Ejemplo específico**: La expansión en Pharr duplicará los carriles comerciales. El modelo mantiene μ=0.35 trucks/min/carril (calibrada contra limitaciones mexicanas), incrementa s de 7 a 14, y re-ejecuta el equilibrio de 50,000 kg por rebanada. El resultado captura tanto la reducción de colas por mayor capacidad CBP como la persistencia del cuello de botella mexicano que limita μ.
+
+La Capa C aplica el mismo modelo logit calibrado sobre las nuevas colas de equilibrio, generando predicciones de participación de mercado que reflejan cómo los transportistas redistribuyen flujos en respuesta a tiempos de espera modificados.
+
+### Calibración contra Línea Base Observada
+
+El sistema aplica factores de calibración puerto-específicos calculados como `share_observado_2024 / share_predicho_capa_C_2024`. Estos factores capturan discrepancias sistemáticas entre el modelo y la realidad que persisten independientemente de cambios de infraestructura: relaciones comerciales establecidas, contratos de largo plazo, factores institucionales no modelados explícitamente.
+
+**Aplicación a Escenarios Futuros**: Los factores de calibración se aplican a las predicciones del escenario futuro, asegurando que las líneas base coincidan exactamente con observaciones BTS 2024-2025 antes de proyectar impactos incrementales. Esta metodología distingue entre cambios atribuibles a nueva infraestructura versus variaciones en el residual institucional.
+
+### Resultados Integrados por Escenario
+
+El análisis predictivo genera:
+
+**Participación de Mercado Futura**: Market share por puente reflejando redistribución causal por factores geométricos, capacidad, y comportamentales.
+
+**Matriz de Colas Horarias**: Tiempos de espera por puerto y hora del día, incorporando efectos de demanda redistribuida y nueva capacidad.
+
+**Descomposición de Impactos**: Atribución precisa de qué porcentaje del cambio en participación se debe a ventajas geométricas (Capa A), reducción de congestión (Capa B), o respuesta comportamental a costos modificados (Capa C).
+
+**Métricas Operativas**: Costos totales de transporte, tonelaje-kilómetro, demoras agregadas, facilitando análisis costo-beneficio de inversiones específicas.
+
+Esta metodología proporciona la base analítica para evaluación financiera de inversiones en infraestructura fronteriza, informando el análisis de ROI mediante proyecciones de flujos de carga incrementales, captación de market share, y posicionamiento competitivo. Los resultados orientan decisiones de asignación de capital, identifican oportunidades de convergencia logística de alto valor, y refuerzan la confianza estratégica en desarrollos de corredores críticos del comercio bilateral.
 
 
 ---
