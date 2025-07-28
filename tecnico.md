@@ -73,7 +73,7 @@ El cálculo kg/USD se complementa con un ajuste determinista por HS-2 anclado a 
 
 #### Agregación Final a HS2
 
-Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Estado_Mexicano, HS2) -> total_kg
+Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Ciudad_Mexicana, HS2) -> total_kg
 
 ## FASE 2: Matriz de Demanda (Estados Unidos)
 
