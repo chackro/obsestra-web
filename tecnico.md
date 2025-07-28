@@ -345,8 +345,6 @@ Estas proyecciones validan decisiones de despliuege capital real y se convierten
 
 ## Validación de Datos {#validacion}
 
-**INSERTAR AQUÍ:** Todo tu reporte de validación de base de datos
-
 # REPORTE TÉCNICO DE VALIDACIÓN DE DATOS
 
 **Evaluación de Control de Calidad de Base de Datos**  
