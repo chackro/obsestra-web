@@ -194,7 +194,7 @@ Los costos de peaje se asignan mediante geolocalización exacta de casetas de co
 
 ![Metodología Completa](grafo.png)
 
-Posteriormente a la carga de los datos a la BD de OBSESTRA, los flujos se despliegan sobre el universo de Rutas (REF) utilizando el *algoritmo de la ruta mas corta de Dijkstra (1)*. El universo geometrico es un grafo cerrado de 399,972 km de rutas en ambos paises, conformado por segmentos que contienen datos de distancia, tiempo de recorrido y peajes para el vehiculo de diseno. El grafo conecta a los 32 estados mexicanos y todas las 140 regiones estadounidenses (FAF) mediante 21 cruces habilitados para carga comercial. Estos representan la totalidad de opciones para un camion de carga pesada para cruzar la frontera. Ninguna carretera ni puente queda fuera del modelo.
+Posteriormente a la carga de los datos a la BD de OBSESTRA, los flujos se despliegan sobre el unoverso geometrico utilizando el *algoritmo de la ruta mas corta de Dijkstra (1)*. El universo geometrico es un grafo cerrado de 399,972 km de rutas en ambos paises, conformado por segmentos que contienen datos de distancia, tiempo de recorrido y peajes para el vehiculo de diseno. El grafo conecta a los 32 estados mexicanos y todas las 140 regiones estadounidenses (FAF) mediante 21 cruces habilitados para carga comercial. Estos representan la totalidad de opciones para un camion de carga pesada para cruzar la frontera. Ninguna carretera ni puente queda fuera del modelo.
 
 *(1) En este caso, la "ruta mas corta" se define como la ruta que minimiza costo por distancia, costo por peajes y costo por tiempo*
 
