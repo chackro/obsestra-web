@@ -19,6 +19,8 @@ No somos consultores, desarrollamos inteligencia estratégica para posicionar a 
 
 ---
 
+!(obsestra.png)
+
 **Acceso Técnico CIEN:** [Documentación Completa](./tecnico)
 
 <!-- Google tag (gtag.js) -->
