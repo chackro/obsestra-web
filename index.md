@@ -19,7 +19,7 @@ No somos consultores, desarrollamos inteligencia estratégica para posicionar a 
 
 ---
 
-!(obsestra.png)
+![OBSESTRA Logo](obsestra.png)
 
 **Acceso Técnico CIEN:** [Documentación Completa](./tecnico)
 
