@@ -4,7 +4,7 @@ title: "CIEN - Documentación Técnica"
 ---
 [← Inicio](./)
 
-# CIEN: Centro de Integración Estratégica Norteamericana
+# Centro de Integración Estratégica Norteamericana
 **Documentación Técnica Completa**
 
 ---
