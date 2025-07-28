@@ -218,7 +218,7 @@ Esta capa transforma el análisis geométrico ideal en una simulación física r
 
 ### Mecanismo Central: Equilibrio Incremental con Congestión
 
-El proceso opera sobre el mismo universo de 56 millones de toneladas, pero ahora la asignacion de flujos a la ruta mas barata se hace de manera **incremental** fragmentando los flujos en unidades de decisión logística de 50,000 kg —aproximadamente 4 camiones basado en el peso promedio observado de 13,147 kg por unidad. Esta granularidad representa la escala operativa real: el tamaño típico que un despachador o flota puede controlar y redirigir en respuesta a condiciones cambiantes.
+El proceso opera sobre el mismo universo de 56 millones de toneladas, pero ahora la asignacion de flujos a la ruta mas barata se hace de manera **incremental** fragmentando los flujos en unidades de decisión logística de 50,000 kg —aproximadamente 4 camiones basado en el peso promedio observado de 13,147 kg por unidad.
 
 Tomando un dia de semana virtual con distribucion de trafico horaria observada, cada "rebanada" de 4 camiones evalúa todas las rutas posibles considerando tanto el costo geométrico base (Capa 1) como el tiempo de espera actual en cada puerto causado por todas las rebanadas que se despacharon antes que ella. La primera rebanada encuentra los puertos vacíos y elige según geometría pura. A medida que se asignan más rebanadas, la demanda acumulada en las horas pico genera colas que penalizan progresivamente a los puertos más demandados por su posicion geografica. Los flujos subsecuentes son asignados automáticamente al puerto que minimiza su costo total (geometría + cola actual), resultando en redistribución dinámica desde puertos geométricamente óptimos hacia alternativas menos congestionadas.
 
@@ -230,7 +230,7 @@ La simulación de colas utiliza un modelo híbrido que opera en dos regímenes s
 
 **Régimen Probabilístico (ρ < umbral calibrado)**: Se aplica el modelo estándar M/M/s de teoría de colas:
 
-- **λ**: Tasa de llegadas (camiones/minuto) construida dinámicamente: cada rebanada de 400,000 kg que se asigna al puerto incrementa λ para la hora correspondiente según distribución horaria observada (pico 10.1% a las 8 AM, valle 0.9% a medianoche)
+- **λ**: Tasa de llegadas (camiones/minuto) construida dinámicamente: cada rebanada de 50,000 kg que se asigna al puerto incrementa λ para la hora correspondiente según distribución horaria observada (pico 10.1% a las 8 AM, valle 0.9% a medianoche)
 - **μ**: Tasa de servicio por carril (camiones/minuto/carril) calibrada semanalmente mediante optimización automática que minimiza RMSE entre predicciones del modelo y tiempos observados de CBP Border Wait Times sobre ventanas de 30 días
 - **s**: Número de carriles comerciales auditado físicamente por puerto (Roma=1, Pharr=8, Otay Mesa=12)
 - **ρ = λ/(s×μ)**: Utilización que determina exponencialmente el tiempo de espera
@@ -241,14 +241,14 @@ La calibración de μ opera por puerto individual: Pharr μ=0.583 (35 camiones/h
 
 `tiempo_espera = camiones_acumulados / (s × μ)`
 
-Este régimen evita predicciones de esperas infinitas cuando ρ→1.0. Los camiones no atendidos en una hora se arrastran a la siguiente como rezago, creando persistencia realista donde picos matutinos impactan todo el día. El sistema aplica un cap de 7,200 minutos (5 días) para casos extremos, pero la mayoría de congestión se resuelve por redistribución natural hacia puertos alternativos.
+Este régimen evita predicciones de esperas infinitas cuando ρ→1.0. Los camiones no atendidos en una hora se arrastran a la siguiente como rezago, creando persistencia realista donde picos matutinos impactan todo el día.
 
 El parámetro crítico **ρ** determina el comportamiento del sistema:
 - ρ < 0.7: Operación fluida con esperas de 5-15 minutos
 - 0.7 ≤ ρ < 0.95: Crecimiento exponencial de demoras según curva M/M/s
 - ρ ≥ 0.95: Saturación crítica con cálculo determinístico
 
-**Arquitectura de Pureza Causal**: Para la simulacion, λ se inicializa en cero y se construye exclusivamente desde la demanda deterministica generada por la capa A. Esta decisión metodológica elimina contaminación histórica y permite aislar el impacto puro de la capacidad física sobre la distribución de flujos.
+**Arquitectura de Pureza Causal**: Para la simulación, λ se inicializa en cero y se construye exclusivamente desde la demanda deterministica generada por la capa A. Esta decisión metodológica elimina contaminación histórica y permite aislar el impacto puro de la capacidad física sobre la distribución de flujos.
 
 La simulación opera hora por hora durante un día típico y considera las horas de operacion de cada puente. Lon camiones no atendidos al final de una hora, se arrastran como rezago a horas subsecuentes, replicando la persistencia real de congestión donde picos matutinos impactan todo el día.
 
@@ -256,19 +256,19 @@ La simulación opera hora por hora durante un día típico y considera las horas
 
 El modelo mantiene anclaje empírico mediante un pipeline de validación automatizado:
 
-**Recolección de Datos**: Captura instantáneas del XML de tiempos de espera de CBP cada 15 minutos, agregadas a medianas horarias para robustez estadística.
+**Recolección de Datos**: Captura instantáneas del XML de tiempos de espera de CBP cada hora.
 
 **Optimización de Parámetros**: Las tasas de servicio (μ) se recalibran semanalmente minimizando RMSE entre predicciones del modelo y observaciones CBP sobre ventanas de 30 días. Esto captura variaciones estacionales y cambios en eficiencia operativa.
 
 Los puertos con RMSE elevado y datos de confianza alta reflejan congestión estructural real, no error del modelo. Esta distinción es crítica: el modelo captura fielmente la realidad operativa, incluyendo disfuncionalidades sistémicas.
 
-**Hallazgo Crítico: Asimetría de Infraestructura Fronteriza**: El proceso de calibración revela una discrepancia sistemática en Pharr donde la tasa de servicio calibrada (μ=0.35) es significativamente menor que la capacidad teórica basada en carriles CBP reportados &&(8 carriles = μ≈0.67)&&. Esta divergencia indica que las colas observadas no se explican por limitaciones del lado estadounidense, sino por cuellos de botella en infraestructura mexicana: accesos viales, instalaciones aduanales, y áreas de staging. La expansión CREFAR que duplicará carriles CBP en Pharr puede paradójicamente empeorar la congestión al agravar esta asimetría infraestructural. El modelo preserva este residual como información estratégica sobre descoordinación transfronteriza, no como error a corregir.
+**Hallazgo Crítico: Asimetría de Infraestructura Fronteriza**: El proceso de calibración revela una discrepancia sistemática en Pharr donde la tasa de servicio calibrada (μ=0.35) es significativamente menor que la capacidad teórica basada en carriles reportados por CBP (7 carriles = μ≈0.67). Esta divergencia indica que las colas observadas no se explican por limitaciones del lado estadounidense, sino por cuellos de botella en infraestructura mexicana: accesos viales, instalaciones aduanales, y áreas de staging. Por lo tanto, la expansión que duplicará carriles CBP en Pharr puede paradójicamente empeorar la congestión al agravar esta asimetría infraestructural. El modelo preserva este residual como información estratégica sobre descoordinación transfronteriza, no como error a corregir.
 
 ### Arquitectura de Dos Etapas
 
 La Capa 2 se ejecuta en dos etapas separadas con propósitos distintos:
 
-**Etapa B1 - Equilibrio Físico Incremental**: Procesa aproximadamente 1.1 millones de rebanadas secuencialmente, donde cada rebanada de 4 camiones evalúa todas las rutas considerando las colas generadas por aquellas procesadas anteriormente. El sistema registra los costos reales (geometría + cola actual) que cada rebanada experimenta en el momento de su asignación, preservando la heterogeneidad temporal del proceso de equilibrio.
+**Etapa B1 - Equilibrio Físico Incremental**: Procesa aproximadamente 1.1 millones de rebanadas secuencialmente, donde cada rebanada de 4 camiones evalúa todas las rutas considerando las colas generadas por aquellas procesadas antes. El sistema registra los costos reales (geometría + cola actual) que cada rebanada experimenta en el momento de su asignación, preservando la heterogeneidad temporal del proceso de equilibrio.
 
 **Etapa B2 - Matriz de Costos Experimentados**: El modelo agrega los costos reales que cada rebanada experimentó durante la simulación secuencial. Esta separación preserva los costos reales que cada rebanada experimentó durante la simulación secuencial, evitando la distorsión de recalcular todos los costos con las colas finales. El sistema rastrea costos por código HS2 para calibración comportamental, ya que cada tipo de mercancía (electrónicos HS2-85, perecederos HS2-07, etc.) tiene parámetros β y ASC distintos que determinan su sensibilidad al costo y preferencias institucionales. Los costos por HS2 se promedian aritméticamente entre todos los flujos de ese tipo de mercancía, donde cada flujo individual refleja su experiencia temporal específica (electrónicos tempranos ven puertos vacíos, electrónicos tardíos ven congestión), preservando esta heterogeneidad en la calibración de preferencias institucionales.
 
