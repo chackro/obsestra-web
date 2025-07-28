@@ -23,3 +23,12 @@ Cuando la ventana es estrecha y el resultado, irreversible.
 ---
 
 **Acceso Técnico:** [Documentación Completa](./tecnico)
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QVN4RJ6Q71"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QVN4RJ6Q71');
+</script>
