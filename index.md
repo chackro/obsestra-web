@@ -18,8 +18,6 @@ No somos consultores, desarrollamos inteligencia estratégica para posicionar a 
 **6 agencias gubernamentales integradas**  
 **Un sistema. Decisiones críticas.**
 
-Cuando la ventana es estrecha y el resultado, irreversible.
-
 ---
 
 **Acceso Técnico:** [Documentación Completa](./tecnico)
