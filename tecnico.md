@@ -24,9 +24,9 @@ México y Estados Unidos se encuentran ante una coyuntura sin precedentes y la c
 
 ---
 
-## Arquitectura del Sistema {#arquitectura}
+## Arquitectura del Sistema CIEN {#arquitectura}
 
-mmd..
+![Arquitectura del Sistema CIEN](diagrama.png)
 
 ---
 
