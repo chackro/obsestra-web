@@ -228,7 +228,7 @@ El sistema alcanza un **estado final** cuando todas las rebanadas han sido asign
 
 La simulación de colas utiliza un modelo híbrido que opera en dos regímenes según el nivel de saturación:
 
-**Régimen Probabilístico (ρ < umbral calibrado)**: Se aplica el modelo estándar M/M/s de teoría de colas: #verificar
+**Régimen Probabilístico (ρ < umbral calibrado)**: Se aplica el modelo estándar M/M/s de teoría de colas:
 
 - **λ**: Tasa de llegadas (camiones/minuto) construida dinámicamente: cada rebanada de 400,000 kg que se asigna al puerto incrementa λ para la hora correspondiente según distribución horaria observada (pico 10.1% a las 8 AM, valle 0.9% a medianoche)
 - **μ**: Tasa de servicio por carril (camiones/minuto/carril) calibrada semanalmente mediante optimización automática que minimiza RMSE entre predicciones del modelo y tiempos observados de CBP Border Wait Times sobre ventanas de 30 días
