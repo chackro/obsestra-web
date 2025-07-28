@@ -2,6 +2,5 @@ theme: jekyll-theme-slate
 title: "OBSESTRA"
 description: "Observatorio Estratégico"
 show_downloads: false
-google_analytics: G-QVN4RJ6Q71
 github:
   is_project_page: false
