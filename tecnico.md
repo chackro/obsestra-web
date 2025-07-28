@@ -20,8 +20,7 @@ El modelo establece aproximadamente 170,000 flujos únicos de exportación que r
 ---
 
 ## Navegación Rápida
-- [Resumen Ejecutivo] (#resumen)
-- [Visión Estratégica](#vision)
+- [Resumen Ejecutivo](#resumen)
 - [Metodología Completa](#metodologia)
 - [Validación de Datos](#validacion)
 
