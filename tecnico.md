@@ -9,7 +9,7 @@ title: "Documentación Técnica"
 
 ---
 
-## Resumen Ejecutivo
+## Resumen Ejecutivo {#resumen}
 
 La reconfiguración de cadenas de suministro globales hacia Norteamérica presenta la mayor oportunidad de crecimiento económico para México en décadas, pero la fragmentación de datos oficiales entre múltiples agencias gubernamentales (BTS, Census, INEGI, CBP, FAF, SICT) impide la toma de decisiones estratégicas informadas sobre inversiones en infraestructura fronteriza. Sin una fuente integrada que revele con granularidad necesaria qué flujos de carga viajan desde cada estado mexicano hacia cada región estadounidense y por qué puerto fronterizo cruzan, las decisiones de inversión en puentes, vialidades y servicios logísticos se basan en intuición más que en análisis predictivo cuantitativo.
 
@@ -20,16 +20,10 @@ El modelo establece aproximadamente 170,000 flujos únicos de exportación que r
 ---
 
 ## Navegación Rápida
+- [Resumen Ejecutivo] (#resumen)
 - [Visión Estratégica](#vision)
-- [Arquitectura del Sistema](#arquitectura)  
 - [Metodología Completa](#metodologia)
 - [Validación de Datos](#validacion)
-
----
-
-## Visión Estratégica {#vision}
-
-México y Estados Unidos se encuentran ante una coyuntura sin precedentes y nuestro análisis (CIEN) identificó una convergencia de infraestructura de relevancia estratégica excepcional para el proyecto INOVUS —el corredor de puentes internacionales (IBTC) en el condado de Hidalgo TX, la duplicación del puente Reynosa-Pharr y la carretera Interserrana al sur de Monterrey— están a punto de reconfigurar las ventajas relativas de los cruces fronterizos. Estos hallazgos confirman la visión previa y anticipada con la que se estructura el proyecto estratégico de dos fases a mediano plazo ubicado precisamente donde la convergencia logística genera el máximo impacto: 8km al sur del Puente Internacional Reynosa-Pharr,  envolviendo infraestructura de distribución crítica que conecta Monterrey-Victoria-Matamoros.
 
 ---
 
