@@ -9,6 +9,16 @@ title: "Documentación Técnica"
 
 ---
 
+## Resumen Ejecutivo (#Resumen)
+
+La reconfiguración de cadenas de suministro globales hacia Norteamérica presenta la mayor oportunidad de crecimiento económico para México en décadas, pero la fragmentación de datos oficiales entre múltiples agencias gubernamentales (BTS, Census, INEGI, CBP, FAF, SICT) impide la toma de decisiones estratégicas informadas sobre inversiones en infraestructura fronteriza. Sin una fuente integrada que revele con granularidad necesaria qué flujos de carga viajan desde cada estado mexicano hacia cada región estadounidense y por qué puerto fronterizo cruzan, las decisiones de inversión en puentes, vialidades y servicios logísticos se basan en intuición más que en análisis predictivo cuantitativo.
+
+CIEN resuelve esta limitación mediante la integración de datos dispersos en un modelo logístico unificado que simula el sistema completo de exportaciones mexicanas a Estados Unidos por camión. El sistema procesa 56 millones de toneladas de flujos comerciales de exportación sobre una red vial de 399,972 kilómetros, aplicando una metodología de descomposición causal de tres capas que aísla y cuantifica los factores determinantes de competitividad entre puertos fronterizos: geometría de red, restricciones de infraestructura, y comportamiento logístico diferenciado por tipo de mercancía. Esta arquitectura permite proyectar con precisión cuantitativa el impacto de nuevas inversiones en infraestructura sobre la redistribución de flujos comerciales de exportación y la captura de participación de mercado en corredores estratégicos.
+
+El modelo establece aproximadamente 170,000 flujos únicos de exportación que representan la totalidad del comercio terrestre de México hacia Estados Unidos, asignándolos dinámicamente a 21 puertos de entrada mediante algoritmos que incorporan colas operativas, capacidad de carriles, programas de facilitación comercial y variaciones horarias. El resultado es un sistema determinista y reproducible que cuantifica exactamente cómo cambios específicos en infraestructura redistribuyen toneladas exportadas, tiempos de tránsito y costos logísticos a través de la frontera, proporcionando la base analítica necesaria para optimizar decisiones de inversión de capital en el contexto del nearshoring y la convergencia de infraestructura norteamericana.
+
+---
+
 ## Navegación Rápida
 - [Visión Estratégica](#vision)
 - [Arquitectura del Sistema](#arquitectura)  
@@ -24,8 +34,6 @@ México y Estados Unidos se encuentran ante una coyuntura sin precedentes y nues
 ---
 
 ## Arquitectura del Sistema CIEN {#arquitectura}
-
-CIEN (Centro de Integración Estratégica Norteamericana) es un producto de modelado logístico desarrollado por OBSESTRA que simula el sistema completo de comercio fronterizo México-Estados Unidos mediante la integración de 56 millones de toneladas de flujos comerciales sobre una red vial de 399,972 kilómetros, aplicando una metodología de descomposición causal de tres capas que aísla y cuantifica los factores determinantes de competitividad entre puertos fronterizos: geometría de red (ubicación y conectividad), restricciones de infraestructura (capacidad y congestión simulada), y comportamiento logístico diferenciado por tipo de mercancía, permitiendo proyectar con precisión cuantitativa el impacto de nuevas inversiones en infraestructura sobre la redistribución de flujos comerciales y la captura de participación de mercado en corredores estratégicos del nearshoring.
 
 ![Arquitectura del Sistema CIEN](diagrama_.png)
 
