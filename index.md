@@ -12,7 +12,7 @@ OBSESTRA existe para las otras cinco.
 
 ---
 
-No somos consultores, desarrollamos inteligencia estratégica para posicionar a nuestros propios proyectos y para aliados que entienden que hay momentos donde la información correcta, en las manos correctas, en el momento preciso, vale más que años de análisis posteriores.
+No somos consultores, desarrollamos inteligencia estratégica para posicionar a nuestros proyectos y para aliados que entienden que hay momentos donde la información correcta, en las manos correctas, en el momento preciso, vale más que años de análisis posteriores.
 
 **19+ millones de registros especializados**  
 **6 agencias gubernamentales integradas**  
