@@ -261,8 +261,6 @@ El modelo mantiene anclaje empírico mediante un pipeline de validación automat
 
 Los puertos con RMSE elevado y datos de confianza alta reflejan congestión estructural real, no error del modelo. Esta distinción es crítica: el modelo captura fielmente la realidad operativa, incluyendo disfuncionalidades sistémicas.
 
-**Hallazgo Crítico: Asimetría de Infraestructura Fronteriza**: El proceso de calibración revela una discrepancia sistemática en Pharr donde la tasa de servicio calibrada (μ=0.35) es significativamente menor que la capacidad teórica basada en carriles reportados por CBP (7 carriles = μ≈0.67). Esta divergencia indica que las colas observadas no se explican por limitaciones del lado estadounidense, sino por cuellos de botella en infraestructura mexicana: accesos viales, instalaciones aduanales, y áreas de staging. Por lo tanto, la expansión que duplicará carriles CBP en Pharr puede paradójicamente empeorar la congestión al agravar esta asimetría infraestructural. El modelo preserva este residual como información estratégica sobre descoordinación transfronteriza, no como error a corregir.
-
 ### Arquitectura de Dos Etapas
 
 La Capa 2 se ejecuta en dos etapas separadas con propósitos distintos:
