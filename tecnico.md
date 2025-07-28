@@ -18,9 +18,7 @@ title: "CIEN - Documentación Técnica"
 
 ## Visión Estratégica {#vision}
 
-Somos operadores que utilizamos inteligencia logística propietaria para guiar despliegue de capital. Nuestro análisis identificó una convergencia de infraestructura de relevancia estratégica excepcional. confirmando la visión previa y anticipada con la que estructuramos este proyecto estratégico de dos fases a mediano plazo con un CAPEX paramétrico de $670 MDP en la primera y $499 en la segunda, ubicado precisamente donde la convergencia logística genera el máximo impacto: 8km al sur del Puente Internacional Reynosa-Pharr,  envolviendo infraestructura de distribución crítica que conecta Monterrey-Victoria-Matamoros.
-
-México y Estados Unidos se encuentran ante una coyuntura sin precedentes y la convergencia de obras clave —incluyendo el corredor de puentes internacionales (IBTC) en el condado de Hidalgo, TX y la carretera Interserrana al sur de Monterrey — está reconfigurando las ventajas relativas de los cruces fronterizos.
+Somos operadores que utilizamos inteligencia logística propietaria para guiar despliegue de capital. México y Estados Unidos se encuentran ante una coyuntura sin precedentes y nuestro análisis (CIEN) identificó una convergencia de infraestructura de relevancia estratégica excepcional —el corredor de puentes internacionales (IBTC) en el condado de Hidalgo TX, la duplicación del puente Reynosa-Pharr y la carretera Interserrana al sur de Monterrey — están a punto de reconfigurar las ventajas relativas de los cruces fronterizos. Estos hallazgos confirman la visión previa y anticipada con la que estructuramos este proyecto estratégico de dos fases a mediano plazo ubicado precisamente donde la convergencia logística genera el máximo impacto: 8km al sur del Puente Internacional Reynosa-Pharr,  envolviendo infraestructura de distribución crítica que conecta Monterrey-Victoria-Matamoros.
 
 ---
 
