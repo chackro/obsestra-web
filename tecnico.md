@@ -9,7 +9,7 @@ title: "Documentación Técnica"
 
 ---
 
-## Resumen Ejecutivo (#Resumen)
+## Resumen Ejecutivo
 
 La reconfiguración de cadenas de suministro globales hacia Norteamérica presenta la mayor oportunidad de crecimiento económico para México en décadas, pero la fragmentación de datos oficiales entre múltiples agencias gubernamentales (BTS, Census, INEGI, CBP, FAF, SICT) impide la toma de decisiones estratégicas informadas sobre inversiones en infraestructura fronteriza. Sin una fuente integrada que revele con granularidad necesaria qué flujos de carga viajan desde cada estado mexicano hacia cada región estadounidense y por qué puerto fronterizo cruzan, las decisiones de inversión en puentes, vialidades y servicios logísticos se basan en intuición más que en análisis predictivo cuantitativo.
 
