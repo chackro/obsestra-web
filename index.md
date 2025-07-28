@@ -3,7 +3,6 @@ layout: default
 title: "OBSESTRA"
 ---
 
-# OBSESTRA
 **Observatorio Estratégico**
 
 Diez decisiones configuran una década. Cinco las tomamos conscientemente.
