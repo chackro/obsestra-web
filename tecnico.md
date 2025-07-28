@@ -556,13 +556,11 @@ Basado en pruebas exhaustivas basadas en SQL de 16,424,006 registros en 7 tablas
 
 
 *Documentación generada: 27 de Julio, 2025*
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QVN4RJ6Q71"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'default',
-    securityLevel: 'loose'
-  });
-});
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-QVN4RJ6Q71');
 </script>
