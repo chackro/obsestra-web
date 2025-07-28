@@ -63,7 +63,7 @@ Cabe destacar que la fracción terrestre se calcula exclusivamente a partir de i
 
 #### Resultados del Mapeo SCIAN→HS6
 
-**Mapeo SCIAN→HS6:** El proceso logra una tasa de éxito del 100% en la conversión de códigos SCIAN a HS-6, incluyendo productos pesqueros (SCIAN 114) que inicialmente carecían de mapeo. Todos los registros de valor de INEGI encuentran una correspondencia válida en el sistema de clasificación arancelaria.
+El proceso logra una tasa de éxito del 100% en la conversión de códigos SCIAN a HS-6. Todos los registros de valor de INEGI encuentran correspondencias válidas en el sistema de clasificación arancelaria.
 
 #### Cálculo de Pesos y Ajustes Deterministas
 
