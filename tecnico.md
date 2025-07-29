@@ -11,26 +11,26 @@ title: "Documentación Técnica"
 
 ## Resumen Ejecutivo {#resumen}
 
-La reconfiguración actual de cadenas de suministro globales hacia Norteamérica representa una oportunidad única para el crecimiento económico de México. Sin embargo, la fragmentación de datos oficiales en múltiples agencias gubernamentales limita la toma de decisiones estratégicas, especialmente en inversiones de infraestructura fronteriza. Actualmente, no existe una fuente integrada que muestre claramente desde qué estado mexicano hacia qué región estadounidense viaja cada flujo de carga, ni qué puertos fronterizos utiliza. Esto genera una pérdida significativa en precisión y potencial impacto de las inversiones.
+La fragmentación de datos oficiales en múltiples agencias gubernamentales limita la toma de decisiones estratégicas, especialmente en inversiones de infraestructura fronteriza necesarias para potencializar el impacto del nearshoring, (siendo los altos costos de logística en México uno de los principales deterrentes del fenómeno(. Actualmente, no existe una fuente integrada que muestre claramente desde qué estado mexicano hacia qué región estadounidense viaja cada flujo de carga, ni qué puertos fronterizos utiliza, lo que limita la visibilidad del impacto de decisiones de infraestructura tanto en términos de impacto económico como en retorno de inversión.
 
-CIEN resuelve esta problemática integrando diversas fuentes de datos en un modelo logístico único que simula la totalidad de las exportaciones mexicanas por camión hacia Estados Unidos. Este modelo procesa 56 millones de toneladas de comercio a través de casi 400 mil kilómetros de carreteras, utilizando una metodología basada en tres factores clave para evaluar la competitividad de los puertos fronterizos:
+CIEN resuelve esta problemática integrando diversas fuentes de datos en un modelo logístico único que simula la totalidad de las exportaciones mexicanas por camión hacia Estados Unidos. Se procesan 56 millones de toneladas de comercio a través de casi 400 mil kilómetros de carreteras, utilizando una metodología basada en tres factores clave para explicar la competitividad de los puertos fronterizos:
 
 1. La geometría de la red vial
 2. Las restricciones reales de infraestructura (capacidad operativa, colas y carriles)
 3. Las decisiones logísticas diferenciadas según el tipo de mercancía
 
-Esta estructura permite predecir con precisión cómo nuevas inversiones en infraestructura afectarían los flujos comerciales y la participación de mercado en rutas estratégicas específicas.
+Al entender los motivos detrás detras del panorama competitivo logístico fronterizo nos permitimos predecir con mayor precisión cómo nuevas inversiones en infraestructura afectarían los flujos comerciales y la participación de mercado en rutas estratégicas específicas.
 
-El modelo contempla alrededor de 170,000 flujos comerciales únicos, representando la totalidad del comercio terrestre desde México hacia EE. UU. Estos flujos se asignan dinámicamente a los 21 puertos fronterizos existentes, utilizando algoritmos que toman en cuenta las condiciones operativas reales (colas, capacidad física, programas de facilitación comercial).
+El modelo contempla alrededor de 170,000 flujos comerciales únicos que se asignan dinámicamente a los 21 puertos fronterizos existentes, utilizando algoritmos que toman en cuenta las rutas optimas segun el factor siendo evaluado.
 
-Algo fundamental del modelo es que integra dos fuentes complementarias:
+El modelo es integra dos fuentes complementarias:
 
-* BTS, que mide los flujos reales en toneladas cruzadas en frontera
-* INEGI, que provee datos sobre la distribución geográfica de producción en México
+* BTS, que mide los flujos reales en toneladas cruzadas en frontera y sus destinos en EEUU
+* INEGI, que provee datos sobre la distribución geográfica de producción paara expotación en México
 
-Esto garantiza que el modelo refleje la realidad observable de los flujos fronterizos, al mismo tiempo que mantiene una representación precisa de la estructura económica mexicana.
+Esto garantiza que que las simulaciones estén basando en un universo real observable, se refleje la realidad observable de los flujos fronterizos.
 
-El resultado es un sistema claro y reproducible que permite entender y predecir cómo cambios específicos en infraestructura redistribuirán las exportaciones, los tiempos de tránsito y los costos logísticos en la frontera, brindando así una base para tomar decisiones más informadas y efectivas en el contexto actual del nearshoring y la integración de infraestructura norteamericana.
+El resultado es un sistema claro y reproducible que permite entender y predecir cómo cambios específicos en infraestructura redistribuyen los flujos de exportación en camión, los tiempos de tránsito y los costos logísticos en la frontera. Permite permite identificar o justificar inversiones —ya definidas o en evaluación— con criterios transparentes, cuantificables y consistentes. En definitiva, CIEN aporta la capacidad analítica necesaria para diseñar estrategias integradas y precisas de inversión pública, con impacto medible en la competitividad logística de México.
 
 ---
 
