@@ -217,8 +217,6 @@ Esta arquitectura garantiza que el modelo respete los flujos totales observados 
 
 **Por qué aceptar un pequeño error en destino**: Para los destinos contamos con datos observados ya en la dimensión exacta requerida (HS2 × estado) gracias a BTS y a la posterior desagregación FAF. Un desajuste residual del 10–20 % refleja principalmente la fricción por distancia que estamos calibrando (β), no una pérdida de masa. El desajuste evita un sobre-ajuste. El β de cada HS2 se entrena con la demanda **del año previo** (jun-2023→mar-2024) y se evalúa contra la demanda **del año corriente** (jun-2024→mar-2025).  Un error ≈15 % indica capacidad predictiva real, ya que si se obligara a bajar a 0% estaríamos simplemente reproduciendo el año de entrenamiento y el modelo fallaría al proyectar escenarios futuros (nuevas capacidades, shocks de demanda, etc.).
 
-[AGREGAR: Tabla de resultados de calibración del Modelo de Gravedad (β de gravedad). Incluir wMAPE de destino, λ óptimo y métricas de validación fuera de muestra.]
-
 Habiendo concluido este proceso de asignación de flujos por origen, destino y HS2, se logran establecer las condiciones sobre las cuales los puertos de entrada terrestre, y sus ciudades fronterizas correspondientes, compiten por el valor economico que representa el procesamiento de los flujos logisticos.
 
 # Descomposición Causal de Flujos
