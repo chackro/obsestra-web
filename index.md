@@ -9,7 +9,7 @@ Diez decisiones configuran una década. Cinco las tomamos conscientemente.
 
 OBSESTRA existe para las otras cinco.
 
----
+![OBSESTRA Logo](obsestra.png)
 
 No somos consultores, desarrollamos inteligencia estratégica para posicionar a aliados que entienden que hay momentos donde la información correcta, en las manos correctas, en el momento preciso, vale más que años de análisis posteriores.
 
@@ -18,8 +18,6 @@ No somos consultores, desarrollamos inteligencia estratégica para posicionar a 
 **Un sistema. Decisiones críticas.**
 
 ---
-
-![OBSESTRA Logo](obsestra.png)
 
 **Acceso Técnico CIEN:** [Documentación Completa](./tecnico)
 
