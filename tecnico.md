@@ -19,7 +19,7 @@ El modelo integra datos de BTS (toneladas observadas cruzando la frontera y su d
 
 El modelo contempla alrededor de 170,000 flujos comerciales únicos que se asignan dinámicamente a los 21 puertos fronterizos existentes, utilizando algoritmos que toman en cuenta las rutas óptimas según el factor siendo evaluado.
 
-El resultado es un sistema claro y reproducible que permite entender y predecir cómo cambios específicos en infraestructura redistribuyen los flujos de exportación en camión, los tiempos de tránsito y los costos logísticos en la frontera. Permite identificar o justificar inversiones con criterios transparentes, cuantificables y consistentes. En definitiva, CIEN aporta la capacidad analítica necesaria para diseñar estrategias integradas y precisas de inversión pública, con impacto medible en la competitividad logística de México.
+El resultado es un sistema claro y reproducible que permite entender y predecir cómo cambios específicos en infraestructura redistribuyen los flujos de exportación en camión, los tiempos de tránsito y los costos logísticos en la frontera. Permite identificar o justificar inversiones con criterios transparentes, cuantificables y consistentes. En definitiva, CIEN aporta la capacidad analítica necesaria para diseñar estrategias integradas y precisas de inversión pública y privada, con impacto medible en la competitividad logística de México.
 
 ---
 
