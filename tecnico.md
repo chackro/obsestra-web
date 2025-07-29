@@ -5,7 +5,6 @@ title: "Documentación Técnica"
 [← Inicio](./)
 
 # Centro de Integración Estratégica Norteamericana
-**Documentación Técnica Completa**
 
 ---
 
