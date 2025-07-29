@@ -71,9 +71,16 @@ En este punto del proceso, tenemos USD por HS6 que se exporta en camion por Esta
 
 El cálculo kg/USD se complementa con un ajuste determinista por HS-2 anclado a la serie BTS DOT-3.  Para cada HS-2 se estima primero un factor bruto = (kg observados ÷ kg estimados) sobre el período 2018-23; luego se aplica un factor de encogimiento λ∈[0,1] de forma que factor_final = factor_base × (1 + λ·(bruto-1)).  El valor λ se busca por grid-search global (0, 0.25, 0.5, 0.75, 1) minimizando el wMAPE fuera de muestra (ventana 2024-01→2025-03). El modelo sacrifica algo de ajuste dentro de la muestra del periodo de analisis —el wMAPE interno sube de 1 % a 12 %— pero la ganancia predictiva es sustancial: el wMAPE fuera-de-muestra baja de 18 % a 10%. Todas las métricas (dentro de muestra primario, dentro de muestra calibrado, fuera de muestra) se imprimen al final de cada corrida junto con el λ óptimo, dejando un rastro completo de auditoría.
 
-#### Agregación Final a HS2
+Aunque la información de INEGI llega únicamente a nivel **estado**, algunos estados exportadores concentran su carga en varios polos logísticos. Para capturar esa realidad, el modelo aplica un mecanismo de división urbana (*split urbano*) que fragmenta cada flujo estatal en sub-flujos ciudad-origen.
 
-Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Ciudad_Mexicana, HS2) -> total_kg
+La Tabla `CITY_ORIGIN_SPLITS` enumera los estados sujetos a división y, para cada uno, la lista de ciudades, coordenadas y participación (`share`) que deben sumar 1,00.
+- Ejemplo:
+  - **Chihuahua**: 70 % Ciudad Juárez, 30 % Chihuahua capital.
+  - **Guanajuato**: 40 % León, 35 % Silao, 25 % Celaya.
+
+El motor normaliza el nombre del estado y genera un sub-flujo por ciudad con peso = `share × flujo_estatal`, asignando `origin_city` y coordenadas precisas. Si no especificamos sub-flujos para un estado, asigna un único centroide a partir de la tabla `MEXICAN_ORIGINS`. Este enfoque introduce granularidad donde es material (estados fronterizos (p.e Reynosa/Nuevo Laredo) y corredores MX-57/MX-15) sin requerir datos municipales exhaustivos, mejorando la precisión de las rutas y de los costos logísticos resultantes.
+
+Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Origen_Mexicano, HS2) -> total_kg
 
 ## FASE 2: Matriz de Demanda (Estados Unidos)
 
