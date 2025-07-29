@@ -393,8 +393,6 @@ El ASC resultante del Paso B entonces captura los factores institucionales siste
 
 **Racionalidad del proceso de calibración separado:** Esta metodología de dos pasos es crucial para obtener parámetros comportamentales precisos y no sesgados. El Paso A aísla la sensibilidad pura al costo (β) utilizando únicamente diferencias geométricas y de peajes, sin contaminación por efectos de congestión. Esto captura la elasticidad fundamental de cada tipo de mercancía a variaciones en costo de transporte. El Paso B entonces usa esa sensibilidad calibrada para ejecutar una simulación completa de equilibrio—incluyendo todas las dinámicas de cola—y calcula los parámetros de preferencia residual (ASC) que capturan factores institucionales no explicados por costo puro: calidad de corredores aduanales, relaciones comerciales establecidas, infraestructura de servicios auxiliares, etc. Si calibráramos ambos parámetros simultáneamente con costos que incluyen colas, los ASCs absorberían artificialmente parte del efecto de congestión, produciendo estimaciones sesgadas que reducirían el poder predictivo del modelo.
 
-[AGREGAR: Tabla de resultados de calibración del Modelo de Comportamiento (parámetros βc y ASCj). Incluir métricas de bondad de ajuste (ej. Log-Likelihood) y una muestra de los parámetros calibrados por clúster de producto.]
-
 # Predicción Calibrada de Escenarios
 
 ## Metodología para Análisis Predictivo
