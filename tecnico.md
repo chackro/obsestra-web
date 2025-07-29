@@ -5,6 +5,7 @@ title: "Documentación Técnica"
 [← Inicio](./)
 
 # Centro de Integración Estratégica Norteamericana
+**Documentación Técnica Completa**
 
 ---
 
@@ -14,7 +15,7 @@ La reconfiguración de cadenas de suministro globales hacia Norteamérica presen
 
 CIEN resuelve esta limitación mediante la integración de datos dispersos en un modelo logístico unificado que simula el sistema completo de exportaciones mexicanas a Estados Unidos por camión. El sistema procesa 56 millones de toneladas de flujos comerciales de exportación sobre una red vial de 399,972 kilómetros, aplicando una metodología de descomposición causal de tres capas que aísla y cuantifica los factores determinantes de competitividad entre puertos fronterizos: geometría de red, restricciones de infraestructura, y comportamiento logístico diferenciado por tipo de mercancía. Esta arquitectura permite proyectar con precisión cuantitativa el impacto de nuevas inversiones en infraestructura sobre la redistribución de flujos comerciales de exportación y la captura de participación de mercado en corredores estratégicos.
 
-El modelo establece aproximadamente 170,000 flujos únicos de exportación que representan la totalidad del comercio terrestre de México hacia Estados Unidos, asignándolos dinámicamente a 21 puertos de entrada mediante algoritmos que incorporan colas operativas, capacidad de carriles, programas de facilitación comercial y variaciones horarias. El resultado es un sistema determinista y reproducible que cuantifica exactamente cómo cambios específicos en infraestructura redistribuyen toneladas exportadas, tiempos de tránsito y costos logísticos a través de la frontera, proporcionando la base analítica necesaria para optimizar decisiones de inversión de capital en el contexto del nearshoring y la convergencia de infraestructura norteamericana.
+El modelo establece aproximadamente 170,000 flujos únicos de exportación que representan la totalidad del comercio terrestre de México hacia Estados Unidos, asignándolos dinámicamente a 21 puertos de entrada mediante algoritmos que incorporan colas operativas, capacidad de carriles, programas de facilitación comercial y variaciones horarias. **Crucialmente, el sistema reconcilia dos fuentes de datos complementarias: BTS proporciona los totales de toneladas que cruzan la frontera (la "verdad observada"), mientras que INEGI proporciona la distribución geográfica de la producción mexicana. Esta combinación garantiza coherencia con los flujos fronterizos reales mientras preserva la geografía económica de México.** El resultado es un sistema determinista y reproducible que cuantifica exactamente cómo cambios específicos en infraestructura redistribuyen toneladas exportadas, tiempos de tránsito y costos logísticos a través de la frontera, proporcionando la base analítica necesaria para optimizar decisiones de inversión de capital en el contexto del nearshoring y la convergencia de infraestructura norteamericana.
 
 ---
 
@@ -69,18 +70,63 @@ El proceso logra una tasa de éxito del 100% en la conversión de códigos SCIAN
 
 En este punto del proceso, tenemos USD por HS6 que se exporta en camion por Estado. Antes de agregar a HS2, el modelo aprovecha la granularidad que ofrece Census en HS6 para  llamar a una funcion externa que aproxima USD/Kg por HS6. La función calcula una relación kg/USD precisa para cada código HS6 utilizando entradas en los datos del Censo solamente si incluyen ambos peso y valor. También filtra embarques anómalos para asegurar que los promedios reflejen condiciones representativas.
 
-El cálculo kg/USD se complementa con un ajuste determinista por HS-2 anclado a la serie BTS DOT-3.  Para cada HS-2 se estima primero un factor bruto = (kg observados ÷ kg estimados) sobre el período 2018-23; luego se aplica un factor de encogimiento λ∈[0,1] de forma que factor_final = factor_base × (1 + λ·(bruto-1)).  El valor λ se busca por grid-search global (0, 0.25, 0.5, 0.75, 1) minimizando el wMAPE fuera de muestra (ventana 2024-01→2025-03). El modelo sacrifica algo de ajuste dentro de la muestra del periodo de analisis —el wMAPE interno sube de 1 % a 12 %— pero la ganancia predictiva es sustancial: el wMAPE fuera-de-muestra baja de 18 % a 10%. Todas las métricas (dentro de muestra primario, dentro de muestra calibrado, fuera de muestra) se imprimen al final de cada corrida junto con el λ óptimo, dejando un rastro completo de auditoría.
+**Nota crítica sobre el origen de los pesos totales**: Aunque el proceso comienza con valores USD de INEGI convertidos a kg, estos valores son solo preliminares. El modelo utiliza un enfoque de **restricción BTS** donde:
+- **BTS proporciona los kg totales** que cruzan la frontera por cada HS2 (la "verdad observada")
+- **INEGI proporciona las proporciones geográficas** (qué porcentaje viene de cada estado mexicano)
+- **El resultado final** = Totales BTS × Proporciones INEGI
+
+El ajuste con BTS ocurre en dos niveles:
+
+1. **Ajuste de ratios kg/USD**: El cálculo kg/USD se complementa con un ajuste determinista por HS-2 anclado a la serie BTS DOT-3. Para cada HS-2 se estima primero un factor bruto = (kg observados ÷ kg estimados) sobre el período 2018-23; luego se aplica un factor de encogimiento λ∈[0,1] de forma que factor_final = factor_base × (1 + λ·(bruto-1)). El valor λ se busca por grid-search global (0, 0.25, 0.5, 0.75, 1) minimizando el wMAPE fuera de muestra (ventana 2024-01→2025-03).
+
+2. **Restricción de totales en `load_mexican_production_matrix()`**: Cuando `use_bts_constraint=True` (default), la función:
+   - Obtiene los kg totales por HS2 de BTS
+   - Calcula las proporciones estatales desde INEGI (ya filtrado por camión)
+   - Multiplica: `producción_estado = total_BTS × proporción_INEGI`
+
+El modelo sacrifica algo de ajuste dentro de la muestra del periodo de analisis —el wMAPE interno sube de 1 % a 12 %— pero la ganancia predictiva es sustancial: el wMAPE fuera-de-muestra baja de 18 % a 10%. Todas las métricas (dentro de muestra primario, dentro de muestra calibrado, fuera de muestra) se imprimen al final de cada corrida junto con el λ óptimo, dejando un rastro completo de auditoría.
+
+Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Ciudad_Mexicana, HS2) -> total_kg
+
+### Resumen de la Fase 1: Origen de los Pesos Totales
+
+**Pregunta clave: ¿De dónde vienen los kg totales del sistema?**
+
+Cuando el modelo opera con `use_bts_constraint=True` (configuración por defecto):
+**BTS determina CUÁNTO**: Los kg totales que cruzan la frontera por cada producto HS2
+y **INEGI determina DÓNDE**: Qué proporción de esos kg se origina en cada estado mexicano
+
+**Ejemplo concreto**:
+- BTS reporta: 1,000,000 kg de electrónicos (HS2-85) cruzan de México a EE.UU. por camión
+- INEGI indica: Chihuahua exporta 60% de electrónicos, Baja California 25%, Jalisco 15%
+- Resultado del modelo:
+  - Chihuahua → 600,000 kg de HS2-85
+  - Baja California → 250,000 kg de HS2-85
+  - Jalisco → 150,000 kg de HS2-85
+
+Esta arquitectura asegura coherencia con los flujos fronterizos observados (BTS) mientras preserva la geografía económica mexicana (INEGI).
+
+### Desagregación Geográfica Mexicana – De Estado a Ciudades Origen {#mx_geodesag}
 
 Aunque la información de INEGI llega únicamente a nivel **estado**, algunos estados exportadores concentran su carga en varios polos logísticos. Para capturar esa realidad, el modelo aplica un mecanismo de división urbana (*split urbano*) que fragmenta cada flujo estatal en sub-flujos ciudad-origen.
 
-La Tabla `CITY_ORIGIN_SPLITS` enumera los estados sujetos a división y, para cada uno, la lista de ciudades, coordenadas y participación (`share`) que deben sumar 1,00.
+#### Tabla `CITY_ORIGIN_SPLITS`
+- Definida en `mexican_origin_deterministic_model.py` (líneas 49–109).
+- Enumera los estados sujetos a división y, para cada uno, la lista de ciudades, coordenadas y participación (`share`) que deben sumar 1,00.
 - Ejemplo:
   - **Chihuahua**: 70 % Ciudad Juárez, 30 % Chihuahua capital.
   - **Guanajuato**: 40 % León, 35 % Silao, 25 % Celaya.
 
-El motor normaliza el nombre del estado y genera un sub-flujo por ciudad con peso = `share × flujo_estatal`, asignando `origin_city` y coordenadas precisas. Si no especificamos sub-flujos para un estado, asigna un único centroide a partir de la tabla `MEXICAN_ORIGINS`. Este enfoque introduce granularidad donde es material (estados fronterizos (p.e Reynosa/Nuevo Laredo) y corredores MX-57/MX-15) sin requerir datos municipales exhaustivos, mejorando la precisión de las rutas y de los costos logísticos resultantes.
+#### Aplicación en `_convert_to_flow_format()`
+- El motor normaliza el nombre del estado y verifica si existe en `CITY_ORIGIN_SPLITS`.
+- Si existe, genera un sub-flujo por ciudad con peso = `share × flujo_estatal`, asignando `origin_city` y coordenadas precisas.
+- Si no existe, asigna un único centroide a partir de la tabla `MEXICAN_ORIGINS`.
 
-Finalmente, los resultados se agregan de HS6 a HS2 y el resultado es una estructura de datos (Origen_Mexicano, HS2) -> total_kg
+#### Conservación de masa y validaciones
+- Las participaciones se validan para que la suma sea 1,00 ± 0,01; el proceso aborta si no se cumple.
+- Cuando faltan coordenadas válidas, `_fallback_to_state_centroids()` utiliza el centroide geográfico y registra la masa afectada en el balance.
+
+Este enfoque introduce granularidad donde es material (estados fronterizos y corredores MX-57/MX-15) sin requerir datos municipales exhaustivos, mejorando la precisión de las rutas y de los costos logísticos resultantes.
 
 ## FASE 2: Matriz de Demanda (Estados Unidos)
 
@@ -163,7 +209,11 @@ Esta fase construye la matriz de origen-destino (O/D) que define cuánto se muev
 
 **Decisión estratégica clave**: El modelo "cierra" (fija al 100 %) los totales de producción por estado mexicano y permite un pequeño error en los totales de destino estadounidense.
 
-**Por qué cerrar el origen**: Los volúmenes de exportación parten de INEGI, pero antes de entrar al modelo atraviesan (1) un mapeo SCIAN→HS6→HS2 y (2) una conversión USD→kg. Ambos pasos introducen ruido inevitable en la desagregación, aunque el total kg queda calibrado contra BTS. Si dejáramos que el algoritmo reajuste esos orígenes, acumularíamos distorsiones y perderíamos la trazabilidad de la etapa de mapeo. Al forzar que cada estado conserve exactamente su masa exportada, contenemos ese error y preservamos la coherencia de la base de producción.
+**Por qué cerrar el origen**: Los volúmenes de exportación por estado mexicano se construyen mediante la combinación de:
+1. **Totales de kg por HS2 de BTS** (cuando `use_bts_constraint=True`, que es el default)
+2. **Distribución geográfica de INEGI** (qué proporción exporta cada estado)
+
+Esta arquitectura garantiza que el modelo respete los flujos totales observados en la frontera (BTS) mientras utiliza la mejor información disponible sobre la distribución geográfica de la producción (INEGI). Los pasos de mapeo SCIAN→HS6→HS2 y conversión USD→kg solo afectan las proporciones relativas entre estados, no los totales absolutos del sistema. Al forzar que cada estado conserve exactamente su proporción de la masa total exportada, contenemos el error de mapeo y preservamos la coherencia con los datos fronterizos observados.
 
 **Por qué aceptar un pequeño error en destino**: Para los destinos contamos con datos observados ya en la dimensión exacta requerida (HS2 × estado) gracias a BTS y a la posterior desagregación FAF. Un desajuste residual del 10–20 % refleja principalmente la fricción por distancia que estamos calibrando (β), no una pérdida de masa. El desajuste evita un sobre-ajuste. El β de cada HS2 se entrena con la demanda **del año previo** (jun-2023→mar-2024) y se evalúa contra la demanda **del año corriente** (jun-2024→mar-2025).  Un error ≈15 % indica capacidad predictiva real, ya que si se obligara a bajar a 0% estaríamos simplemente reproduciendo el año de entrenamiento y el modelo fallaría al proyectar escenarios futuros (nuevas capacidades, shocks de demanda, etc.).
 
@@ -290,6 +340,10 @@ El sistema instrumenta cada decisión de enrutamiento, identificando el momento 
 
 Esta granularidad permite identificar qué flujos son "cautivos" de ciertos puertos (alta ventaja geométrica) versus cuáles representan demanda elástica que responde rápidamente a condiciones operativas.
 
+### Innovación Metodológica: Costos Experimentados vs. Costos Teóricos
+
+TODO
+
 ### Implicaciones Estratégicas
 
 La Capa 2 transforma ventajas geográficas estáticas en participación de mercado dinámica bajo restricciones reales. Los resultados revelan:
@@ -388,20 +442,19 @@ Esta metodología proporciona la base analítica para evaluación financiera de 
 
 ## Validación de Datos {#validacion}
 
-# REPORTE TÉCNICO DE VALIDACIÓN DE DATOS
+# Validación Técnica de Base de Datos
 
-**Evaluación de Control de Calidad de Base de Datos**  
+**Control de Calidad Interno**  
 **Fecha de Ejecución:** 27 de Julio, 2025  
 **Sistema de Base de Datos:** PostgreSQL  
-**Marco de Validación:** Aseguramiento de Calidad basado en SQL  
+**Framework de Validación:** Scripts SQL automatizados  
 
 ---
 
-## RESUMEN EJECUTIVO
+## Resumen de Validación
 
-Este documento presenta los resultados de validación técnica para la base de datos de comercio internacional, ejecutados mediante consultas SQL directas contra la base de datos de producción. Todos los procedimientos de validación fueron realizados utilizando scripts SQL automatizados para garantizar objetividad y reproducibilidad.
+Los resultados de validación técnica para la base de datos de comercio internacional se ejecutaron mediante consultas SQL directas contra la base de datos de producción. Todos los procedimientos utilizan scripts automatizados para garantizar consistencia y reproducibilidad.
 
-**Evaluación General:** APROBADO  
 **Problemas Críticos Identificados:** 0  
 **Tablas Validadas:** 7  
 **Total de Registros Analizados:** 16,424,006  
@@ -425,7 +478,7 @@ FROM validation_completeness_analysis;
 | quarterly_mexican_exports_state_product | 236,214 | 236,214 | 87 | 32 | 25 | 80 |
 | border_crossing_metrics | 1,018 | 1,018 | 24 | 22 | 4 | 2 |
 
-**Resultado de Validación:** APROBADO  
+**Resultado de Validación:** Completo  
 **Análisis:** Todas las tablas demuestran 100% de unicidad en claves primarias. No se detectaron claves primarias duplicadas.
 
 ---
@@ -448,7 +501,7 @@ FROM null_value_validation;
 | quarterly_mexican_exports_state_product | export_value_usd | 236,214 | 0 | 0.0000 |
 | quarterly_mexican_exports_state_product | estimated_weight_kg | 236,214 | 0 | 0.0000 |
 
-**Resultado de Validación:** APROBADO  
+**Resultado de Validación:** Completo  
 **Análisis:** Cero valores nulos detectados en campos monetarios y de cantidad críticos a través de todas las tablas de hechos.
 
 ---
@@ -465,13 +518,13 @@ FROM referential_integrity_check;
 
 | tabla_origen | columna_clave_foranea | tabla_destino | total_registros_origen | referencias_validas | registros_huerfanos | resultado_validacion |
 |-------------|-------------------|-------------|---------------------|------------------|------------------|-------------------|
-| bts_dot3_freight | port_id | port_dim | 982,802 | 982,802 | 0 | APROBADO |
-| bts_dot3_freight | country_id | country_reference | 982,802 | 982,802 | 0 | APROBADO |
-| bts_dot3_freight | time_id | time_dim | 982,802 | 982,802 | 0 | APROBADO |
-| census_port_monthly_trade | port_id | port_dim | 15,203,972 | 15,203,972 | 0 | APROBADO |
-| quarterly_mexican_exports_state_product | state_id | state_dim | 236,214 | 236,214 | 0 | APROBADO |
+| bts_dot3_freight | port_id | port_dim | 982,802 | 982,802 | 0 | Válido |
+| bts_dot3_freight | country_id | country_reference | 982,802 | 982,802 | 0 | Válido |
+| bts_dot3_freight | time_id | time_dim | 982,802 | 982,802 | 0 | Válido |
+| census_port_monthly_trade | port_id | port_dim | 15,203,972 | 15,203,972 | 0 | Válido |
+| quarterly_mexican_exports_state_product | state_id | state_dim | 236,214 | 236,214 | 0 | Válido |
 
-**Resultado de Validación:** APROBADO  
+**Resultado de Validación:** Completo  
 **Análisis:** 100% de integridad referencial mantenida a través de todas las relaciones de claves foráneas. Cero registros huérfanos detectados.
 
 ---
@@ -493,7 +546,7 @@ FROM temporal_coverage_validation;
 | quarterly_mexican_exports_state_product | 2018 | 2025 | 29 | 8 | 236,214 |
 | border_crossing_metrics | 2023 | 2024 | 24 | 2 | 1,018 |
 
-**Resultado de Validación:** APROBADO  
+**Resultado de Validación:** Completo  
 **Análisis:** La cobertura temporal abarca 8 años para las tablas principales. Las métricas de cruces fronterizos muestran cobertura completa de 24 meses para el período disponible.
 
 ---
@@ -510,11 +563,11 @@ FROM business_rules_validation;
 
 | nombre_tabla | regla_validacion | combinaciones_totales | combinaciones_unicas | conteo_duplicados | resultado_validacion |
 |------------|----------------|-------------------|--------------------|--------------------|-------------------|
-| bts_dot3_freight | unique_business_key | 982,802 | 982,802 | 0 | APROBADO |
-| census_port_monthly_trade | unique_business_key | 15,203,972 | 15,203,972 | 0 | APROBADO |
-| quarterly_mexican_exports_state_product | unique_business_key | 236,214 | 236,214 | 0 | APROBADO |
+| bts_dot3_freight | unique_business_key | 982,802 | 982,802 | 0 | Válido |
+| census_port_monthly_trade | unique_business_key | 15,203,972 | 15,203,972 | 0 | Válido |
+| quarterly_mexican_exports_state_product | unique_business_key | 236,214 | 236,214 | 0 | Válido |
 
-**Resultado de Validación:** APROBADO
+**Resultado de Validación:** Completo
 **Análisis:** Cero combinaciones de claves de negocio duplicadas detectadas. Todas las restricciones de unicidad operan correctamente.
 
 ---
@@ -531,10 +584,10 @@ FROM dimension_validation;
 
 | tabla_dimension | total_registros | año_minimo | año_maximo | años_distintos | meses_distintos | validacion_unicidad |
 |----------------|---------------|----------|----------|----------------|----------------|-----------------------|
-| time_dim | 381 | 2000 | 2050 | 40 | 12 | APROBADO |
-| country_reference | 273 | NULL | NULL | 273 | NULL | APROBADO |
-| state_dim | 115 | NULL | NULL | 115 | NULL | APROBADO |
-| port_dim | 479 | NULL | NULL | 479 | NULL | APROBADO |
+| time_dim | 381 | 2000 | 2050 | 40 | 12 | Válido |
+| country_reference | 273 | NULL | NULL | 273 | NULL | Válido |
+| state_dim | 115 | NULL | NULL | 115 | NULL | Válido |
+| port_dim | 479 | NULL | NULL | 479 | NULL | Válido |
 
 **Análisis:** Todas las tablas de dimensión demuestran restricciones de clave única adecuadas y cobertura referencial completa.
 
@@ -583,19 +636,19 @@ FROM dimension_validation;
 Basado en pruebas exhaustivas basadas en SQL de 16,424,006 registros en 7 tablas, la base de datos demuestra:
 
 1. **Completitud de Datos:** 100% - Sin valores críticos faltantes
-2. **Integridad Referencial:** 100% - Todas las relaciones de clave foránea son válidas
+2. **Integridad Referencial:** 100% - Todas las relaciones de clave foráneas son válidas
 3. **Consistencia Temporal:** 100% - Cobertura completa de la dimensión temporal
 4. **Integridad Dimensional:** 100% - Todas las tablas de búsqueda están estructuradas correctamente
 
-**Evaluación Final:** APROBADA PARA ANÁLISIS DE PRODUCCIÓN
+**Resumen Final:** Base de datos lista para análisis de producción
 
-**Estado de Aseguramiento de Calidad:** APROBADO
-**Estado de Liberación de la Base de Datos:** VALIDADO
+**Estado de Control de Calidad:** Validación completada
+**Estado de la Base de Datos:** Verificado
 **Próximo Ciclo de Validación:** Trimestral
 
 ---
 
-*Este informe de validación fue generado mediante la ejecución directa de consultas a la base de datos el 27 de Julio de 2025. Todos los resultados representan el estado inalterado de la base de datos al momento de la ejecución.*
+*Esta validación fue generada mediante la ejecución directa de consultas a la base de datos el 27 de Julio de 2025. Todos los resultados representan el estado de la base de datos al momento de la ejecución.*
 
 
 *Documentación generada: 27 de Julio, 2025*
