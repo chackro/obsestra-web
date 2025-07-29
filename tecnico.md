@@ -283,10 +283,6 @@ El sistema instrumenta cada decisión de enrutamiento, identificando el momento 
 
 Esta granularidad permite identificar qué flujos son "cautivos" de ciertos puertos (alta ventaja geométrica) versus cuáles representan demanda elástica que responde rápidamente a condiciones operativas.
 
-### Innovación Metodológica: Costos Experimentados vs. Costos Teóricos
-
-TODO
-
 ### Implicaciones Estratégicas
 
 La Capa 2 transforma ventajas geográficas estáticas en participación de mercado dinámica bajo restricciones reales. Los resultados revelan:
