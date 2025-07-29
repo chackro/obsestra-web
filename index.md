@@ -15,7 +15,7 @@ No somos consultores, desarrollamos inteligencia estratégica para posicionar a 
 
 **67+ millones de registros especializados**  
 **12+ fuentes gubernamentales y comerciales integradas**
-**Un sistema. Decisiones críticas.**
+**Un sistema. Decisiones críticas**
 
 ---
 
