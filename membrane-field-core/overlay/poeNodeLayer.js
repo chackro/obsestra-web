@@ -444,7 +444,10 @@ export class POENodeLayer {
             for (const [capturer, kgCaptured] of Object.entries(summary.destinations)) {
                 const capturerCanon = canonicalize(capturer);
                 const capturerCoords = this.poeLocations[capturerCanon];
-                if (!capturerCoords) continue;
+                if (!capturerCoords) {
+                    console.warn(`[BleedRay] No coords for capturer: ${capturer} → ${capturerCanon}`);
+                    continue;
+                }
 
                 const capturerScreen = camera.worldToScreen(capturerCoords.x, capturerCoords.y);
 
@@ -452,7 +455,10 @@ export class POENodeLayer {
                 const dx = capturerScreen.x - loserScreen.x;
                 const dy = capturerScreen.y - loserScreen.y;
                 const fullLen = Math.sqrt(dx * dx + dy * dy);
-                if (fullLen < 30) continue;  // Too short to render
+                if (fullLen < 30) {
+                    console.log(`[BleedRay] Skipping ${loser}→${capturerCanon}: screenLen=${fullLen.toFixed(1)}px < 30`);
+                    continue;  // Too short to render
+                }
 
                 const baseAngle = Math.atan2(dy, dx);
 

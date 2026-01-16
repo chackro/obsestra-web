@@ -264,8 +264,8 @@
         /* Scenario comparison overlay - positioned below clock, above metrics */
         #scenario-overlay {
             position: fixed;
-            top: 9vh;
-            right: 3vw;
+            top: 120px;
+            right: 24px;
             z-index: 1001;
             pointer-events: none;
             text-align: right;
@@ -389,11 +389,12 @@
 
         #scenario-metrics {
             position: fixed;
-            top: 80px;
-            left: 24px;
+            top: 160px;
+            right: 24px;
             z-index: 1000;
             pointer-events: none;
             font-family: 'IBM Plex Mono', monospace;
+            text-align: right;
             display: none;
         }
 
@@ -441,15 +442,17 @@
 
         #comparison-table {
             position: fixed;
-            bottom: 80px;
-            right: 60px;
+            bottom: 40px;
+            right: 30px;
             z-index: 1001;
             pointer-events: none;
             font-family: 'IBM Plex Mono', monospace;
             background: rgba(0, 0, 0, 0.90);
-            padding: 30px 60px;
+            padding: 15px 30px;
             border: 1px solid #333;
             display: none;
+            transform: scale(0.5);
+            transform-origin: bottom right;
         }
 
         .tier-label {
@@ -488,15 +491,12 @@
         }
 
         .table-header span:nth-child(3) {
-            width: 180px;
-        }
-
-        .table-header span:nth-child(4) {
             width: 260px;
         }
 
-        .table-header span:nth-child(5) {
-            width: 230px;
+        /* Tier 2 only has 3 cols now (Espera patios commented out) */
+        .table-header span:nth-child(4) {
+            width: 260px;
         }
 
         .table-row {
@@ -522,15 +522,12 @@
         }
 
         .table-row span:nth-child(3) {
-            width: 180px;
-        }
-
-        .table-row span:nth-child(4) {
             width: 260px;
         }
 
-        .table-row span:nth-child(5) {
-            width: 230px;
+        /* Tier 2 only has 3 cols now (Espera patios commented out) */
+        .table-row span:nth-child(4) {
+            width: 260px;
         }
 
         .table-row.baseline {
@@ -906,9 +903,11 @@
             pointer-events: none;
             font-family: 'IBM Plex Mono', monospace;
             background: rgba(0, 0, 0, 0.85);
-            padding: 24px 32px;
-            border: 2px solid #333;
+            padding: 12px 16px;
+            border: 1px solid #333;
             display: none;
+            transform: scale(0.5);
+            transform-origin: top right;
         }
 
         #hourly-table .ht-title {
@@ -4116,23 +4115,22 @@
                 </div>`;
             }).join('');
 
-            // TIER 2: Temporal outcomes (EFFECT)
+            // TIER 2: Temporal outcomes (EFFECT) — 2 data cols, Espera patios commented out (shows 0)
             const tier2Rows = orderedScenarios.map(s => {
                 const isBaseline = s.scenarioName === 'Baseline';
                 const loss = Math.round(s.summary.truckHoursLost_final);
                 const congestion = Math.round(s.summary.truckHoursLostCongestion_final || 0);
-                const lotWait = Math.round(s.summary.truckHoursLostLotWait_final || 0);
+                // const lotWait = Math.round(s.summary.truckHoursLostLotWait_final || 0);
 
                 // Deltas vs baseline (shown as subtext, not percentages)
                 const lossDelta = isBaseline ? '' : formatDelta(loss, baseline?.truckHoursLost_final);
                 const congestionDelta = isBaseline ? '' : formatDelta(congestion, baseline?.truckHoursLostCongestion_final);
-                const lotWaitDelta = isBaseline ? '' : formatDelta(lotWait, baseline?.truckHoursLostLotWait_final);
+                // const lotWaitDelta = isBaseline ? '' : formatDelta(lotWait, baseline?.truckHoursLostLotWait_final);
 
                 return `<div class="table-row${isBaseline ? ' baseline' : ''}">
                     <span>${s.displayName}</span>
                     <span>${loss}${lossDelta}</span>
                     <span>${congestion}${congestionDelta}</span>
-                    <span>${lotWait}${lotWaitDelta}</span>
                 </div>`;
             }).join('');
 
@@ -4151,7 +4149,6 @@
                     <span>Escenario</span>
                     <span>Pérdida total</span>
                     <span>Congestión</span>
-                    <span>Espera patios</span>
                 </div>
                 ${tier2Rows}
             `;
@@ -4455,17 +4452,16 @@
                 </div>
             `).join('');
 
-            // TIER 2: Temporal outcomes
+            // TIER 2: Temporal outcomes (2 data cols — Espera patios commented out, shows 0)
             const tier2Rows = ledgerRows.map(row => {
                 const lossDelta = row.baselineRef ? formatDelta(row.truckHoursLost, row.baselineRef.truckHoursLost) : '';
                 const congestionDelta = row.baselineRef ? formatDelta(row.truckHoursLostCongestion, row.baselineRef.truckHoursLostCongestion) : '';
-                const lotWaitDelta = row.baselineRef ? formatDelta(row.truckHoursLostLotWait, row.baselineRef.truckHoursLostLotWait) : '';
+                // const lotWaitDelta = row.baselineRef ? formatDelta(row.truckHoursLostLotWait, row.baselineRef.truckHoursLostLotWait) : '';
 
                 return `<div class="table-row${row.isBaseline ? ' baseline' : ''}">
                     <span>${row.displayName}</span>
                     <span>${row.truckHoursLost}${lossDelta}</span>
                     <span>${row.truckHoursLostCongestion}${congestionDelta}</span>
-                    <span>${row.truckHoursLostLotWait}${lotWaitDelta}</span>
                 </div>`;
             }).join('');
 
@@ -4484,7 +4480,6 @@
                     <span>Escenario</span>
                     <span>Pérdida total</span>
                     <span>Congestión</span>
-                    <span>Espera patios</span>
                 </div>
                 ${tier2Rows}
             `;
@@ -4968,7 +4963,7 @@
         let stableFrameCount = 0;
         let lastSplashCheckTime = 0;
         const splashStartTime = performance.now();
-        const SPLASH_MIN_HOLD_MS = 15000;   // Hold splash for at least 15 seconds
+        const SPLASH_MIN_HOLD_MS = 20000;   // Hold splash for at least 20 seconds
         const STABLE_FRAMES_REQUIRED = 10;  // Need 10 consecutive good frames
         const MIN_FPS_THRESHOLD = 30;       // Frame must be >30fps to count as stable
 

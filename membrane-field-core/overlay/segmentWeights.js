@@ -8,6 +8,8 @@
 // Weights are normalized to [0,1] for conductance scaling.
 // ═══════════════════════════════════════════════════════════════════════════════
 
+import { canonicalize } from './poeCanonical.js';
+
 // ───────────────────────────────────────────────────────────────────────────────
 // CONSTANTS / HELPERS
 // ───────────────────────────────────────────────────────────────────────────────
@@ -298,12 +300,13 @@ export function getSegmentPoeDistribution(bundle) {
     const segmentLoad = bundle.segment_load_kg_by_poe_hs2;
     if (!segmentLoad) return result;
 
-    // First pass: aggregate weight per segment per POE
-    // segTotals: segId → Map<poe, totalKg>
+    // First pass: aggregate weight per segment per POE (canonicalized)
+    // segTotals: segId → Map<canonicalPoe, totalKg>
     const segTotals = new Map();
 
-    for (const poe in segmentLoad) {
-        const poeData = segmentLoad[poe];
+    for (const rawPoe in segmentLoad) {
+        const poe = canonicalize(rawPoe);  // Canonicalize POE name (e.g., 'pharr' → 'hidalgo_pharr')
+        const poeData = segmentLoad[rawPoe];
         for (const hs2Code in poeData) {
             const hs2Data = poeData[hs2Code];
             for (const segId in hs2Data) {
