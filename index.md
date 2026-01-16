@@ -21,7 +21,7 @@ No somos consultores; desarrollamos inteligencia estratégica para posicionar pr
 
 
 **Acceso Técnico CIEN:** [Documentación Completa](./tecnico)
-
+**Simulación:** [Ver Simulación](./membrane-field-core/test/testBundle.html)
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QVN4RJ6Q71"></script>
 <script>
