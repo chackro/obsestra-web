@@ -3550,6 +3550,9 @@
                         _storedBaselinePoeDistribution,
                         _storedBaselinePoeDistribution
                     );
+                    // Immediately trigger corridor highlight to mask stale poeIds from old distribution
+                    // Old trucks keep routing, new trucks get correct poeIds, highlight hides the transition
+                    macroParticles.setCorridorHighlight('laredo', 'hidalgo_pharr', true);
                     console.log('[Director] POE mode: baseline (both slots = baseline)');
                 } else if (mode === 'interserrana') {
                     // baseline→interserrana, use α≥0.5 for interserrana POEs
