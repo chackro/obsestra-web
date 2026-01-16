@@ -337,6 +337,10 @@ export class HeadlessSim {
           spawns: raw.spawns - start.spawns,
           departedCount: raw.departedCount - start.departedCount,
           departingCount: raw.departingCount,
+          // AUDIT: Service time instrumentation
+          serviceTimeStats: raw.serviceTimeStats,
+          currentServiceTimeS: raw.currentServiceTimeS,
+          effectiveLanes: raw.effectiveLanes,
         };
 
         // Monotonicity check

@@ -43,6 +43,7 @@ let maxWorkers = Infinity;
 let durationDays = DAYS;
 let dt = 10;
 let animate = false;
+let noWarmup = false;
 const scenarioNames = [];
 
 for (let i = 0; i < args.length; i++) {
@@ -58,6 +59,8 @@ for (let i = 0; i < args.length; i++) {
     dt = 30;
   } else if (args[i] === '--animate' || args[i] === '-a') {
     animate = true;
+  } else if (args[i] === '--no-warmup') {
+    noWarmup = true;
   } else {
     scenarioNames.push(args[i]);
   }
@@ -104,7 +107,7 @@ const resultsFolder = `./results/${yy}${mm}${dd}_${hh}${min}`;
 fs.mkdirSync(resultsFolder, { recursive: true });
 
 // Override RUN_OPTS with CLI values
-const warmupHours = 24;  // Always 24h warmup minimum
+const warmupHours = noWarmup ? 0 : 24;  // 24h warmup unless --no-warmup
 const runOpts = {
   ...RUN_OPTS,
   duration: durationDays * 24 * HOUR,

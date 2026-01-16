@@ -1435,6 +1435,8 @@ const baseCommuterWeight = new Float32Array(N2);  // [0, 1] static spatial map (
 const commuterType = new Uint8Array(N2);          // 0=none, 1=arterial, 2=industrial_approach, 3=aduana
 const isIntersection = new Uint8Array(N2);        // 1 = intersection cell (3+ road neighbors)
 const speedLimitMS = new Float32Array(N2);        // Speed limit per cell (m/s), 0 = use default
+const routingCostPharr = new Float32Array(N2);    // Routing cost multiplier for PHARR (1.0 = normal)
+routingCostPharr.fill(1.0);
 
 // Commuter type constants
 const CTYPE_NONE = 0;
@@ -2138,7 +2140,9 @@ function computePotential(sinkIndices, phiOutput, label, sinkBias = null, biasWe
                 }
             }
 
-            const newCost = cost + edgeCost * capacityPenalty;
+            // Apply per-cell routing cost for PHARR routing
+            const cellCost = (label === 'PHARR' || label === 'PHARR_TWIN') ? routingCostPharr[ni] : 1.0;
+            const newCost = cost + edgeCost * capacityPenalty * cellCost;
             if (newCost < phiOutput[ni]) {
                 phiOutput[ni] = newCost;
                 heap.push([newCost, ni]);
@@ -2255,6 +2259,9 @@ let _truckHoursLostBridgeServiceTick = 0; // Per-tick accumulator (in-service)
 let _serviceTimeActual = [];           // Collected actualServiceTime per completion (seconds)
 let _serviceTimeExpected = [];         // SERVICE_TIME_S at assignment time (seconds)
 let _serviceTimeAssignSim = [];        // simTime at assignment (for debugging)
+
+// OUTLIER AUDIT: Full per-completion records for proving boundary artifact
+let _serviceCompletionRecords = [];    // Array of {actual, expected, assignTime, completeTime, groundTruthStart, groundTruthEnd, wasWarmupAssign}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONGESTION VISUALIZATION — Density-driven render spread (anti-aliasing)
@@ -2595,17 +2602,22 @@ function updateCBPServiceTime() {
  * Handles multiple completions per lane per tick when dt > SERVICE_TIME_S.
  * This is the ONLY place particles exit the system.
  *
+ * Model B closure semantics:
+ * - Existing in-service trucks continue to completion (completions always processed)
+ * - No new lane assignments when bridge is closed (isBridgeOpen() gates assignment)
+ *
  * @param {number} dt - Time step in seconds
  */
 function stepCBPLanes(dt) {
-    // Closed hours or blocked: do nothing
-    if (!isFinite(SERVICE_TIME_S)) return;
-
     const tickStart = simTime - dt;
     const tickEnd = simTime;
 
+    // Single source of truth: is CBP accepting new trucks?
+    const cbpOpen = isBridgeOpen();
+
     for (const lane of CBP_LANES) {
-        // Process all completions that should happen within [tickStart, tickEnd]
+        // === COMPLETIONS: Always process, even during closure (Model B) ===
+        // Trucks already in service complete at their scheduled busyUntil time.
         while (lane.particle && lane.busyUntil <= tickEnd) {
             const p = lane.particle;
 
@@ -2614,12 +2626,24 @@ function stepCBPLanes(dt) {
             metrics.exited += particleMass();
             _cbpCompletionCount++;
 
-            // AUDIT: Record actual vs expected service time
+            // AUDIT: Record actual vs expected service time with full timestamps
             if (p._cbpAssignTime !== undefined) {
                 const actualServiceTime = simTime - p._cbpAssignTime;
+                const groundTruthDuration = simTime - (p._cbpServiceStartTime || p._cbpAssignTime);
                 _serviceTimeActual.push(actualServiceTime);
                 _serviceTimeExpected.push(p._cbpExpectedServiceTime || 0);
                 _serviceTimeAssignSim.push(p._cbpAssignTime);
+                // Full record for outlier analysis
+                _serviceCompletionRecords.push({
+                    actual: actualServiceTime,
+                    expected: p._cbpExpectedServiceTime || 0,
+                    assignTime: p._cbpAssignTime,
+                    completeTime: simTime,
+                    groundTruthStart: p._cbpServiceStartTime || p._cbpAssignTime,
+                    groundTruthEnd: simTime,
+                    groundTruthDuration,
+                    laneFreeTimeAtAssign: p._cbpLaneFreeTimeAtAssign || null,
+                });
             }
 
             // Transition to DEPARTING state for exit animation
@@ -2632,6 +2656,11 @@ function stepCBPLanes(dt) {
             const laneFreeTime = lane.busyUntil;
             lane.particle = null;
 
+            // === ASSIGNMENT AFTER COMPLETION: Only when CBP is open ===
+            if (!cbpOpen) {
+                break;  // Don't assign new trucks during closure
+            }
+
             // Immediately assign next particle if queue has particles
             if (sinkQueue.length > 0) {
                 const next = sinkQueue.shift();
@@ -2643,13 +2672,16 @@ function stepCBPLanes(dt) {
                 // AUDIT: Record assignment time and expected service time
                 next._cbpAssignTime = laneFreeTime;
                 next._cbpExpectedServiceTime = SERVICE_TIME_S;
+                // AUDIT: Ground-truth timestamps
+                next._cbpServiceStartTime = simTime;  // actual wall-clock assignment moment
+                next._cbpLaneFreeTimeAtAssign = laneFreeTime;
             } else {
                 break;  // No more particles to process in queue
             }
         }
 
-        // Also assign to lanes that were empty at start of tick
-        if (lane.particle === null && sinkQueue.length > 0) {
+        // === ASSIGNMENT TO EMPTY LANES: Only when CBP is open ===
+        if (cbpOpen && lane.particle === null && sinkQueue.length > 0) {
             const p = sinkQueue.shift();
             lane.particle = p;
             // Service starts at beginning of tick window
@@ -2659,6 +2691,9 @@ function stepCBPLanes(dt) {
             // AUDIT: Record assignment time and expected service time
             p._cbpAssignTime = tickStart;
             p._cbpExpectedServiceTime = SERVICE_TIME_S;
+            // AUDIT: Ground-truth timestamps
+            p._cbpServiceStartTime = simTime;  // actual wall-clock assignment moment
+            p._cbpLaneFreeTimeAtAssign = tickStart;  // lane was empty, so "free" at tickStart
         }
     }
 }
@@ -4205,6 +4240,7 @@ export function reset() {
     _serviceTimeActual = [];
     _serviceTimeExpected = [];
     _serviceTimeAssignSim = [];
+    _serviceCompletionRecords = [];
 
     // Reset stall-ton-hours (critical for fresh runs)
     _stallTonHours = 0;
@@ -4644,6 +4680,7 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
     }
 
     const id = ++_workerRequestId;
+    const isPharrRouting = label === 'PHARR' || label === 'PHARR_TWIN';
     const config = {
         sinkIndices: Array.from(sinkIndices),
         N, N2,
@@ -4657,7 +4694,8 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
         lotMass: lotMass.buffer.slice(0),
         label,
         sinkBias: sinkBias ? sinkBias.buffer.slice(0) : null,
-        biasWeight
+        biasWeight,
+        cellCost: isPharrRouting ? routingCostPharr.buffer.slice(0) : null
     };
 
     const result = await new Promise((resolve, reject) => {
@@ -4665,7 +4703,7 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
         _routingWorker.postMessage(
             { id, token: _routingBuildToken, cmd: 'computeRouting', config },
             [config.Kxx, config.Kyy, config.regionMap, config.cellToLotIndex,
-             config.lotCapacity, config.lotMass, ...(config.sinkBias ? [config.sinkBias] : [])]
+             config.lotCapacity, config.lotMass, ...(config.sinkBias ? [config.sinkBias] : []), ...(config.cellCost ? [config.cellCost] : [])]
         );
     });
 
@@ -7444,9 +7482,12 @@ function stampInovusConnectors() {
     _inovusConnectorCells = [];
     for (const coord of INOVUS_CONNECTOR_COORDS) {
         const idx = stampConnectorCoord(coord);
-        if (idx !== false) _inovusConnectorCells.push(idx);
+        if (idx !== false) {
+            _inovusConnectorCells.push(idx);
+            routingCostPharr[idx] = 2.0;  // 2x routing cost for PHARR
+        }
     }
-    log(`[INOVUS] Stamped ${_inovusConnectorCells.length} Inovus connector cells`);
+    log(`[INOVUS] Stamped ${_inovusConnectorCells.length} Inovus connector cells (2x routing cost)`);
 }
 
 function unstampInovusConnectors() {
@@ -7461,6 +7502,7 @@ function unstampInovusConnectors() {
         regionMap[idx] = REGION.VOID;
         Kxx[idx] = 0;
         Kyy[idx] = 0;
+        routingCostPharr[idx] = 1.0;  // Reset routing cost
         // Remove from roadCellIndices
         const roadIdx = roadCellIndices.indexOf(idx);
         if (roadIdx !== -1) roadCellIndices.splice(roadIdx, 1);
@@ -8549,12 +8591,18 @@ export function getMetricsPhase1() {
 
 /**
  * Compute mean/p50/p90 for service time arrays.
- * Returns stats in seconds.
+ * Returns stats in seconds, plus outlier analysis.
  */
 function computeServiceTimeStats() {
     const n = _serviceTimeActual.length;
     if (n === 0) {
-        return { count: 0, actual: { mean: 0, p50: 0, p90: 0 }, expected: { mean: 0, p50: 0, p90: 0 } };
+        return {
+            count: 0,
+            actual: { mean: 0, p50: 0, p90: 0, max: 0 },
+            expected: { mean: 0, p50: 0, p90: 0 },
+            outliers: { countAboveExpectedPlusDt: 0, countAboveExpectedPlus100s: 0 },
+            top20: [],
+        };
     }
 
     const sortedActual = [..._serviceTimeActual].sort((a, b) => a - b);
@@ -8565,6 +8613,21 @@ function computeServiceTimeStats() {
 
     const p50Idx = Math.floor(n * 0.5);
     const p90Idx = Math.floor(n * 0.9);
+    const maxActual = sortedActual[n - 1];
+
+    // Outlier counts (dt=10)
+    const dt = 10;
+    let countAboveExpectedPlusDt = 0;
+    let countAboveExpectedPlus100s = 0;
+    for (let i = 0; i < n; i++) {
+        const diff = _serviceTimeActual[i] - _serviceTimeExpected[i];
+        if (diff > dt) countAboveExpectedPlusDt++;
+        if (diff > 100) countAboveExpectedPlus100s++;
+    }
+
+    // Top 20 longest (sorted by actual desc)
+    const sortedRecords = [..._serviceCompletionRecords].sort((a, b) => b.actual - a.actual);
+    const top20 = sortedRecords.slice(0, 20);
 
     return {
         count: n,
@@ -8572,12 +8635,18 @@ function computeServiceTimeStats() {
             mean: meanActual,
             p50: sortedActual[p50Idx],
             p90: sortedActual[p90Idx],
+            max: maxActual,
         },
         expected: {
             mean: meanExpected,
             p50: sortedExpected[p50Idx],
             p90: sortedExpected[p90Idx],
         },
+        outliers: {
+            countAboveExpectedPlusDt,
+            countAboveExpectedPlus100s,
+        },
+        top20,
     };
 }
 

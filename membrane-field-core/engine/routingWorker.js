@@ -53,7 +53,7 @@ const REGION_LOT = 2;
 
 function computePotential(config) {
     const { sinkIndices, N, N2, edgeCost, Kxx, Kyy, regionMap, cellToLotIndex,
-            drainingLots, lotCapacity, lotMass, label, sinkBias, biasWeight } = config;
+            drainingLots, lotCapacity, lotMass, label, sinkBias, biasWeight, cellCost } = config;
 
     const phi = new Float32Array(N2);
     phi.fill(PHI_LARGE);
@@ -110,7 +110,8 @@ function computePotential(config) {
                 }
             }
 
-            const newCost = cost + edgeCost * capacityPenalty;
+            const cellCostMult = cellCost ? cellCost[ni] : 1.0;
+            const newCost = cost + edgeCost * capacityPenalty * cellCostMult;
             if (newCost < phi[ni]) {
                 phi[ni] = newCost;
                 heap.push([newCost, ni]);
@@ -167,6 +168,7 @@ function handleMessage(data) {
         config.lotCapacity = new Float32Array(config.lotCapacity);
         config.lotMass = new Float32Array(config.lotMass);
         if (config.sinkBias) config.sinkBias = new Float32Array(config.sinkBias);
+        if (config.cellCost) config.cellCost = new Float32Array(config.cellCost);
 
         const { phi, reachable } = computePotential(config);
         const nextHop = buildNextHop(phi, config.N, config.N2, config.regionMap, config.label);

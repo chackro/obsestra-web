@@ -4010,32 +4010,22 @@
                 return;
             }
 
-            // Calculate delta if not baseline
-            let deltaHtml = '';
-            if (baseline && scenarioName !== 'Baseline') {
-                const delta = summary.truckHoursLost_final - baseline.truckHoursLost_final;
-                const pct = (delta / baseline.truckHoursLost_final * 100);
-                const sign = pct >= 0 ? '+' : '';
-                deltaHtml = `
-                    <div class="metric-line delta">
-                        <span class="metric-label">Δ vs baseline</span>
-                        <span class="metric-value">${sign}${pct.toFixed(1)}%</span>
-                    </div>
-                `;
-            }
-
+            // ═══════════════════════════════════════════════════════════════
+            // EPHEMERAL SCENARIO BLOCK (A)
+            // Role: live system state. Absolute units only. No deltas, no per-truck.
+            // ═══════════════════════════════════════════════════════════════
             container.innerHTML = `
                 <div class="metric-line">
-                    <span class="metric-label">Pérdida total</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLost_final)} camión-h/día</span>
+                    <span class="metric-label">Carga total de demora</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLost_final)} camión-h</span>
                 </div>
                 <div class="metric-line breakdown">
                     <span class="metric-label">Congestión vial</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLostCongestion_final)}</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLostCongestion_final)} camión-h</span>
                 </div>
                 <div class="metric-line breakdown last">
                     <span class="metric-label">Espera en patios</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLostLotWait_final)}</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLostLotWait_final)} camión-h</span>
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
@@ -4045,7 +4035,6 @@
                     <span class="metric-label">Cola CBP promedio</span>
                     <span class="metric-value">${Math.round(summary.sinkQueueCount_mean)} camiones</span>
                 </div>
-                ${deltaHtml}
             `;
             container.style.display = 'block';
         }
@@ -4101,8 +4090,46 @@
                 return `<span class="delta ${cls}">${sign}${Math.round(d)}</span>`;
             }
 
-            // TIER 1: Structural conditions (CAUSE)
-            const tier1Rows = orderedScenarios.map(s => {
+            // ═══════════════════════════════════════════════════════════════
+            // PERSISTENT COMPARISON TABLE (B)
+            // Role: comparative judgment. Normalized per-truck metrics. Deltas allowed.
+            // ═══════════════════════════════════════════════════════════════
+
+            // Helper: format per-truck delta
+            function formatPerTruckDelta(value, baselineValue) {
+                if (baselineValue === undefined || baselineValue === null) return '';
+                const d = value - baselineValue;
+                if (Math.abs(d) < 0.001) return '';
+                const sign = d >= 0 ? '+' : '';
+                const cls = d < 0 ? 'negative' : 'positive';
+                return `<span class="delta ${cls}">${sign}${d.toFixed(2)}</span>`;
+            }
+
+            // PRIMARY: Per-truck delay metrics (what we rank by)
+            const primaryRows = orderedScenarios.map(s => {
+                const isBaseline = s.scenarioName === 'Baseline';
+                const avgDelay = s.summary.avgDelayPerTruck ?? 0;
+                const avgCongestion = s.summary.avgCongestionPerTruck ?? 0;
+                const avgCbpQueue = s.summary.avgBridgeQueuePerTruck ?? 0;
+                const avgLotWait = s.summary.avgLotWaitPerTruck ?? 0;
+
+                // Deltas vs baseline (allowed here per spec)
+                const delayDelta = isBaseline ? '' : formatPerTruckDelta(avgDelay, baseline?.avgDelayPerTruck);
+                const congestionDelta = isBaseline ? '' : formatPerTruckDelta(avgCongestion, baseline?.avgCongestionPerTruck);
+                const cbpQueueDelta = isBaseline ? '' : formatPerTruckDelta(avgCbpQueue, baseline?.avgBridgeQueuePerTruck);
+                const lotWaitDelta = isBaseline ? '' : formatPerTruckDelta(avgLotWait, baseline?.avgLotWaitPerTruck);
+
+                return `<div class="table-row${isBaseline ? ' baseline' : ''}">
+                    <span>${s.displayName}</span>
+                    <span>${avgDelay.toFixed(2)}${delayDelta}</span>
+                    <span>${avgCongestion.toFixed(2)}${congestionDelta}</span>
+                    <span>${avgCbpQueue.toFixed(3)}${cbpQueueDelta}</span>
+                    <span>${avgLotWait.toFixed(3)}${lotWaitDelta}</span>
+                </div>`;
+            }).join('');
+
+            // STRUCTURAL CONTEXT: Non-ranked, for interpretation
+            const contextRows = orderedScenarios.map(s => {
                 const isBaseline = s.scenarioName === 'Baseline';
                 const injection = s.summary.injectedKg_final ? Math.round(s.summary.injectedKg_final / 1000) : '—';
                 const cbpLanes = s.summary.cbpLanesInUse_mean !== undefined ? s.summary.cbpLanesInUse_mean.toFixed(1) : '—';
@@ -4115,42 +4142,25 @@
                 </div>`;
             }).join('');
 
-            // TIER 2: Temporal outcomes (EFFECT) — 2 data cols, Espera patios commented out (shows 0)
-            const tier2Rows = orderedScenarios.map(s => {
-                const isBaseline = s.scenarioName === 'Baseline';
-                const loss = Math.round(s.summary.truckHoursLost_final);
-                const congestion = Math.round(s.summary.truckHoursLostCongestion_final || 0);
-                // const lotWait = Math.round(s.summary.truckHoursLostLotWait_final || 0);
-
-                // Deltas vs baseline (shown as subtext, not percentages)
-                const lossDelta = isBaseline ? '' : formatDelta(loss, baseline?.truckHoursLost_final);
-                const congestionDelta = isBaseline ? '' : formatDelta(congestion, baseline?.truckHoursLostCongestion_final);
-                // const lotWaitDelta = isBaseline ? '' : formatDelta(lotWait, baseline?.truckHoursLostLotWait_final);
-
-                return `<div class="table-row${isBaseline ? ' baseline' : ''}">
-                    <span>${s.displayName}</span>
-                    <span>${loss}${lossDelta}</span>
-                    <span>${congestion}${congestionDelta}</span>
-                </div>`;
-            }).join('');
-
             container.innerHTML = `
-                <div class="tier-label">Condiciones estructurales</div>
+                <div class="tier-label">Demora por camión (h/camión)</div>
+                <div class="table-header">
+                    <span>Escenario</span>
+                    <span>Demora total</span>
+                    <span>Congestión</span>
+                    <span>Cola CBP</span>
+                    <span>Patios</span>
+                </div>
+                ${primaryRows}
+
+                <div class="tier-label">Contexto estructural</div>
                 <div class="table-header">
                     <span>Escenario</span>
                     <span>Inyección (t)</span>
                     <span>CBP prom</span>
                     <span>Cap patios (Mt)</span>
                 </div>
-                ${tier1Rows}
-
-                <div class="tier-label">Resultados temporales</div>
-                <div class="table-header">
-                    <span>Escenario</span>
-                    <span>Pérdida total</span>
-                    <span>Congestión</span>
-                </div>
-                ${tier2Rows}
+                ${contextRows}
             `;
             container.style.display = 'block';
 
@@ -4278,35 +4288,25 @@
             const cbpLanesInUse = summary.cbpLanesInUse_mean;
             const sinkQueueCount = summary.sinkQueueCount_mean;
 
-            // Calculate delta vs baseline (only show at end)
-            let deltaHtml = '';
-            if (progress >= 1 && baseline && scenarioName !== 'Baseline') {
-                const delta = summary.truckHoursLost_final - baseline.truckHoursLost_final;
-                const pct = (delta / baseline.truckHoursLost_final * 100);
-                const sign = pct >= 0 ? '+' : '';
-                deltaHtml = `
-                    <div class="metric-line delta">
-                        <span class="metric-label">Δ vs baseline</span>
-                        <span class="metric-value">${sign}${pct.toFixed(1)}%</span>
-                    </div>
-                `;
-            }
-
             const container = document.getElementById('scenario-metrics');
             if (!container) return;
 
+            // ═══════════════════════════════════════════════════════════════
+            // EPHEMERAL SCENARIO BLOCK (A) - Replay version
+            // Role: live system state. Absolute units only. No deltas, no per-truck.
+            // ═══════════════════════════════════════════════════════════════
             container.innerHTML = `
                 <div class="metric-line">
-                    <span class="metric-label">Pérdida total</span>
+                    <span class="metric-label">Carga total de demora</span>
                     <span class="metric-value">${Math.round(truckHoursLost)} camión-h</span>
                 </div>
                 <div class="metric-line breakdown">
                     <span class="metric-label">Congestión vial</span>
-                    <span class="metric-value">${Math.round(truckHoursLostCongestion)}</span>
+                    <span class="metric-value">${Math.round(truckHoursLostCongestion)} camión-h</span>
                 </div>
                 <div class="metric-line breakdown last">
                     <span class="metric-label">Espera en patios</span>
-                    <span class="metric-value">${Math.round(truckHoursLostLotWait)}</span>
+                    <span class="metric-value">${Math.round(truckHoursLostLotWait)} camión-h</span>
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
@@ -4316,7 +4316,6 @@
                     <span class="metric-label">Cola CBP promedio</span>
                     <span class="metric-value">${Math.round(sinkQueueCount)} camiones</span>
                 </div>
-                ${deltaHtml}
             `;
             container.style.display = 'block';
         }
@@ -4391,24 +4390,26 @@
             );
             const displayName = narrativeEntry ? narrativeEntry.display : scenarioName;
 
-            // Store all metrics needed for two-tier table
+            // Store all metrics needed for persistent comparison table (per-truck, not absolute)
             ledgerRows.push({
                 scenarioName,
                 displayName,
                 isBaseline,
-                // Tier 1: Structural conditions
+                // Primary: Per-truck delay metrics (h/camión)
+                avgDelayPerTruck: summary.avgDelayPerTruck ?? 0,
+                avgCongestionPerTruck: summary.avgCongestionPerTruck ?? 0,
+                avgBridgeQueuePerTruck: summary.avgBridgeQueuePerTruck ?? 0,
+                avgLotWaitPerTruck: summary.avgLotWaitPerTruck ?? 0,
+                // Structural context (non-ranked)
                 injectionTons: summary.injectedKg_final ? Math.round(summary.injectedKg_final / 1000) : null,
                 cbpLanesMean: summary.cbpLanesInUse_mean,
                 lotCapacityMt: summary.totalLotCapacityKg ? summary.totalLotCapacityKg / 1e6 : null,
-                // Tier 2: Temporal outcomes
-                truckHoursLost: Math.round(summary.truckHoursLost_final),
-                truckHoursLostCongestion: Math.round(summary.truckHoursLostCongestion_final || 0),
-                truckHoursLostLotWait: Math.round(summary.truckHoursLostLotWait_final || 0),
-                // Baseline reference for deltas
+                // Baseline reference for deltas (per-truck)
                 baselineRef: isBaseline ? null : {
-                    truckHoursLost: baseline?.truckHoursLost_final,
-                    truckHoursLostCongestion: baseline?.truckHoursLostCongestion_final,
-                    truckHoursLostLotWait: baseline?.truckHoursLostLotWait_final,
+                    avgDelayPerTruck: baseline?.avgDelayPerTruck,
+                    avgCongestionPerTruck: baseline?.avgCongestionPerTruck,
+                    avgBridgeQueuePerTruck: baseline?.avgBridgeQueuePerTruck,
+                    avgLotWaitPerTruck: baseline?.avgLotWaitPerTruck,
                 },
             });
 
@@ -4421,7 +4422,11 @@
         }
 
         /**
-         * Render the cumulative ledger table (two-tier structure).
+         * Render the cumulative ledger table.
+         * ═══════════════════════════════════════════════════════════════
+         * PERSISTENT COMPARISON TABLE (B) - Ledger version
+         * Role: comparative judgment. Normalized per-truck metrics. Deltas allowed.
+         * ═══════════════════════════════════════════════════════════════
          */
         function renderLedger() {
             const container = document.getElementById('comparison-table');
@@ -4432,18 +4437,34 @@
                 return;
             }
 
-            // Helper: format delta as subtext
-            function formatDelta(value, baselineValue) {
-                if (baselineValue === undefined || baselineValue === null || baselineValue === 0) return '';
+            // Helper: format per-truck delta as subtext
+            function formatPerTruckDelta(value, baselineValue) {
+                if (baselineValue === undefined || baselineValue === null) return '';
                 const d = value - baselineValue;
-                if (Math.abs(d) < 0.5) return '';
+                if (Math.abs(d) < 0.001) return '';
                 const sign = d >= 0 ? '+' : '';
                 const cls = d < 0 ? 'negative' : 'positive';
-                return `<span class="delta ${cls}">${sign}${Math.round(d)}</span>`;
+                return `<span class="delta ${cls}">${sign}${d.toFixed(2)}</span>`;
             }
 
-            // TIER 1: Structural conditions
-            const tier1Rows = ledgerRows.map(row => `
+            // PRIMARY: Per-truck delay metrics (h/camión)
+            const primaryRows = ledgerRows.map(row => {
+                const delayDelta = row.baselineRef ? formatPerTruckDelta(row.avgDelayPerTruck, row.baselineRef.avgDelayPerTruck) : '';
+                const congestionDelta = row.baselineRef ? formatPerTruckDelta(row.avgCongestionPerTruck, row.baselineRef.avgCongestionPerTruck) : '';
+                const cbpQueueDelta = row.baselineRef ? formatPerTruckDelta(row.avgBridgeQueuePerTruck, row.baselineRef.avgBridgeQueuePerTruck) : '';
+                const lotWaitDelta = row.baselineRef ? formatPerTruckDelta(row.avgLotWaitPerTruck, row.baselineRef.avgLotWaitPerTruck) : '';
+
+                return `<div class="table-row${row.isBaseline ? ' baseline' : ''}">
+                    <span>${row.displayName}</span>
+                    <span>${row.avgDelayPerTruck.toFixed(2)}${delayDelta}</span>
+                    <span>${row.avgCongestionPerTruck.toFixed(2)}${congestionDelta}</span>
+                    <span>${row.avgBridgeQueuePerTruck.toFixed(3)}${cbpQueueDelta}</span>
+                    <span>${row.avgLotWaitPerTruck.toFixed(3)}${lotWaitDelta}</span>
+                </div>`;
+            }).join('');
+
+            // STRUCTURAL CONTEXT: Non-ranked
+            const contextRows = ledgerRows.map(row => `
                 <div class="table-row${row.isBaseline ? ' baseline' : ''}">
                     <span>${row.displayName}</span>
                     <span>${row.injectionTons !== null ? row.injectionTons : '—'}</span>
@@ -4452,36 +4473,25 @@
                 </div>
             `).join('');
 
-            // TIER 2: Temporal outcomes (2 data cols — Espera patios commented out, shows 0)
-            const tier2Rows = ledgerRows.map(row => {
-                const lossDelta = row.baselineRef ? formatDelta(row.truckHoursLost, row.baselineRef.truckHoursLost) : '';
-                const congestionDelta = row.baselineRef ? formatDelta(row.truckHoursLostCongestion, row.baselineRef.truckHoursLostCongestion) : '';
-                // const lotWaitDelta = row.baselineRef ? formatDelta(row.truckHoursLostLotWait, row.baselineRef.truckHoursLostLotWait) : '';
-
-                return `<div class="table-row${row.isBaseline ? ' baseline' : ''}">
-                    <span>${row.displayName}</span>
-                    <span>${row.truckHoursLost}${lossDelta}</span>
-                    <span>${row.truckHoursLostCongestion}${congestionDelta}</span>
-                </div>`;
-            }).join('');
-
             container.innerHTML = `
-                <div class="tier-label">Condiciones estructurales</div>
+                <div class="tier-label">Demora por camión (h/camión)</div>
+                <div class="table-header">
+                    <span>Escenario</span>
+                    <span>Demora total</span>
+                    <span>Congestión</span>
+                    <span>Cola CBP</span>
+                    <span>Patios</span>
+                </div>
+                ${primaryRows}
+
+                <div class="tier-label">Contexto estructural</div>
                 <div class="table-header">
                     <span>Escenario</span>
                     <span>Inyección (t)</span>
                     <span>CBP prom</span>
                     <span>Cap patios (Mt)</span>
                 </div>
-                ${tier1Rows}
-
-                <div class="tier-label">Resultados temporales</div>
-                <div class="table-header">
-                    <span>Escenario</span>
-                    <span>Pérdida total</span>
-                    <span>Congestión</span>
-                </div>
-                ${tier2Rows}
+                ${contextRows}
             `;
             container.style.display = 'block';
         }

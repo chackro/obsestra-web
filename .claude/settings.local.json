@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node runComparison.js:*)"
+      "Bash(node runComparison.js:*)",
+      "Bash(dir \"C:\\\\Users\\\\pablo\\\\projects\\\\obsestra-web\\\\membrane-field-core\\\\tracker\\\\results\")",
+      "Bash(node:*)"
     ]
   }
 }
