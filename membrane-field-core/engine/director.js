@@ -147,6 +147,7 @@ export class Director {
         this.onEnableLayerB = options.onEnableLayerB || (() => { });
         this.onSetLayerBAlpha = options.onSetLayerBAlpha || (() => { });
         this.onSwitchToLayerB = options.onSwitchToLayerB || (() => { });  // Layer A → Layer B weight regime switch
+        this.onSetPoeMode = options.onSetPoeMode || (() => { });  // Switch POE distribution for particle coloring
         this.onDimNonHighlighted = options.onDimNonHighlighted || (() => { });
         this.onSetCorridorColor = options.onSetCorridorColor || (() => { });
         this.onTogglePhysicsDebug = options.onTogglePhysicsDebug || (() => { });
@@ -169,6 +170,7 @@ export class Director {
         this.onShowComparisonTable = options.onShowComparisonTable || (() => { });
         this.onSetMacroParticleDensity = options.onSetMacroParticleDensity || (() => { });
         this.onForceMacroRender = options.onForceMacroRender || (() => { });
+        this.onEnterLocalField = options.onEnterLocalField || (() => { });
         this.onPreloadLocalSim = options.onPreloadLocalSim || (() => { });
         this.onShowLiveLogs = options.onShowLiveLogs || (() => { });
         this.onHighlightLots = options.onHighlightLots || (() => { });
@@ -576,6 +578,13 @@ export class Director {
                 this._nextInstruction(now);
                 break;
 
+            case 'setPoeMode':
+                // Switch POE distribution for particle coloring (independent of routing α)
+                // mode: 'baseline' = both slots baseline, 'interserrana' = baseline→interserrana
+                this.onSetPoeMode(instr.mode);
+                this._nextInstruction(now);
+                break;
+
             case 'transitionAlpha':
                 this._animateAlpha(elapsed, instr, now);
                 break;
@@ -694,6 +703,11 @@ export class Director {
 
             case 'forceMacroRender':
                 this.onForceMacroRender(instr.enabled);
+                this._nextInstruction(now);
+                break;
+
+            case 'enterLocalField':
+                this.onEnterLocalField();
                 this._nextInstruction(now);
                 break;
 
@@ -1147,8 +1161,9 @@ export const Scripts = {
             // Bleed is a stress fracture diagram showing where pressure concentrates.
             // Shown AFTER adaptation (α=1 baseline routing).
             // ─────────────────────────────────────────────────────────────
-            // Switch to baseline routing (α=1)
+            // Switch to baseline routing (α=1) and baseline POE coloring
             { type: 'setScenarioAlpha', alpha: 1.0 },
+            { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
             // Beat 1: Feasibility rays (dashed) — instant structural collapse
             { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
             { type: 'wait', duration: 4000 },
@@ -1220,8 +1235,9 @@ export const Scripts = {
         let stateColorActive = false;   // Track STATE mode for orange coloring
         let sourceColorActive = false;  // Track SOURCE mode for corridor coloring
 
-        // Start with the local sim intro frame
+        // Start with the local sim intro frame and enter LOCAL_FIELD state
         instructions.push({ type: 'snapToFrame', target: 'localSimIntro' });
+        instructions.push({ type: 'enterLocalField' });
 
         for (const item of modelSpec) {
             // Check if this item STARTS a color mode (set BEFORE overlay so it gets the color)
@@ -1503,6 +1519,7 @@ export const Scripts = {
             { type: 'forceMacroRender', enabled: true },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
+            { type: 'setPoeMode', mode: 'interserrana' },                        // Particles respawn with interserrana POEs
             { type: 'snapToFrame', target: 'interserrana' },                     // Immediate snap to wide view
             { type: 'wait', duration: 8000 },                                    // 8s hold
             { type: 'showInterserranaBox' },                                     // Show box 2s before activation

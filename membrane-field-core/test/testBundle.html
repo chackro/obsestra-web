@@ -90,7 +90,7 @@
             transform: translateX(-50%);
             color: #fff;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 30px;
+            font-size: clamp(10px, 1.4vw, 15px);
             font-weight: 400;
             max-width: 1200px;
             text-align: left;
@@ -108,7 +108,7 @@
         }
 
         #intro-text .dimension-name {
-            font-size: 34px;
+            font-size: clamp(12px, 1.5vw, 17px);
             font-weight: 500;
         }
 
@@ -198,9 +198,9 @@
 
         #telemetry-overlay {
             position: fixed;
-            top: 12vh;
-            right: 3vw;
-            text-align: right;
+            top: 2vh;
+            left: 1.5vw;
+            text-align: left;
             color: #fff;
             font-family: 'IBM Plex Mono', monospace;
             font-size: clamp(10px, 1.4vw, 16px);
@@ -974,16 +974,16 @@
         }
 
         #splash-screen .acronym {
-            font-size: 216px;
+            font-size: clamp(60px, 10vw, 108px);
             font-weight: 700;
             letter-spacing: 0.3em;
             color: #fff;
-            margin-bottom: 48px;
-            margin-top: -120px;
+            margin-bottom: 24px;
+            margin-top: -60px;
         }
 
         #splash-screen .subtitle {
-            font-size: 48px;
+            font-size: clamp(16px, 2.2vw, 24px);
             font-weight: 400;
             color: #888;
             letter-spacing: 0.1em;
@@ -991,18 +991,18 @@
 
         #splash-screen .manifesto {
             position: absolute;
-            bottom: 220px;
-            max-width: 2324px;
-            padding: 0 48px;
+            bottom: 110px;
+            max-width: 1200px;
+            padding: 0 24px;
             text-align: left;
         }
 
         #splash-screen .manifesto p {
-            font-size: 28px;
+            font-size: clamp(10px, 1.3vw, 14px);
             font-weight: 700;
             color: #888;
             line-height: 1.6;
-            margin-bottom: 24px;
+            margin-bottom: 12px;
         }
 
         #splash-screen .manifesto p:last-child {
@@ -3434,6 +3434,14 @@
                     framingSquare.visible = false;
                     console.warn(`[Director] Unknown frame "${target}", fell back to reynosa`);
                 }
+                // Force LOCAL_FIELD for local frames (bypasses zoom threshold)
+                const localFrames = ['reynosa', 'localSimIntro', 'scenarioRun', 'twinspan'];
+                if (localFrames.includes(target)) {
+                    currentZoomState = ZoomState.LOCAL_FIELD;
+                    transitionProgress = 1;
+                    if (macroParticles) macroParticles.paused = true;
+                    console.log(`[Director] Forced LOCAL_FIELD state for frame: ${target}`);
+                }
             },
             onStartSim: () => {
                 // Start the simulation (unpause)
@@ -3531,6 +3539,28 @@
                 macroAlpha = 1.0;
                 macroTargetAlpha = 1.0;
                 console.log('[Director] Regime switch: Layer A → Layer B (queue equilibrium)');
+            },
+            onSetPoeMode: (mode) => {
+                // Switch POE distribution for particle coloring (independent of routing)
+                // mode: 'baseline' = all particles get baseline POEs
+                // mode: 'interserrana' = particles get interserrana POEs (at α≥0.5)
+                if (!macroParticles) return;
+                if (mode === 'baseline') {
+                    // Both slots = baseline, so all new particles get baseline POEs
+                    macroParticles.setScenarioPoeDistributions(
+                        _storedBaselinePoeDistribution,
+                        _storedBaselinePoeDistribution
+                    );
+                    console.log('[Director] POE mode: baseline (both slots = baseline)');
+                } else if (mode === 'interserrana') {
+                    // baseline→interserrana, use α≥0.5 for interserrana POEs
+                    macroParticles.setScenarioPoeDistributions(
+                        _storedBaselinePoeDistribution,
+                        _storedInterserranaPoeDistribution
+                    );
+                    macroParticles.setScenarioAlpha(1.0);  // Ensure α=1 so new particles use interserrana
+                    console.log('[Director] POE mode: interserrana (α=1 → interserrana POEs)');
+                }
             },
             onStartQueuePhase: () => {
                 if (queueTimeSeries) {
@@ -3821,6 +3851,14 @@
                         macroParticles.paused = true;
                     }
                 }
+            },
+            onEnterLocalField: () => {
+                // Explicitly enter LOCAL_FIELD state (bypasses zoom threshold)
+                currentZoomState = ZoomState.LOCAL_FIELD;
+                transitionProgress = 1;
+                forceMacroRender = false;
+                if (macroParticles) macroParticles.paused = true;
+                console.log('[Director] Entered LOCAL_FIELD (explicit)');
             },
             onShowLiveLogs: () => {
                 const panel = document.getElementById('live-logs');
@@ -5991,38 +6029,8 @@
         });
         const cellHoverInfo = document.getElementById('cell-hover-info');
         canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                camera.pan(e.clientX - lastMouse.x, e.clientY - lastMouse.y);
-                lastMouse = { x: e.clientX, y: e.clientY };
-            }
-
-            // Show cell debug info when debug mode is active
-            const debugData = getPhysicsDebugData();
-            if (showPhysicsDebug && debugData?.getCellDebugInfo) {
-                const world = camera.screenToWorld(e.offsetX, e.offsetY);
-                const info = debugData.getCellDebugInfo(world.x, world.y);
-                if (info) {
-                    const lines = [
-                        `Cell ${info.cellIdx} ${info.fieldXY}`,
-                        `Region: ${info.region}`,
-                        `φ_lots: ${info.phi_lots}`,
-                        `φ_pharr: ${info.phi_pharr}`,
-                        `nh_lots: ${info.nextHop_lots}`,
-                        `K: ${info.Kxx}`,
-                        `Mass: ${info.mass}`,
-                        `Particles: ${info.particleCount}`,
-                    ];
-                    if (info.lotIdx !== null) lines.push(`Lot: ${info.lotIdx}`);
-                    cellHoverInfo.textContent = lines.join('\n');
-                    cellHoverInfo.style.display = 'block';
-                    cellHoverInfo.style.left = (e.offsetX + 15) + 'px';
-                    cellHoverInfo.style.top = (e.offsetY + 15) + 'px';
-                } else {
-                    cellHoverInfo.style.display = 'none';
-                }
-            } else {
-                cellHoverInfo.style.display = 'none';
-            }
+            // Disabled for public deployment - mouse tracking causes frame drops
+            return;
         });
         canvas.addEventListener('mouseup', () => isDragging = false);
         canvas.addEventListener('mouseleave', () => {
