@@ -1618,7 +1618,7 @@ export class MacroParticleLayer {
                 // DEBUG: Target location investigation - track segment 1345 specifically
                 const endPt = seg.polyline[seg.polyline.length - 1];
                 const segIdNum = parseInt(seg.id, 10);
-                const isTargetLoc = segIdNum >= 1340 && segIdNum <= 1360;
+                const isTargetLoc = false; // disabled: segIdNum >= 1340 && segIdNum <= 1360
                 const is1345 = seg.id === '1345' || segIdNum === 1345;
 
                 if (is1345 && !this._logged1345) {
