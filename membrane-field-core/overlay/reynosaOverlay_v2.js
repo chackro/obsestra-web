@@ -2239,13 +2239,22 @@ let _lastRateSampleTime = 0;
 let _lastRateSampleValue = 0;
 
 // Truck-hours lost BREAKDOWN (instrumentation only, no behavior change)
-// Split by cause: congestion vs waiting outside full lots vs bridge queue
+// Split by cause: congestion vs waiting outside full lots vs bridge queue vs bridge service
 let _truckHoursLostCongestion = 0;      // Normal road congestion (density-based)
 let _truckHoursLostLotWait = 0;         // Bounced from full lots, waiting on road
-let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR
+let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR (pre-service only)
+let _truckHoursLostBridgeService = 0;   // Being serviced in CBP lane (in-service only)
 let _truckHoursLostCongestionTick = 0;  // Per-tick accumulator
 let _truckHoursLostLotWaitTick = 0;     // Per-tick accumulator
-let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator
+let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator (pre-service)
+let _truckHoursLostBridgeServiceTick = 0; // Per-tick accumulator (in-service)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SERVICE TIME INSTRUMENTATION — Per-completion tracking for audit
+// ═══════════════════════════════════════════════════════════════════════════════
+let _serviceTimeActual = [];           // Collected actualServiceTime per completion (seconds)
+let _serviceTimeExpected = [];         // SERVICE_TIME_S at assignment time (seconds)
+let _serviceTimeAssignSim = [];        // simTime at assignment (for debugging)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONGESTION VISUALIZATION — Density-driven render spread (anti-aliasing)
@@ -2393,6 +2402,7 @@ export async function step(dt) {
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
+    _truckHoursLostBridgeServiceTick = 0;
 
     // 0. UPDATE COMMUTER FRICTION: Apply time-of-day modulation to spatial weights
     const tCommuter0 = performance.now();
@@ -2526,6 +2536,7 @@ export async function step(dt) {
     _truckHoursLostCongestion += _truckHoursLostCongestionTick / 3600;
     _truckHoursLostLotWait += _truckHoursLostLotWaitTick / 3600;
     _truckHoursLostBridgeQueue += _truckHoursLostBridgeQueueTick / 3600;
+    _truckHoursLostBridgeService += _truckHoursLostBridgeServiceTick / 3600;
 
     // INVARIANT: cumulative must be monotonic
     if (_truckHoursLost < prevTruckHoursLost) {
@@ -2603,6 +2614,14 @@ function stepCBPLanes(dt) {
             metrics.exited += particleMass();
             _cbpCompletionCount++;
 
+            // AUDIT: Record actual vs expected service time
+            if (p._cbpAssignTime !== undefined) {
+                const actualServiceTime = simTime - p._cbpAssignTime;
+                _serviceTimeActual.push(actualServiceTime);
+                _serviceTimeExpected.push(p._cbpExpectedServiceTime || 0);
+                _serviceTimeAssignSim.push(p._cbpAssignTime);
+            }
+
             // Transition to DEPARTING state for exit animation
             // Particle stays in sink cell, drift loop will move it out
             // Note: particle is already in movingParticles (was CLEARED, entered SINK but never removed)
@@ -2621,6 +2640,9 @@ function stepCBPLanes(dt) {
                 lane.busyUntil = laneFreeTime + SERVICE_TIME_S;
                 next._cbpLane = lane;
                 next._cbpEndTime = lane.busyUntil;
+                // AUDIT: Record assignment time and expected service time
+                next._cbpAssignTime = laneFreeTime;
+                next._cbpExpectedServiceTime = SERVICE_TIME_S;
             } else {
                 break;  // No more particles to process in queue
             }
@@ -2634,6 +2656,9 @@ function stepCBPLanes(dt) {
             lane.busyUntil = tickStart + SERVICE_TIME_S;
             p._cbpLane = lane;
             p._cbpEndTime = lane.busyUntil;
+            // AUDIT: Record assignment time and expected service time
+            p._cbpAssignTime = tickStart;
+            p._cbpExpectedServiceTime = SERVICE_TIME_S;
         }
     }
 }
@@ -2892,11 +2917,17 @@ function stepDriftAndTransferInner(dt) {
             p.stuckLogged = false;
         }
 
-        // Skip particles waiting in sink queue (still in movingParticles but not drifting)
+        // Skip particles in CBP area (still in movingParticles but not drifting)
+        // Separate queue time (waiting) from service time (in lane)
         if (p.state === STATE.CLEARED && regionMap[cellIdx] === REGION.SINK) {
-            // Waiting in CBP queue - track as bridge queue delay
             _truckHoursLostThisTick += dt;           // c=0 → loss=1
-            _truckHoursLostBridgeQueueTick += dt;    // attribute to bridge queue
+            if (p._cbpLane) {
+                // In service — assigned to lane, being processed
+                _truckHoursLostBridgeServiceTick += dt;
+            } else {
+                // In queue — waiting for lane assignment
+                _truckHoursLostBridgeQueueTick += dt;
+            }
             continue;
         }
 
@@ -4164,9 +4195,16 @@ export function reset() {
     _truckHoursLostCongestion = 0;
     _truckHoursLostLotWait = 0;
     _truckHoursLostBridgeQueue = 0;
+    _truckHoursLostBridgeService = 0;
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
+    _truckHoursLostBridgeServiceTick = 0;
+
+    // Reset service time instrumentation arrays
+    _serviceTimeActual = [];
+    _serviceTimeExpected = [];
+    _serviceTimeAssignSim = [];
 
     // Reset stall-ton-hours (critical for fresh runs)
     _stallTonHours = 0;
@@ -4866,6 +4904,9 @@ async function initializeFromGeometry(geometry) {
 
     // Stamp manual fine-grained connectors
     stampManualConnectors();
+
+    // Unstamp Inovus-only connectors (they exist in bundle but should only be active when Inovus enabled)
+    unstampInovusConnectors();
 
     // Stamp manual blockers (destroy roads/lots)
     stampManualBlockers();
@@ -7409,7 +7450,13 @@ function stampInovusConnectors() {
 }
 
 function unstampInovusConnectors() {
-    for (const idx of _inovusConnectorCells) {
+    let count = 0;
+    for (const coord of INOVUS_CONNECTOR_COORDS) {
+        const fx = Math.floor(worldToFieldX(coord.x));
+        const fy = Math.floor(worldToFieldY(coord.y));
+        if (fx < 0 || fx >= N || fy < 0 || fy >= N) continue;
+        const idx = fy * N + fx;
+
         // Revert to impassable (no road)
         regionMap[idx] = REGION.VOID;
         Kxx[idx] = 0;
@@ -7417,8 +7464,9 @@ function unstampInovusConnectors() {
         // Remove from roadCellIndices
         const roadIdx = roadCellIndices.indexOf(idx);
         if (roadIdx !== -1) roadCellIndices.splice(roadIdx, 1);
+        count++;
     }
-    log(`[INOVUS] Unstamped ${_inovusConnectorCells.length} Inovus connector cells`);
+    log(`[INOVUS] Unstamped ${count} Inovus connector cells`);
     _inovusConnectorCells = [];
 }
 
@@ -8467,7 +8515,8 @@ export function getMetricsPhase1() {
         // Truck-hours lost breakdown (instrumentation)
         truckHoursLostCongestion: _truckHoursLostCongestion,  // normal road congestion
         truckHoursLostLotWait: _truckHoursLostLotWait,        // waiting outside full lots
-        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue
+        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue (pre-service)
+        truckHoursLostBridgeService: _truckHoursLostBridgeService, // being serviced in CBP lane
         stallTonHours: _stallTonHours,             // cumulative ton-hours
         simTime: simTime,                          // current sim time (debug)
         // Sink observability (for drain invariant)
@@ -8490,6 +8539,45 @@ export function getMetricsPhase1() {
         // Per-lot fill ratios (for replay animation)
         lotFillRatios: Array.from(lotMass).map((m, i) =>
             lotCapacity[i] > 0 ? m / lotCapacity[i] : 0),
+        // AUDIT: Service time stats (seconds)
+        serviceTimeStats: computeServiceTimeStats(),
+        // Current SERVICE_TIME_S (for verification)
+        currentServiceTimeS: SERVICE_TIME_S,
+        effectiveLanes: getEffectiveLanes(),
+    };
+}
+
+/**
+ * Compute mean/p50/p90 for service time arrays.
+ * Returns stats in seconds.
+ */
+function computeServiceTimeStats() {
+    const n = _serviceTimeActual.length;
+    if (n === 0) {
+        return { count: 0, actual: { mean: 0, p50: 0, p90: 0 }, expected: { mean: 0, p50: 0, p90: 0 } };
+    }
+
+    const sortedActual = [..._serviceTimeActual].sort((a, b) => a - b);
+    const sortedExpected = [..._serviceTimeExpected].sort((a, b) => a - b);
+
+    const meanActual = _serviceTimeActual.reduce((a, b) => a + b, 0) / n;
+    const meanExpected = _serviceTimeExpected.reduce((a, b) => a + b, 0) / n;
+
+    const p50Idx = Math.floor(n * 0.5);
+    const p90Idx = Math.floor(n * 0.9);
+
+    return {
+        count: n,
+        actual: {
+            mean: meanActual,
+            p50: sortedActual[p50Idx],
+            p90: sortedActual[p90Idx],
+        },
+        expected: {
+            mean: meanExpected,
+            p50: sortedExpected[p50Idx],
+            p90: sortedExpected[p90Idx],
+        },
     };
 }
 

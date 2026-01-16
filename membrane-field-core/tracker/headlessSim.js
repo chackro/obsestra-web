@@ -324,6 +324,7 @@ export class HeadlessSim {
           truckHoursLostCongestion: raw.truckHoursLostCongestion - start.truckHoursLostCongestion,
           truckHoursLostLotWait: raw.truckHoursLostLotWait - start.truckHoursLostLotWait,
           truckHoursLostBridgeQueue: raw.truckHoursLostBridgeQueue - start.truckHoursLostBridgeQueue,
+          truckHoursLostBridgeService: raw.truckHoursLostBridgeService - start.truckHoursLostBridgeService,
           stallTonHours: raw.stallTonHours - start.stallTonHours,
           sinkQueueCount: raw.sinkQueueCount,
           cbpLanesInUse: raw.cbpLanesInUse,
@@ -395,6 +396,7 @@ export class HeadlessSim {
       truckHoursLostCongestion_final: final.truckHoursLostCongestion,
       truckHoursLostLotWait_final: final.truckHoursLostLotWait,
       truckHoursLostBridgeQueue_final: final.truckHoursLostBridgeQueue,
+      truckHoursLostBridgeService_final: final.truckHoursLostBridgeService,
       exitedKgPerHour_mean,
       truckHoursLostPerHour_mean,
       truckHoursLostRate_mean: overlayRate_mean,
@@ -415,6 +417,11 @@ export class HeadlessSim {
       avgCongestionPerTruck: final.cbpCompletions > 0 ? (final.truckHoursLostCongestion / final.cbpCompletions) : 0,
       avgLotWaitPerTruck: final.cbpCompletions > 0 ? (final.truckHoursLostLotWait / final.cbpCompletions) : 0,
       avgBridgeQueuePerTruck: final.cbpCompletions > 0 ? (final.truckHoursLostBridgeQueue / final.cbpCompletions) : 0,
+      avgBridgeServicePerTruck: final.cbpCompletions > 0 ? (final.truckHoursLostBridgeService / final.cbpCompletions) : 0,
+      // AUDIT: Per-completion service time stats (seconds)
+      serviceTimeStats: final.serviceTimeStats,
+      currentServiceTimeS: final.currentServiceTimeS,
+      effectiveLanes: final.effectiveLanes,
     };
 
     // Structured end summary

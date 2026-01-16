@@ -455,8 +455,7 @@ export class POENodeLayer {
                 const dx = capturerScreen.x - loserScreen.x;
                 const dy = capturerScreen.y - loserScreen.y;
                 const fullLen = Math.sqrt(dx * dx + dy * dy);
-                if (fullLen < 30) {
-                    console.log(`[BleedRay] Skipping ${loser}→${capturerCanon}: screenLen=${fullLen.toFixed(1)}px < 30`);
+                if (fullLen < 10) {
                     continue;  // Too short to render
                 }
 

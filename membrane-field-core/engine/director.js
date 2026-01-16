@@ -1520,17 +1520,16 @@ export const Scripts = {
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setPoeMode', mode: 'interserrana' },                        // Particles respawn with interserrana POEs
+            // Pharr highlighted (magenta) immediately on entering Layer 3
+            { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },
+            { type: 'setCorridorColor', poe: 'laredo', color: 'white' },
+            { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'snapToFrame', target: 'interserrana' },                     // Immediate snap to wide view
             { type: 'wait', duration: 8000 },                                    // 8s hold
             { type: 'showInterserranaBox' },                                     // Show box 2s before activation
             { type: 'wait', duration: 2000 },                                    // 2s with box visible
             { type: 'setScenarioAlpha', alpha: 1.0 },                            // Trigger routing change
-            { type: 'wait', duration: 3000 },                                    // 3s stagger before magenta
-            // Pharr highlighted (magenta) after routing visibly changes
-            { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },
-            { type: 'setCorridorColor', poe: 'laredo', color: 'white' },
-            { type: 'dimNonHighlighted', dimAlpha: 0.8 },
-            { type: 'wait', duration: 1000 },                                    // 1s after activation (3s total box)
+            { type: 'wait', duration: 4000 },                                    // 4s after activation (3s total box)
             { type: 'hideInterserranaBox' },                                     // Hide box
             { type: 'wait', duration: 14000 },                                   // 14s remaining hold
             { type: 'snapToFrame', target: 'scenarioRun' },                      // Immediate snap back
