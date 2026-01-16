@@ -38,11 +38,11 @@
 
         canvas {
             display: block;
-            cursor: grab;
+            cursor: none;
         }
 
         canvas:active {
-            cursor: grabbing;
+            cursor: none;
         }
 
         #controls {
@@ -76,79 +76,11 @@
         }
 
         #btn-skip {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            background: rgba(255, 100, 100, 0.7);
-            color: #000;
-            border: none;
-            padding: 8px 16px;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 2000;
-        }
-
-        #btn-skip:hover {
-            background: rgba(255, 100, 100, 0.9);
+            display: none; /* Hidden for public deployment */
         }
 
         #bottom-action-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 280px;
-            /* Leave room for sidebar */
-            display: flex;
-            gap: 8px;
-            padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.85);
-            border-top: 1px solid #333;
-            z-index: 1000;
-        }
-
-        #bottom-action-bar button {
-            background: rgba(60, 60, 60, 0.9);
-            color: #fff;
-            border: 1px solid #555;
-            padding: 10px 16px;
-            font-family: inherit;
-            font-size: 12px;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 4px;
-            white-space: nowrap;
-        }
-
-        #bottom-action-bar button:hover {
-            background: rgba(80, 80, 80, 0.95);
-            border-color: #777;
-        }
-
-        #bottom-action-bar button.active {
-            background: rgba(40, 100, 40, 0.9);
-            border-color: #4a4;
-        }
-
-        #bottom-action-bar button.primary {
-            background: rgba(40, 80, 40, 0.9);
-            border-color: #4a4;
-        }
-
-        #bottom-action-bar button.primary:hover {
-            background: rgba(60, 120, 60, 0.95);
-        }
-
-        #bottom-action-bar .separator {
-            width: 1px;
-            background: #444;
-            margin: 0 8px;
-        }
-
-        #bottom-action-bar button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+            display: none; /* Hidden for public deployment */
         }
 
         #intro-text {
@@ -266,11 +198,12 @@
 
         #telemetry-overlay {
             position: fixed;
-            top: 24px;
-            left: 24px;
+            top: 12vh;
+            right: 3vw;
+            text-align: right;
             color: #fff;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 32px;
+            font-size: clamp(10px, 1.4vw, 16px);
             line-height: 1.15;
             z-index: 999;
             pointer-events: none;
@@ -284,11 +217,11 @@
 
         /* Tree-style telemetry indentation */
         .telemetry-line.indent-1 {
-            padding-left: 32px;
+            padding-left: 1.5em;
         }
 
         .telemetry-line.indent-2 {
-            padding-left: 64px;
+            padding-left: 3em;
         }
 
         .telemetry-line.tree::before {
@@ -328,11 +261,11 @@
             /* Green - Industrial */
         }
 
-        /* Scenario comparison overlay - positioned above comparison table */
+        /* Scenario comparison overlay - positioned below clock, above metrics */
         #scenario-overlay {
             position: fixed;
-            bottom: 420px;
-            right: 60px;
+            top: 9vh;
+            right: 3vw;
             z-index: 1001;
             pointer-events: none;
             text-align: right;
@@ -340,7 +273,7 @@
 
         #scenario-label {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 24px;
+            font-size: clamp(8px, 1.1vw, 12px);
             font-weight: 700;
             color: #fa0;
             text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
@@ -349,7 +282,7 @@
 
         #scenario-intervention {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 16px;
+            font-size: clamp(6px, 0.7vw, 8px);
             font-weight: 400;
             color: #aaa;
             text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
@@ -359,8 +292,8 @@
 
         #montage-overlay {
             position: fixed;
-            top: 70px;
-            right: 24px;
+            top: 5vh;
+            right: 1.5vw;
             text-align: right;
             z-index: 1000;
             pointer-events: none;
@@ -368,7 +301,7 @@
 
         #montage-day {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 28px;
+            font-size: clamp(10px, 1.2vw, 14px);
             font-weight: 600;
             color: #fff;
             text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
@@ -377,7 +310,7 @@
 
         #montage-clock {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 48px;
+            font-size: clamp(14px, 2vw, 24px);
             font-weight: 700;
             color: #fff;
             text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
@@ -387,10 +320,10 @@
         /* Macro layer month clock - shows month during alienObserver */
         #macro-month-clock {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: 2vh;
+            right: 1.5vw;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 32px;
+            font-size: clamp(10px, 1.4vw, 16px);
             font-weight: 600;
             color: #fff;
             text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);

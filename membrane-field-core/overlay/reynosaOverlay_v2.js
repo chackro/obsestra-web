@@ -1188,6 +1188,7 @@ let _interserranaScenario = null;                 // Second scenario for interpo
 let _phasesAsLots = false;
 let _phaseLotIndices = [];                        // Lot indices created from phases
 let _phaseLotCells = [];                          // Cells stamped from phases
+let _inovusConnectorCells = [];                   // Cells stamped for Inovus road access
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SLEEP LOTS — Overnight parking for CLEARED particles when bridge is closed
@@ -5802,6 +5803,7 @@ const SPEED_LIMIT_POLYLINES = [
         name: 'AVE_PTE_PHARR',
         polylines: [
             [
+                [-344.6282421308715, -13042.040588503369],
                 [-549.9350614429121, -12139.653375770506],
                 [-554.5252970950285, -10710.832667154451],
                 [-538.5252970950285, -10483.832667154451],
@@ -7373,32 +7375,73 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -524.34, y: -13032 },
 ];
 
+// Inovus-only road stamps (south access to FASE lots)
+// Only stamped when _phasesAsLots is true
+const INOVUS_CONNECTOR_COORDS = [
+    { x: -344.6282421308715, y: -13042.040588503369 },
+    { x: -1145.4750313105994, y: -13025.861865489636 },
+    { x: -1131.9927621324896, y: -13025.861865489636 },
+    { x: -1121.2069467900017, y: -13025.861865489636 },
+    { x: -1109.0729045297028, y: -13025.861865489636 },
+];
+
 function stampManualConnectors() {
     let stamped = 0;
+
+    // Always stamp base connectors
     for (const coord of MANUAL_CONNECTOR_COORDS) {
-        const fx = Math.floor(worldToFieldX(coord.x));
-        const fy = Math.floor(worldToFieldY(coord.y));
-        if (fx < 0 || fx >= N || fy < 0 || fy >= N) continue;
-
-        const idx = fy * N + fx;
-
-        // Don't touch sinks
-        if (regionMap[idx] === REGION.SINK) continue;
-
-        // Stamp as traversable road
-        regionMap[idx] = REGION.ROAD;
-        Kxx[idx] = Math.max(Kxx[idx], K_CONNECTOR);
-        Kyy[idx] = Math.max(Kyy[idx], K_CONNECTOR);
-
-        // Add to roadCellIndices if not present
-        if (!roadCellIndices.includes(idx)) {
-            roadCellIndices.push(idx);
-        }
-        stamped++;
+        if (stampConnectorCoord(coord)) stamped++;
     }
+
     if (stamped > 0) {
         log(`[BRIDGE] Manual connectors: ${stamped} cells stamped`);
     }
+}
+
+// Stamp/unstamp Inovus-only connector cells
+function stampInovusConnectors() {
+    _inovusConnectorCells = [];
+    for (const coord of INOVUS_CONNECTOR_COORDS) {
+        const idx = stampConnectorCoord(coord);
+        if (idx !== false) _inovusConnectorCells.push(idx);
+    }
+    log(`[INOVUS] Stamped ${_inovusConnectorCells.length} Inovus connector cells`);
+}
+
+function unstampInovusConnectors() {
+    for (const idx of _inovusConnectorCells) {
+        // Revert to impassable (no road)
+        regionMap[idx] = REGION.VOID;
+        Kxx[idx] = 0;
+        Kyy[idx] = 0;
+        // Remove from roadCellIndices
+        const roadIdx = roadCellIndices.indexOf(idx);
+        if (roadIdx !== -1) roadCellIndices.splice(roadIdx, 1);
+    }
+    log(`[INOVUS] Unstamped ${_inovusConnectorCells.length} Inovus connector cells`);
+    _inovusConnectorCells = [];
+}
+
+function stampConnectorCoord(coord) {
+    const fx = Math.floor(worldToFieldX(coord.x));
+    const fy = Math.floor(worldToFieldY(coord.y));
+    if (fx < 0 || fx >= N || fy < 0 || fy >= N) return false;
+
+    const idx = fy * N + fx;
+
+    // Don't touch sinks
+    if (regionMap[idx] === REGION.SINK) return false;
+
+    // Stamp as traversable road
+    regionMap[idx] = REGION.ROAD;
+    Kxx[idx] = Math.max(Kxx[idx], K_CONNECTOR);
+    Kyy[idx] = Math.max(Kyy[idx], K_CONNECTOR);
+
+    // Add to roadCellIndices if not present
+    if (!roadCellIndices.includes(idx)) {
+        roadCellIndices.push(idx);
+    }
+    return idx;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -9414,6 +9457,9 @@ export async function togglePhasesAsLots() {
 
         log(`[PHASES] Stamped ${_phaseLotCells.length} total cells as lots`);
         log(`[PHASES] Sleep lots: ${_phaseSleepLotIndices.length} (indices: ${_phaseSleepLotIndices.join(', ')})`);
+
+        // Stamp Inovus-only road connectors
+        stampInovusConnectors();
     } else {
         // Unstamp phase lots
         for (const idx of _phaseLotCells) {
@@ -9433,6 +9479,9 @@ export async function togglePhasesAsLots() {
 
         _phaseLotIndices = [];
         _phaseLotCells = [];
+
+        // Unstamp Inovus-only road connectors
+        unstampInovusConnectors();
 
         log(`[PHASES] Unstamped phase lots, reverted to road`);
     }
