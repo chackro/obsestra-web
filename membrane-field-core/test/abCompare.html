@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Layer A/B Compare</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            overflow: hidden;
+        }
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #layer-label {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        #layer-label.layer-a { color: #ff6b00; }
+        #layer-label.layer-b { color: #4a9eff; }
+        #layer-desc {
+            font-size: 13px;
+            color: #707070;
+            margin-bottom: 16px;
+        }
+        .stat-row {
+            margin: 4px 0;
+            color: #808080;
+        }
+        .stat-value {
+            color: #c0c0c0;
+            font-weight: 500;
+        }
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 12px;
+            color: #606060;
+        }
+        #stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: #707070;
+            text-align: right;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        .legend {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+        }
+        .legend-swatch {
+            width: 20px;
+            height: 3px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div id="hud">
+        <div id="layer-label" class="layer-b">LAYER B</div>
+        <div id="layer-desc">Infrastructure geometry</div>
+        <div class="stat-row">Segments: <span id="segment-count" class="stat-value">-</span></div>
+        <div class="stat-row">With flow: <span id="segments-with-flow" class="stat-value">-</span></div>
+        <div class="stat-row">Total flow: <span id="total-flow" class="stat-value">-</span></div>
+    </div>
+
+    <div id="stats-panel">
+        <div>Max segment load: <span id="max-load">-</span></div>
+        <div>POEs in data: <span id="poe-list">-</span></div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:#303030"></div> No flow data</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#ff6b00"></div> High flow</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#662200"></div> Low flow</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        [SPACE] toggle Layer A/B &nbsp; [R] reset view &nbsp; [+/-] zoom &nbsp; drag to pan
+    </div>
+
+    <script type="module">
+        // ═══════════════════════════════════════════════════════════════
+        // BUNDLE LOADING
+        // ═══════════════════════════════════════════════════════════════
+
+        let bundleA = null;  // Layer A (pure routing)
+        let bundleB = null;  // Layer B (queue equilibrium)
+        let showingLayerA = true;  // Start with Layer A
+
+        // Parsed segment loads for each layer
+        let loadsA = {};  // segment_id → total kg
+        let loadsB = {};
+        let maxLoadA = 0;
+        let maxLoadB = 0;
+
+        async function loadBundles() {
+            const [resA, resB] = await Promise.all([
+                fetch('./bundle_baseline_LAYER_A.json'),
+                fetch('./bundle_baseline.json'),
+            ]);
+
+            if (!resA.ok) throw new Error('Failed to load Layer A bundle');
+            if (!resB.ok) throw new Error('Failed to load Layer B bundle');
+
+            bundleA = await resA.json();
+            bundleB = await resB.json();
+
+            // Parse segment loads for both
+            [loadsA, maxLoadA] = parseSegmentLoads(bundleA);
+            [loadsB, maxLoadB] = parseSegmentLoads(bundleB);
+
+            console.log(`Layer A: ${Object.keys(loadsA).length} segments, max=${maxLoadA}`);
+            console.log(`Layer B: ${Object.keys(loadsB).length} segments, max=${maxLoadB}`);
+
+            updateHUD();
+            render();
+        }
+
+        function parseSegmentLoads(bundle) {
+            const loads = {};
+            let maxLoad = 0;
+
+            const raw = bundle.segment_load_kg_by_poe_hs2;
+            if (!raw) {
+                console.warn('No segment_load_kg_by_poe_hs2 in bundle');
+                return [loads, maxLoad];
+            }
+
+            for (const [segId, poeData] of Object.entries(raw)) {
+                let total = 0;
+                for (const [poe, hs2Data] of Object.entries(poeData)) {
+                    for (const [hs2, kg] of Object.entries(hs2Data)) {
+                        total += kg;
+                    }
+                }
+                loads[segId] = total;
+                if (total > maxLoad) maxLoad = total;
+            }
+
+            return [loads, maxLoad];
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // COORDINATE TRANSFORM
+        // ═══════════════════════════════════════════════════════════════
+
+        function latLonToWorld(lat, lon, transform) {
+            const dLat = lat - transform.origin_lat;
+            const dLon = lon - transform.origin_lon;
+            return {
+                x: dLon * transform.meters_per_deg_lon,
+                y: dLat * transform.meters_per_deg_lat,
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // HUD UPDATE
+        // ═══════════════════════════════════════════════════════════════
+
+        function updateHUD() {
+            const label = document.getElementById('layer-label');
+            const desc = document.getElementById('layer-desc');
+            const bundle = showingLayerA ? bundleA : bundleB;
+            const loads = showingLayerA ? loadsA : loadsB;
+            const maxLoad = showingLayerA ? maxLoadA : maxLoadB;
+
+            if (showingLayerA) {
+                label.textContent = 'LAYER A';
+                label.className = 'layer-a';
+                desc.textContent = 'Pure routing (no queue effects)';
+            } else {
+                label.textContent = 'LAYER B';
+                label.className = 'layer-b';
+                desc.textContent = 'Queue equilibrium';
+            }
+
+            const segments = bundle.geometry.segments_in_roi;
+            const withFlow = Object.keys(loads).length;
+            const totalFlow = Object.values(loads).reduce((a, b) => a + b, 0);
+
+            document.getElementById('segment-count').textContent = segments.length.toLocaleString();
+            document.getElementById('segments-with-flow').textContent = withFlow.toLocaleString();
+            document.getElementById('total-flow').textContent = `${(totalFlow / 1e9).toFixed(2)}B kg`;
+            document.getElementById('max-load').textContent = `${(maxLoad / 1e6).toFixed(1)}M kg`;
+
+            // POE shares comparison
+            const flowA = bundleA?.flow_kg_by_poe || {};
+            const flowB = bundleB?.flow_kg_by_poe || {};
+            const pharrA = flowA.hidalgo_pharr || 0;
+            const pharrB = flowB.hidalgo_pharr || 0;
+            const laredoA = flowA.laredo || 0;
+            const laredoB = flowB.laredo || 0;
+            const pharrDelta = pharrB > 0 ? ((pharrB - pharrA) / pharrA * 100).toFixed(1) : 0;
+            const laredoDelta = laredoB > 0 ? ((laredoB - laredoA) / laredoA * 100).toFixed(1) : 0;
+
+            document.getElementById('poe-list').innerHTML =
+                `PHARR: ${(pharrA/1e9).toFixed(2)}→${(pharrB/1e9).toFixed(2)}B (${pharrDelta}%)<br>` +
+                `LAREDO: ${(laredoA/1e9).toFixed(2)}→${(laredoB/1e9).toFixed(2)}B (${laredoDelta}%)`;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CANVAS & CAMERA
+        // ═══════════════════════════════════════════════════════════════
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let camera = {
+            x: 0,
+            y: 0,
+            zoom: 0.002,
+        };
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            render();
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDERING
+        // ═══════════════════════════════════════════════════════════════
+
+        function render() {
+            const bundle = showingLayerA ? bundleA : bundleB;
+            const loads = showingLayerA ? loadsA : loadsB;
+            const maxLoad = showingLayerA ? maxLoadA : maxLoadB;
+
+            if (!bundle) return;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, w, h);
+
+            const transform = bundle.geometry.transform;
+            const segments = bundle.geometry.segments_in_roi;
+
+            // Draw segments
+            for (const seg of segments) {
+                const coords = seg.geometry_coordinates;
+                if (!coords || coords.length < 2) continue;
+
+                const load = loads[seg.segment_id] || 0;
+
+                // Color by flow weight - orange for A, blue for B
+                if (load > 0 && maxLoad > 0) {
+                    const t = Math.pow(load / maxLoad, 0.4);  // gamma for visibility
+                    if (showingLayerA) {
+                        // Orange gradient for Layer A
+                        const r = Math.floor(102 + t * 153);
+                        const g = Math.floor(34 + t * 73);
+                        ctx.strokeStyle = `rgb(${r},${g},0)`;
+                    } else {
+                        // Blue gradient for Layer B
+                        const r = Math.floor(30 + t * 44);
+                        const g = Math.floor(100 + t * 58);
+                        const b = Math.floor(180 + t * 75);
+                        ctx.strokeStyle = `rgb(${r},${g},${b})`;
+                    }
+                    ctx.lineWidth = Math.max(1, (1 + t * 3) * camera.zoom * 500);
+                } else {
+                    ctx.strokeStyle = '#1a1a1a';  // Very dim for no-flow
+                    ctx.lineWidth = Math.max(0.5, camera.zoom * 300);
+                }
+
+                ctx.beginPath();
+                for (let i = 0; i < coords.length; i++) {
+                    const [lat, lon] = coords[i];
+                    const world = latLonToWorld(lat, lon, transform);
+                    const sx = cx + (world.x - camera.x) * camera.zoom;
+                    const sy = cy - (world.y - camera.y) * camera.zoom;
+
+                    if (i === 0) ctx.moveTo(sx, sy);
+                    else ctx.lineTo(sx, sy);
+                }
+                ctx.stroke();
+            }
+
+            // Draw PHARR marker
+            const pharr = bundle.geometry.pharr_coords;
+            const pharrWorld = latLonToWorld(pharr.lat, pharr.lon, transform);
+            const pharrSx = cx + (pharrWorld.x - camera.x) * camera.zoom;
+            const pharrSy = cy - (pharrWorld.y - camera.y) * camera.zoom;
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(pharrSx, pharrSy, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.font = '12px -apple-system, sans-serif';
+            ctx.fillText('PHARR', pharrSx + 10, pharrSy + 4);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INTERACTION
+        // ═══════════════════════════════════════════════════════════════
+
+        function toggleLayer() {
+            showingLayerA = !showingLayerA;
+            updateHUD();
+            render();
+        }
+
+        function resetView() {
+            camera.x = 0;
+            camera.y = 0;
+            camera.zoom = 0.002;
+            render();
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                toggleLayer();
+            } else if (e.code === 'KeyR') {
+                resetView();
+            } else if (e.code === 'Equal' || e.code === 'NumpadAdd') {
+                camera.zoom *= 1.3;
+                render();
+            } else if (e.code === 'Minus' || e.code === 'NumpadSubtract') {
+                camera.zoom /= 1.3;
+                render();
+            }
+        });
+
+        // Pan
+        let dragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let cameraStart = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            dragging = true;
+            dragStart = { x: e.clientX, y: e.clientY };
+            cameraStart = { x: camera.x, y: camera.y };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            camera.x = cameraStart.x - dx / camera.zoom;
+            camera.y = cameraStart.y + dy / camera.zoom;
+            render();
+        });
+
+        canvas.addEventListener('mouseup', () => { dragging = false; });
+        canvas.addEventListener('mouseleave', () => { dragging = false; });
+
+        // Scroll zoom
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            camera.zoom *= factor;
+            render();
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+
+        loadBundles().catch(err => {
+            console.error('Failed to load bundles:', err);
+            document.body.innerHTML = `<div style="padding:40px;color:#f44">${err.message}</div>`;
+        });
+    </script>
+</body>
+</html>

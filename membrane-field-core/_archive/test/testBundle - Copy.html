@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIEN/FIELD Viewer</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow: hidden;
+        }
+        #container { display: flex; height: 100vh; }
+        #canvas-wrapper { flex: 1; position: relative; }
+        canvas { display: block; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        #controls {
+            width: 300px;
+            background: #12121a;
+            padding: 16px;
+            overflow-y: auto;
+            border-left: 1px solid #2a2a3e;
+        }
+        h2 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .control-group { margin-bottom: 20px; }
+        label { display: block; font-size: 11px; color: #666; margin-bottom: 4px; }
+        input[type="range"] { width: 100%; margin-bottom: 8px; }
+        .value { font-size: 13px; color: #0f0; }
+        button {
+            background: #2a2a4e;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px 4px 4px 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+        }
+        button:hover { background: #3a3a6e; }
+        button.active { background: #0a6; }
+        #metrics {
+            background: #0a0a12;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.8;
+            border: 1px solid #2a2a3e;
+        }
+        .metric-row { display: flex; justify-content: space-between; }
+        .metric-row .label { color: #666; }
+        .metric-row .value { color: #0f0; }
+        #bundle-status {
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        #bundle-status.loading { background: #440; color: #ff0; }
+        #bundle-status.loaded { background: #040; color: #0f0; }
+        #bundle-status.error { background: #400; color: #f66; }
+        #zoom-state {
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            border-radius: 4px;
+        }
+        #zoom-state.macro { background: #1a3a5a; color: #6af; }
+        #zoom-state.transition { background: #3a3a1a; color: #ff0; }
+        #zoom-state.local { background: #2a4a2a; color: #6f6; }
+        #authority-indicator {
+            font-size: 11px;
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="controls">
+            <h2>CIEN / FIELD Viewer</h2>
+
+            <div id="bundle-status" class="loading">Loading bundle...</div>
+            <div id="zoom-state" class="macro">MACRO_CIEN</div>
+            <div id="authority-indicator">Authority: CIEN</div>
+            <div id="timelapse-indicator" style="color: #4a9; font-weight: bold;">Mode: Daily Pain</div>
+
+            <div class="control-group">
+                <label>Hour of Day</label>
+                <input type="range" id="hour-slider" min="0" max="23" value="8">
+                <span class="value" id="hour-value">08:00</span>
+            </div>
+
+            <div class="control-group">
+                <label>Time Scale (authoritative)</label>
+                <span class="value" id="timescale-value" style="font-size: 12px;">--</span>
+                <div style="font-size: 10px; color: #666;">1 day = 75s video</div>
+            </div>
+
+            <div class="control-group">
+                <label>Zoom (scroll to change)</label>
+                <input type="range" id="zoom-slider" min="1" max="200" value="2" disabled>
+                <span class="value" id="zoom-value">0.02</span>
+            </div>
+
+            <div class="control-group">
+                <button id="btn-pause">Pause</button>
+                <button id="btn-reset">Reset</button>
+                <button id="btn-macro">View Macro</button>
+                <button id="btn-local">View Local</button>
+            </div>
+
+            <div class="control-group">
+                <label>Scenario</label>
+                <button id="btn-interserrana" disabled>Interserrana →</button>
+                <button id="btn-twin-span">Twin Span →</button>
+                <button id="btn-inovus">INOVUS →</button>
+            </div>
+
+            <div class="control-group">
+                <label>Debug (D to toggle, TAB to cycle)</label>
+                <button id="btn-clear-debug-cache">Clear Debug Cache</button>
+            </div>
+
+            <div class="control-group">
+                <label>Headless Test (Phase 1)</label>
+                <button id="btn-headless-test">Run Invariant Check</button>
+                <div id="headless-status" style="font-size: 11px; color: #666; margin-top: 6px;">Ready</div>
+            </div>
+
+            <div class="control-group" id="director-controls">
+                <label>Director</label>
+                <div style="display: flex; gap: 4px; margin-bottom: 8px;">
+                    <button id="btn-director-play">Play</button>
+                    <button id="btn-director-stop">Stop</button>
+                </div>
+                <select id="director-script" style="width: 100%; padding: 6px; background: #1a1a2e; color: #fff; border: 1px solid #2a2a4e; font-family: inherit; font-size: 12px;">
+                    <option value="intro">Intro (Macro → Local)</option>
+                    <option value="corridorTour">Corridor Tour</option>
+                    <option value="zoomCycle">Zoom Cycle (Loop)</option>
+                </select>
+                <div id="director-status" style="font-size: 11px; color: #666; margin-top: 6px;">Ready</div>
+            </div>
+
+            <h2>Metrics</h2>
+            <div id="metrics">
+                <div class="metric-row">
+                    <span class="label">Hour Inflow:</span>
+                    <span class="value" id="m-inflow">0 t/hr</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Hour Capacity:</span>
+                    <span class="value" id="m-cap">0 t/hr</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Throughput:</span>
+                    <span class="value" id="m-throughput">--</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Backlog:</span>
+                    <span class="value" id="m-backlog">--</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Field Mass:</span>
+                    <span class="value" id="m-total">--</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Segments:</span>
+                    <span class="value" id="m-segments">0</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Scenario α:</span>
+                    <span class="value" id="m-alpha">0.00</span>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 20px;">Legend</h2>
+            <div style="font-size: 11px; color: #888; line-height: 1.8;">
+                <div><span style="color: hsl(220, 70%, 45%);">━</span> Low flow (thin)</div>
+                <div><span style="color: hsl(170, 75%, 50%);">━━</span> Light flow</div>
+                <div><span style="color: hsl(120, 80%, 50%);">━━━</span> Medium flow</div>
+                <div><span style="color: hsl(60, 85%, 55%);">━━━━</span> High flow</div>
+                <div><span style="color: hsl(30, 90%, 60%);">━━━━━</span> Peak flow (thick)</div>
+                <div style="margin-top: 8px; color: #666;">
+                    Thickness + color = cargo volume<br>
+                    (CIEN routing equilibrium)
+                </div>
+            </div>
+
+            <h2 style="margin-top: 20px;">Bundle Info</h2>
+            <div id="bundle-info" style="font-size: 11px; color: #666; line-height: 1.6;"></div>
+
+            <!-- Coordinate Picker (hidden by default) -->
+            <div id="coord-picker" style="display: none; margin-top: 20px; padding: 10px; background: #1a1a2e; border: 1px solid #4af; border-radius: 4px;">
+                <h2 style="color: #4af; margin: 0 0 10px 0;">Coordinate Picker</h2>
+                <div style="font-size: 11px; color: #aaa; margin-bottom: 8px;">
+                    Click on map to collect points.<br>
+                    Press B again to close.
+                </div>
+                <div id="coord-list" style="font-size: 10px; color: #6f6; max-height: 150px; overflow-y: auto; font-family: monospace; margin-bottom: 8px;"></div>
+                <div style="display: flex; gap: 5px;">
+                    <button id="copy-coords-btn" style="flex: 1; padding: 5px; font-size: 11px; cursor: pointer;">Copy to Clipboard</button>
+                    <button id="clear-coords-btn" style="padding: 5px; font-size: 11px; cursor: pointer;">Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { loadBundle, loadScenarioPairBundles, getHourlyInflow, getHourlyCapacity, getSegmentsInROI, getMetadata, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
+        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1 } from '../overlay/reynosaOverlay_v2.js';
+        import { ParticleRenderer } from '../overlay/particleRenderer.js';
+        import { loadWeightMaps, extractWeights, getInterpolatedWeight, hasWeightMaps, getSegmentPoeDistribution } from '../overlay/segmentWeights.js';
+        import { MacroParticleLayer } from '../overlay/macroParticleLayer.js';
+        import { Director, Scripts } from '../engine/director.js';
+
+        // =====================================================================
+        // REMOTE LOGGING (run: python log_server.py)
+        // =====================================================================
+        const LOG_SERVER = 'http://localhost:9999';
+        let logServerAvailable = false;
+
+        // Clear remote log on page load
+        fetch(`${LOG_SERVER}/clear`, { method: 'POST' }).then(() => {
+            logServerAvailable = true;
+            console.log('[LOG] Remote logging enabled - logs written to debug.log');
+        }).catch(() => {
+            console.log('[LOG] Remote log server not running. Start with: python log_server.py');
+        });
+
+        // Remote logging - re-enabled
+        const originalConsoleLog = console.log.bind(console);
+        console.log = (...args) => {
+            originalConsoleLog(...args);
+            if (logServerAvailable) {
+                const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
+                fetch(`${LOG_SERVER}/log`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ msg: msg })
+                }).catch(() => {});
+            }
+        };
+
+        // =====================================================================
+        // ZOOM STATE MACHINE (per spec)
+        // =====================================================================
+
+        const ZoomState = {
+            MACRO_CIEN: 'MACRO_CIEN',
+            TRANSITION_IN: 'TRANSITION_IN',
+            LOCAL_FIELD: 'LOCAL_FIELD',
+            TRANSITION_OUT: 'TRANSITION_OUT'
+        };
+
+        // Zoom thresholds (pixels per meter)
+        // Must match REYNOSA_ACTIVATION in renderer_interfaces.js
+        const Z_MACRO = 0.003;     // Below this: fully macro
+        const Z_LOCAL = 0.032;     // Above this: fully local
+        // Between Z_MACRO and Z_LOCAL: transition zone
+
+        // Transition duration (ms)
+        const TRANSITION_DURATION_MS = 800;
+
+        // State
+        let currentZoomState = ZoomState.MACRO_CIEN;
+        let transitionStartTime = 0;
+        let transitionProgress = 0;  // 0 to 1
+
+        // =====================================================================
+        // COORDINATE PICKER
+        // =====================================================================
+        let coordPickerActive = false;
+        let collectedCoords = [];
+
+        // =====================================================================
+        // DEBUG: PHYSICS X-RAY (press D to toggle, TAB to cycle layers)
+        // Freezes sim when active. Layers: K, φ_base, Connectivity, Road Type
+        // =====================================================================
+        let showPhysicsDebug = false;
+        let debugWasPaused = false;  // Track if sim was paused before debug
+        let debugLayer = 0;  // 0=K, 1=φ_base(cost), 2=connectivity, 3=road type, 4=density
+        const DEBUG_LAYER_NAMES = ['K (conductance)', 'φ_base (cost)', 'Connectivity', 'Road Type', 'Density (ρ)'];
+        const DEBUG_LAYER_COUNT = 5;
+
+        // Cached debug stats (expensive N² computations)
+        let _debugStatsCache = null;
+
+        function togglePhysicsDebug() {
+            showPhysicsDebug = !showPhysicsDebug;
+            if (showPhysicsDebug) {
+                // Freeze sim
+                debugWasPaused = time.paused;
+                time.paused = true;
+                console.log(`[DEBUG] Layer ${debugLayer}: ${DEBUG_LAYER_NAMES[debugLayer]} (TAB to cycle)`);
+            } else {
+                // Restore pause state
+                time.paused = debugWasPaused;
+            }
+        }
+
+        function cycleDebugLayer() {
+            if (!showPhysicsDebug) return;
+            debugLayer = (debugLayer + 1) % DEBUG_LAYER_COUNT;
+            console.log(`[DEBUG] Layer ${debugLayer}: ${DEBUG_LAYER_NAMES[debugLayer]}`);
+        }
+
+        function clearDebugCache() {
+            _debugStatsCache = null;
+            console.log('[DEBUG] Cache cleared - stats will recompute next frame');
+        }
+
+        /**
+         * PHYSICS X-RAY OVERLAY
+         * Press D to toggle, TAB to cycle layers:
+         *   0: K (conductance) - grayscale, white=road
+         *   1: φ_base (cost) - blue→yellow gradient
+         *   2: Connectivity - green=valid, red=dead-end
+         *   3: Road Type - orange=city, white=highway
+         * Sources (cyan) and sinks (green) always shown.
+         */
+        function drawPhysicsDebug(ctx, camera) {
+            if (!showPhysicsDebug) return;
+
+            const debug = getPhysicsDebugData();
+            if (!debug || !debug.N || !debug.phi_pharr) {
+                ctx.fillStyle = '#ff0';
+                ctx.font = '14px monospace';
+                ctx.fillText('[D] Physics not initialized (phi computing...)', 20, 30);
+                return;
+            }
+
+            const { N, roi, sinkCellIndices, roadCellIndices, conductiveCellIndices, G, phi, phi_pharr, phi_lots, Kxx, Kyy, S,
+                    nextHop_pharr, nextHop_lots, rho_restricted, rho_cleared,
+                    fieldToWorldX, fieldToWorldY, PHI_LARGE,
+                    roadTypeMap, ROAD_TYPE_CITY, loopCells, loopEnabled } = debug;
+            // Use phi_pharr as primary visualization (cleared mass routing)
+            const phi_base = phi_pharr;
+            const nextHop = nextHop_pharr;
+
+            const cellPx = Math.max(1, camera.metersToPixels(roi.cellSize));
+            const N2 = N * N;
+
+            // Use cached stats or compute once (expensive N² loops)
+            if (!_debugStatsCache) {
+                console.log('[DEBUG] Computing stats (N²=' + N2 + ')...');
+                const t0 = performance.now();
+
+                let phiMin = Infinity, phiMax = 0;
+                let reachableCount = 0, roadPhiCount = 0;
+                let kMin = Infinity, kMax = 0, kRoadCount = 0;
+                for (let i = 0; i < N2; i++) {
+                    const k = Math.max(Kxx[i], Kyy[i]);
+                    if (phi_base[i] < PHI_LARGE) reachableCount++;
+                    if (k > 0.01) {
+                        kRoadCount++;
+                        if (k < kMin) kMin = k;
+                        if (k > kMax) kMax = k;
+                        if (phi_base[i] < PHI_LARGE) {
+                            roadPhiCount++;
+                            if (phi_base[i] < phiMin) phiMin = phi_base[i];
+                            if (phi_base[i] > phiMax) phiMax = phi_base[i];
+                        }
+                    }
+                }
+                const phiRange = (phiMax - phiMin) || 1;
+
+                let q1=0, q2=0, q3=0, q4=0;
+                for (let i = 0; i < N2; i++) {
+                    const k = Math.max(Kxx[i], Kyy[i]);
+                    if (k > 0.01 && phi_base[i] < PHI_LARGE) {
+                        const t = (phi_base[i] - phiMin) / phiRange;
+                        if (t < 0.25) q1++;
+                        else if (t < 0.5) q2++;
+                        else if (t < 0.75) q3++;
+                        else q4++;
+                    }
+                }
+
+                let hwSum=0, hwCount=0, citySum=0, cityCount=0;
+                for (let i = 0; i < N2; i++) {
+                    const k = Math.max(Kxx[i], Kyy[i]);
+                    if (k > 0.01 && phi_base[i] < PHI_LARGE) {
+                        if (roadTypeMap && roadTypeMap[i] === ROAD_TYPE_CITY) {
+                            citySum += phi_base[i]; cityCount++;
+                        } else {
+                            hwSum += phi_base[i]; hwCount++;
+                        }
+                    }
+                }
+                const hwAvg = hwCount > 0 ? hwSum / hwCount : 0;
+                const cityAvg = cityCount > 0 ? citySum / cityCount : 0;
+
+                _debugStatsCache = {
+                    phiMin, phiMax, phiRange, reachableCount, roadPhiCount,
+                    kMin, kMax, kRoadCount,
+                    q1, q2, q3, q4,
+                    hwAvg, hwCount, cityAvg, cityCount
+                };
+
+                const elapsed = performance.now() - t0;
+                console.log(`[DEBUG] Stats cached in ${elapsed.toFixed(1)}ms`);
+                console.log(`[DEBUG LAYER] phi_base (roads only): min=${phiMin.toFixed(0)} max=${phiMax.toFixed(0)} range=${phiRange.toFixed(0)} roadPhiCells=${roadPhiCount}`);
+                console.log(`[DEBUG LAYER] phi distribution: Q1(0-25%)=${q1} Q2(25-50%)=${q2} Q3(50-75%)=${q3} Q4(75-100%)=${q4}`);
+                console.log(`[DEBUG LAYER] phi by road type: highway avg=${hwAvg.toFixed(0)} (n=${hwCount}) | city avg=${cityAvg.toFixed(0)} (n=${cityCount})`);
+                console.log(`[DEBUG LAYER] K: min=${kMin.toFixed(3)} max=${kMax.toFixed(3)} roadCells=${kRoadCount}`);
+            }
+
+            const { phiMin, phiMax, phiRange, kMin, kMax, kRoadCount } = _debugStatsCache;
+
+            ctx.save();
+
+            // ─────────────────────────────────────────────────────────────────
+            // LAYER 0: K (Conductance) - Grayscale on roads only
+            // Uses roadCellIndices for O(roadCells) instead of O(N²)
+            // Loop cells shown in CYAN (if enabled) or dim cyan (if disabled)
+            // ─────────────────────────────────────────────────────────────────
+            if (debugLayer === 0) {
+                // Build loop cell set for O(1) lookup
+                const loopCellSet = new Set(loopCells || []);
+
+                for (const idx of conductiveCellIndices) {
+                    const fx = idx % N;
+                    const fy = Math.floor(idx / N);
+                    const k = Math.max(Kxx[idx], Kyy[idx]);
+
+                    const wx = fieldToWorldX(fx + 0.5);
+                    const wy = fieldToWorldY(fy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    // Check if this cell is part of the hardcoded loop
+                    if (loopCellSet.has(idx)) {
+                        // CYAN = loop cell (bright if enabled, dim if disabled)
+                        ctx.fillStyle = loopEnabled ? '#00ffff' : '#006666';
+                    } else {
+                        // Normalize K to 0-1 range for gradient (kMin to kMax)
+                        const kNorm = (k - kMin) / ((kMax - kMin) || 1);
+                        const gray = Math.floor(128 + kNorm * 127);  // 128-255 range
+                        ctx.fillStyle = `rgb(${gray},${gray},${gray})`;
+                    }
+                    ctx.fillRect(screen.x - cellPx/2, screen.y - cellPx/2, cellPx, cellPx);
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // LAYER 1: φ_base (Cost) - Blue→Yellow gradient on roads only
+            // Uses LOG SCALE to handle skewed distribution
+            // Blue = low cost (near sink), Yellow = high cost (far/penalized)
+            // ─────────────────────────────────────────────────────────────────
+            if (debugLayer === 1) {
+                // Use log scale for better gradient visibility
+                const logMin = Math.log(phiMin + 1);
+                const logMax = Math.log(phiMax + 1);
+                const logRange = (logMax - logMin) || 1;
+
+                for (const idx of conductiveCellIndices) {
+                    const fx = idx % N;
+                    const fy = Math.floor(idx / N);
+
+                    const wx = fieldToWorldX(fx + 0.5);
+                    const wy = fieldToWorldY(fy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    if (phi_base[idx] >= PHI_LARGE) {
+                        ctx.fillStyle = '#f00';  // Unreachable road (red = problem)
+                    } else {
+                        // Clip to Q1 range (where 95% of cells are) for better gradient
+                        // Q1 = 0-25% of range, so effective max = phiMin + 0.25 * phiRange
+                        const effectiveMax = phiMin + phiRange * 0.30;  // 30% for some headroom
+                        let t = (phi_base[idx] - phiMin) / (effectiveMax - phiMin);
+                        t = Math.min(1, Math.max(0, t));  // Clamp to [0,1]
+                        // High-contrast: blue → cyan → yellow → red
+                        let r, g, b;
+                        if (t < 0.33) {
+                            // Blue → cyan
+                            const s = t * 3;
+                            r = 0;
+                            g = Math.floor(s * 255);
+                            b = 255;
+                        } else if (t < 0.66) {
+                            // Cyan → yellow
+                            const s = (t - 0.33) * 3;
+                            r = Math.floor(s * 255);
+                            g = 255;
+                            b = Math.floor((1 - s) * 255);
+                        } else {
+                            // Yellow → red
+                            const s = (t - 0.66) * 3;
+                            r = 255;
+                            g = Math.floor((1 - s) * 255);
+                            b = 0;
+                        }
+                        ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    }
+                    ctx.fillRect(screen.x - cellPx/2, screen.y - cellPx/2, cellPx, cellPx);
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // LAYER 2: Graph connectivity - roads only
+            // Green = valid nextHop, Red = dead-end
+            // ─────────────────────────────────────────────────────────────────
+            if (debugLayer === 2) {
+                for (const idx of conductiveCellIndices) {
+                    const fx = idx % N;
+                    const fy = Math.floor(idx / N);
+
+                    const wx = fieldToWorldX(fx + 0.5);
+                    const wy = fieldToWorldY(fy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    if (G[idx] > 0.001) {
+                        ctx.fillStyle = '#0f0';  // Sink cell (bright green)
+                    } else if (nextHop[idx] >= 0) {
+                        ctx.fillStyle = '#2a2';  // Valid path (green)
+                    } else {
+                        ctx.fillStyle = '#f22';  // Dead-end (red)
+                    }
+                    ctx.fillRect(screen.x - cellPx/2, screen.y - cellPx/2, cellPx, cellPx);
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // LAYER 3: Road Type - Orange = city (2× cost), White = highway
+            // ─────────────────────────────────────────────────────────────────
+            if (debugLayer === 3) {
+                for (const idx of conductiveCellIndices) {
+                    const fx = idx % N;
+                    const fy = Math.floor(idx / N);
+
+                    const wx = fieldToWorldX(fx + 0.5);
+                    const wy = fieldToWorldY(fy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    if (roadTypeMap && roadTypeMap[idx] === ROAD_TYPE_CITY) {
+                        ctx.fillStyle = '#f80';  // City road (orange)
+                    } else {
+                        ctx.fillStyle = '#fff';  // Highway (white)
+                    }
+                    ctx.fillRect(screen.x - cellPx/2, screen.y - cellPx/2, cellPx, cellPx);
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // LAYER 4: Density (ρ) - Shows congestion buildup
+            // Green = empty, Yellow = moderate, Red = congested
+            // Only on road cells with K > 0
+            // ─────────────────────────────────────────────────────────────────
+            if (debugLayer === 4) {
+                // Find max density for normalization
+                let rhoMax = 0;
+                for (const idx of conductiveCellIndices) {
+                    const rho = rho_restricted[idx] + rho_cleared[idx];
+                    if (rho > rhoMax) rhoMax = rho;
+                }
+                // Use 50,000 kg as reference if no mass yet (RHO_CONGESTION_0)
+                const rhoRef = Math.max(rhoMax, 50000);
+
+                for (const idx of conductiveCellIndices) {
+                    const fx = idx % N;
+                    const fy = Math.floor(idx / N);
+
+                    const wx = fieldToWorldX(fx + 0.5);
+                    const wy = fieldToWorldY(fy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    const rho = rho_restricted[idx] + rho_cleared[idx];
+                    const t = Math.min(1, rho / rhoRef);
+
+                    // Green → Yellow → Red gradient
+                    let r, g, b;
+                    if (t < 0.5) {
+                        // Green → Yellow
+                        const s = t * 2;
+                        r = Math.floor(s * 255);
+                        g = 255;
+                        b = 0;
+                    } else {
+                        // Yellow → Red
+                        const s = (t - 0.5) * 2;
+                        r = 255;
+                        g = Math.floor((1 - s) * 255);
+                        b = 0;
+                    }
+                    ctx.fillStyle = `rgb(${r},${g},${b})`;
+                    ctx.fillRect(screen.x - cellPx/2, screen.y - cellPx/2, cellPx, cellPx);
+                }
+
+                // Log density stats
+                if (!_debugStatsCache?.rhoLogged) {
+                    console.log(`[DEBUG LAYER 4] Density: max=${rhoMax.toFixed(0)}kg, ref=${rhoRef.toFixed(0)}kg`);
+                    if (_debugStatsCache) _debugStatsCache.rhoLogged = true;
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // ALWAYS: Sources (S>0) - Cyan squares
+            // ─────────────────────────────────────────────────────────────────
+            ctx.fillStyle = 'rgba(0,255,255,1)';  // Cyan
+            const { sourceCellIndices } = debug;
+            for (const idx of sourceCellIndices) {
+                const fx = idx % N;
+                const fy = Math.floor(idx / N);
+
+                const wx = fieldToWorldX(fx + 0.5);
+                const wy = fieldToWorldY(fy + 0.5);
+                const screen = camera.worldToScreen(wx, wy);
+
+                const size = Math.max(cellPx, 6);
+                ctx.fillRect(screen.x - size/2, screen.y - size/2, size, size);
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // ALWAYS: Sinks (G>0) - Green circles
+            // ─────────────────────────────────────────────────────────────────
+            ctx.fillStyle = 'rgba(0,255,0,0.9)';
+            for (const idx of sinkCellIndices) {
+                const fy = Math.floor(idx / N);
+                const fx = idx % N;
+                const wx = fieldToWorldX(fx + 0.5);
+                const wy = fieldToWorldY(fy + 0.5);
+                const screen = camera.worldToScreen(wx, wy);
+
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, Math.max(cellPx/2, 3), 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // ALWAYS: Lot numbers - Red labels at lot centroids
+            // ─────────────────────────────────────────────────────────────────
+            const { regionMap, REGION_LOT, cellToLotIndex, lotToCellIndices, lotCount } = debug;
+            if (lotToCellIndices && lotCount > 0) {
+                ctx.fillStyle = '#ff0000';
+                ctx.font = 'bold 14px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                for (let lotIdx = 0; lotIdx < lotCount; lotIdx++) {
+                    const cells = lotToCellIndices[lotIdx];
+                    if (!cells || cells.length === 0) continue;
+
+                    // Compute centroid of lot cells
+                    let sumX = 0, sumY = 0;
+                    for (const idx of cells) {
+                        const fx = idx % N;
+                        const fy = Math.floor(idx / N);
+                        sumX += fx;
+                        sumY += fy;
+                    }
+                    const cx = sumX / cells.length;
+                    const cy = sumY / cells.length;
+
+                    const wx = fieldToWorldX(cx + 0.5);
+                    const wy = fieldToWorldY(cy + 0.5);
+                    const screen = camera.worldToScreen(wx, wy);
+
+                    // Draw lot number with background for visibility
+                    const text = `${lotIdx}`;
+                    const metrics = ctx.measureText(text);
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                    ctx.fillRect(screen.x - metrics.width/2 - 3, screen.y - 8, metrics.width + 6, 16);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillText(text, screen.x, screen.y);
+                }
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+            }
+
+            // ─────────────────────────────────────────────────────────────────
+            // HUD: Show current layer name
+            // ─────────────────────────────────────────────────────────────────
+            ctx.fillStyle = '#fff';
+            ctx.font = '14px monospace';
+            ctx.fillText(`[D] Layer ${debugLayer}: ${DEBUG_LAYER_NAMES[debugLayer]} (TAB to cycle)`, 10, 20);
+
+            // Show loop routing stats for Layer 0
+            if (debugLayer === 0) {
+                const loopCount = loopCells ? loopCells.length : 0;
+                ctx.fillStyle = loopEnabled ? '#00ffff' : '#666666';
+                ctx.fillText(`Loop routing: ${loopCount} cells, ${loopEnabled ? 'ENABLED' : 'DISABLED'} (cyan)`, 10, 38);
+                if (loopCount === 0) {
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillText(`WARNING: No loop cells initialized!`, 10, 56);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function toggleCoordPicker() {
+            coordPickerActive = !coordPickerActive;
+            document.getElementById('coord-picker').style.display = coordPickerActive ? 'block' : 'none';
+            canvas.style.cursor = coordPickerActive ? 'crosshair' : 'grab';
+            console.log('[CoordPicker]', coordPickerActive ? 'ACTIVE - click to collect points' : 'INACTIVE');
+        }
+
+        // =====================================================================
+        // VIEW CAPTURE (V key) - for director script narrative beats
+        // =====================================================================
+        let capturedViews = [];
+
+        function captureView() {
+            const view = {
+                x: Math.round(camera.centerWorld.x),
+                y: Math.round(camera.centerWorld.y),
+                zoom: parseFloat(camera.zoom.toFixed(6)),
+                zoomState: currentZoomState,
+                simHour: time.currentHour,
+            };
+            capturedViews.push(view);
+
+            // Format for director script
+            const beat = `{ x: ${view.x}, y: ${view.y}, zoom: ${view.zoom} }`;
+
+            console.log('─'.repeat(50));
+            console.log('[VIEW CAPTURED]');
+            console.log(`  Center: (${view.x}, ${view.y})`);
+            console.log(`  Zoom: ${view.zoom} px/m`);
+            console.log(`  State: ${view.zoomState}`);
+            console.log(`  Sim Hour: ${view.simHour}:00`);
+            console.log('');
+            console.log('  Director beat:');
+            console.log(`  ${beat}`);
+            console.log('─'.repeat(50));
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(beat).then(() => {
+                console.log('[VIEW] Copied to clipboard!');
+            }).catch(() => {
+                console.log('[VIEW] Clipboard write failed - copy from console');
+            });
+
+            return view;
+        }
+
+        function addCoordinate(worldX, worldY) {
+            collectedCoords.push({ x: worldX, y: worldY });
+            updateCoordList();
+        }
+
+        function updateCoordList() {
+            const listEl = document.getElementById('coord-list');
+            if (collectedCoords.length === 0) {
+                listEl.innerHTML = '<span style="color: #666;">No points collected</span>';
+                return;
+            }
+            listEl.innerHTML = collectedCoords.map((c, i) =>
+                `${i + 1}. x: ${c.x.toFixed(1)}, y: ${c.y.toFixed(1)}`
+            ).join('<br>');
+        }
+
+        function copyCoords() {
+            if (collectedCoords.length === 0) {
+                alert('No coordinates collected');
+                return;
+            }
+            const text = JSON.stringify(collectedCoords, null, 2);
+            navigator.clipboard.writeText(text).then(() => {
+                console.log('[CoordPicker] Copied to clipboard:', text);
+                alert('Coordinates copied to clipboard!');
+            });
+        }
+
+        function clearCoords() {
+            collectedCoords = [];
+            updateCoordList();
+        }
+
+        function drawCoordMarkers(ctx, camera) {
+            if (!coordPickerActive || collectedCoords.length === 0) return;
+
+            ctx.save();
+            for (let i = 0; i < collectedCoords.length; i++) {
+                const c = collectedCoords[i];
+                const screen = camera.worldToScreen(c.x, c.y);
+
+                // Draw marker
+                ctx.fillStyle = '#f00';
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, 6, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw label
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px monospace';
+                ctx.fillText(`${i + 1}`, screen.x + 10, screen.y + 4);
+            }
+            ctx.restore();
+        }
+
+        /**
+         * Get authority for current state.
+         * Only MACRO_CIEN and LOCAL_FIELD compute truth.
+         */
+        function getAuthority(state) {
+            if (state === ZoomState.MACRO_CIEN) return 'CIEN';
+            if (state === ZoomState.LOCAL_FIELD) return 'FIELD';
+            return null;  // Transitions have NO authority
+        }
+
+        /**
+         * Update zoom state based on camera zoom level.
+         * Returns true if state changed.
+         */
+        function updateZoomState(zoom, now) {
+            const prevState = currentZoomState;
+
+            switch (currentZoomState) {
+                case ZoomState.MACRO_CIEN:
+                    // Only transition to local when zoom reaches Z_LOCAL threshold
+                    // Stay in macro for the entire range below Z_LOCAL
+                    if (zoom >= Z_LOCAL) {
+                        currentZoomState = ZoomState.TRANSITION_IN;
+                        transitionStartTime = now;
+                        onTransitionInStart();
+                    }
+                    break;
+
+                case ZoomState.TRANSITION_IN:
+                    transitionProgress = Math.min(1, (now - transitionStartTime) / TRANSITION_DURATION_MS);
+                    if (zoom < Z_MACRO) {
+                        // User zoomed back out during transition
+                        currentZoomState = ZoomState.TRANSITION_OUT;
+                        transitionStartTime = now;
+                        transitionProgress = 0;
+                    } else if (zoom >= Z_LOCAL || transitionProgress >= 1) {
+                        // Transition complete
+                        currentZoomState = ZoomState.LOCAL_FIELD;
+                        transitionProgress = 1;
+                        onLocalFieldStart();
+                    }
+                    break;
+
+                case ZoomState.LOCAL_FIELD:
+                    if (zoom < Z_MACRO) {
+                        // Start transition out
+                        currentZoomState = ZoomState.TRANSITION_OUT;
+                        transitionStartTime = now;
+                        onTransitionOutStart();
+                    } else if (zoom < Z_LOCAL && zoom >= Z_MACRO) {
+                        // In the transition zone but still local
+                        // Don't change state until fully zoomed out
+                    }
+                    break;
+
+                case ZoomState.TRANSITION_OUT:
+                    transitionProgress = Math.min(1, (now - transitionStartTime) / TRANSITION_DURATION_MS);
+                    if (zoom >= Z_LOCAL) {
+                        // User zoomed back in during transition
+                        currentZoomState = ZoomState.TRANSITION_IN;
+                        transitionStartTime = now;
+                        transitionProgress = 0;
+                    } else if (transitionProgress >= 1) {
+                        // Transition complete
+                        currentZoomState = ZoomState.MACRO_CIEN;
+                        transitionProgress = 0;
+                        onMacroCienStart();
+                    }
+                    break;
+            }
+
+            return prevState !== currentZoomState;
+        }
+
+        // =====================================================================
+        // STATE TRANSITION HANDLERS
+        // =====================================================================
+
+        function onTransitionInStart() {
+            console.log('[ZoomState] TRANSITION_IN started');
+            // CIEN frozen, FIELD initialized but not running
+            // No mass motion during transition
+        }
+
+        function onLocalFieldStart() {
+            console.log('[ZoomState] LOCAL_FIELD started - FIELD has authority');
+            // FIELD clock starts, density evolves
+            // FIELD always starts empty (ρ = 0)
+            initFieldFromCien();
+        }
+
+        function onTransitionOutStart() {
+            console.log('[ZoomState] TRANSITION_OUT started');
+            // FIELD paused, visual fade
+        }
+
+        function onMacroCienStart() {
+            console.log('[ZoomState] MACRO_CIEN started - CIEN has authority');
+            // CIEN authoritative, FIELD dormant but stays attached (phi_base precomputed)
+            // DO NOT detach - keep phi_base in memory for instant zoom-in
+        }
+
+        /**
+         * Initialize FIELD from CIEN bundle.
+         * FIELD always starts empty - viewer watches consequences form.
+         */
+        function initFieldFromCien() {
+            if (!bundleLoaded) return;
+
+            // Skip if already precomputed at startup
+            if (fieldAttached && fieldInitialized) {
+                console.log('[Handoff] FIELD already initialized (precomputed at startup)');
+                console.log('[Handoff] Inflow schedule:', getHourlyInflow(time.currentHour).total_kg.toFixed(0), 'kg/hr');
+                console.log('[Handoff] Capacity:', getHourlyCapacity(time.currentHour).toFixed(0), 'kg/hr');
+                return;
+            }
+
+            console.log('[Handoff] Initializing FIELD from CIEN');
+            console.log('[Handoff] FIELD starts with ρ = 0 (empty)');
+            console.log('[Handoff] Inflow schedule:', getHourlyInflow(time.currentHour).total_kg.toFixed(0), 'kg/hr');
+            console.log('[Handoff] Capacity:', getHourlyCapacity(time.currentHour).toFixed(0), 'kg/hr');
+
+            // Attach overlay (which initializes field to empty)
+            if (!fieldAttached) {
+                ReynosaEastOverlay.onAttach(createRendererContext());
+                // Enable FIELD-driven particles (velocity advected, not geometric polylines)
+                setLocalScenario({ renderMode: 'particles' });
+                fieldAttached = true;
+                fieldInitialized = true;
+            }
+        }
+
+        // =====================================================================
+        // MACRO SCENARIO INTERPOLATION STATE
+        // =====================================================================
+
+        let macroAlpha = 0;                  // Current α ∈ [0, 1] (0=baseline, 1=interserrana)
+        let macroTargetAlpha = 0;            // Target α for smooth ramp
+        const MACRO_RAMP_DURATION = 1500;    // ms for smooth transition
+        let macroRampStartTime = null;
+        let macroRampStartAlpha = 0;
+        let interserranaBundleLoaded = false; // True if dual-bundle mode
+
+        // =====================================================================
+        // TWIN SPAN SCENARIO STATE (independent of Interserrana)
+        // =====================================================================
+
+        let twinSpanAlpha = 0;
+        let twinSpanTargetAlpha = 0;
+        let twinSpanRampStartTime = null;
+        let twinSpanRampStartAlpha = 0;
+        const TWIN_SPAN_RAMP_DURATION = 800;
+
+        // Twin span geometry (world meters, relative to PHARR origin)
+        // Single polyline: approach start -> junction -> bridge end
+        const TWIN_SPAN_POLYLINE = [
+            { x: -363.6711606637666, y: -2694.9719926976927 },   // approach start (south)
+            { x: -481.6711606637666, y: -2583.9719926976927 },   // junction
+            { x: 236.39229354591248, y: 2212.2113236596624 }     // bridge end (north)
+        ];
+        // Split for addSegment compatibility
+        const TWIN_SPAN_BRIDGE = [TWIN_SPAN_POLYLINE[1], TWIN_SPAN_POLYLINE[2]];
+        const TWIN_SPAN_APPROACH = [TWIN_SPAN_POLYLINE[0], TWIN_SPAN_POLYLINE[1]];
+        const TWIN_SPAN_BRIDGE_ID = 'twin_span_bridge';
+        const TWIN_SPAN_APPROACH_ID = 'twin_span_approach';
+
+        // =====================================================================
+        // BUNDLE & DATA
+        // =====================================================================
+
+        const bundleStatus = document.getElementById('bundle-status');
+        const bundleInfo = document.getElementById('bundle-info');
+        let bundleLoaded = false;
+        let scenarioAdapter = null;
+        let geometryProvider = null;
+        let rawBundle = null;
+        let segmentWeights = new Map();
+        let fieldAttached = false;
+        let fieldInitialized = false;
+        let macroParticles = null;
+        let canvasBgDark = true;  // Dark mode default
+
+        function computeSegmentWeights(bundle) {
+            // Single-bundle mode: use canonical extractor (linear max-normalized).
+            // No POE hardcode: aggregate across all POEs.
+            segmentWeights = extractWeights(bundle, null, null);
+            console.log('[CIEN] Segment weights computed (canonical):', segmentWeights.size, 'segments');
+        }
+
+        /**
+         * Update twin span visual segments and capacity.
+         * @param {number} alpha - 0 = off, 1 = fully active
+         */
+        function updateTwinSpanState(alpha) {
+            // MACRO view: update particle layer segments
+            if (macroParticles) {
+                if (alpha > 0.01) {
+                    // Add/update twin span segments with 50% of traffic
+                    const weight = 0.5 * alpha;
+                    if (!macroParticles.segments.has(TWIN_SPAN_BRIDGE_ID)) {
+                        macroParticles.addSegment(TWIN_SPAN_BRIDGE_ID, TWIN_SPAN_BRIDGE, weight);
+                        macroParticles.addSegment(TWIN_SPAN_APPROACH_ID, TWIN_SPAN_APPROACH, weight);
+                        console.log('[Twin Span] Segments added');
+                    } else {
+                        macroParticles.segments.get(TWIN_SPAN_BRIDGE_ID).weight = weight;
+                        macroParticles.segments.get(TWIN_SPAN_APPROACH_ID).weight = weight;
+                    }
+                    // Scale original PHARR approach segments to 50%
+                    scalePharrSegments(1 - 0.5 * alpha);
+                } else {
+                    // Remove twin span segments when fully off
+                    macroParticles.removeSegment(TWIN_SPAN_BRIDGE_ID);
+                    macroParticles.removeSegment(TWIN_SPAN_APPROACH_ID);
+                    // Restore original PHARR approach weights
+                    scalePharrSegments(1.0);
+                }
+            }
+
+            // LOCAL view: update road rendering in reynosaOverlay
+            setTwinSpanSegments([TWIN_SPAN_BRIDGE, TWIN_SPAN_APPROACH], alpha);
+
+            // Capacity: 1x at alpha=0, 2x at alpha=1
+            setTwinSpanCapacityMultiplier(1 + alpha);
+        }
+
+        /**
+         * Scale PHARR approach segment weights for 50/50 traffic split.
+         */
+        function scalePharrSegments(factor) {
+            if (!macroParticles) return;
+            const pharr = getPharrWorldCoords();
+            for (const [id, seg] of macroParticles.segments) {
+                if (id.startsWith('twin_span')) continue;
+                const last = seg.polyline[seg.polyline.length - 1];
+                const dist = Math.hypot(last.x - pharr.x, last.y - pharr.y);
+                if (dist < 3000) {
+                    // Store original weight if not already stored
+                    if (seg._origWeight === undefined) {
+                        seg._origWeight = seg.weight;
+                    }
+                    seg.weight = seg._origWeight * factor;
+                }
+            }
+        }
+
+        // Reynosa city segments (merged with CIEN for FIELD view)
+        let reynosaCitySegments = [];
+
+        // Cached segment data for LOCAL_FIELD rendering (precomputed bboxes)
+        let _cienSegmentsWithBbox = null;
+        let _citySegmentsTransformed = null;
+
+        async function loadBundleFromFile() {
+            try {
+                bundleStatus.className = 'loading';
+                bundleStatus.textContent = 'Loading bundles...';
+
+                // Load baseline bundle (required) - cache-bust to ensure fresh data
+                const cacheBust = '?t=' + Date.now();
+                const baselineResponse = await fetch('./bundle_baseline.json' + cacheBust);
+                if (!baselineResponse.ok) throw new Error(`Baseline: HTTP ${baselineResponse.status}`);
+                const baselineBundle = await baselineResponse.json();
+
+                // Try to load interserrana bundle (optional)
+                let interserranaBundle = null;
+                try {
+                    const interserranaResponse = await fetch('./interserrana_bundle.json' + cacheBust);
+                    if (interserranaResponse.ok) {
+                        interserranaBundle = await interserranaResponse.json();
+                        interserranaBundleLoaded = true;
+                        console.log('[Bundle] Interserrana bundle loaded');
+                    }
+                } catch (e) {
+                    console.log('[Bundle] No interserrana bundle (single-scenario mode)');
+                }
+
+                // Load Reynosa city network (for FIELD micro view)
+                try {
+                    const cityResponse = await fetch('./reynosa_city_bundle.json' + cacheBust);
+                    if (cityResponse.ok) {
+                        const cityBundle = await cityResponse.json();
+                        reynosaCitySegments = cityBundle.geometry?.segments_in_roi || [];
+                        console.log('[Bundle] Reynosa city network loaded:', reynosaCitySegments.length, 'segments');
+                    }
+                } catch (e) {
+                    console.log('[Bundle] No Reynosa city bundle');
+                }
+
+                rawBundle = baselineBundle;
+
+                // Load scenario pair if both bundles available (sets up hasScenarioPair())
+                if (interserranaBundle) {
+                    loadScenarioPairBundles(baselineBundle, interserranaBundle);
+                } else {
+                    loadBundle(baselineBundle);
+                }
+
+                bundleLoaded = true;
+                if (interserranaBundleLoaded) {
+                    bundleStatus.className = 'loaded';
+                    bundleStatus.textContent = 'Bundles: baseline + interserrana';
+                    // Load weight maps for interpolation
+                    // No POE hardcode: aggregate across all POEs.
+                    loadWeightMaps(baselineBundle, interserranaBundle, { hs2Filter: null, poeFilter: null });
+                    // Enable scenario toggle button
+                    document.getElementById('btn-interserrana').disabled = false;
+
+                    // Create interserrana scenario adapter for FIELD overlay
+                    // Must match bundle structure: bundle.inflow.hourly_kg[h], bundle.capacity.hourly_kg[h]
+                    const interserranaScenarioAdapter = {
+                        getPharrInflow(hour) {
+                            const h = Math.floor(hour) % 24;
+                            const total = interserranaBundle.inflow?.hourly_kg?.[h] || 0;
+                            const byHs2 = interserranaBundle.inflow?.hourly_kg_by_hs2?.[h];
+                            return { hs2_kg: byHs2 || { "99": total } };
+                        },
+                        getPharrGateCapacity(hour) {
+                            const h = Math.floor(hour) % 24;
+                            const cap = interserranaBundle.capacity?.hourly_kg?.[h] || 0;
+                            return { cap_kg_per_hour: cap };
+                        },
+                    };
+                    setInterserranaScenario(interserranaScenarioAdapter);
+                    console.log('[Scenario] Interserrana scenario adapter set for FIELD overlay');
+                } else {
+                    bundleStatus.className = 'loaded';
+                    bundleStatus.textContent = 'Bundle: ' + baselineBundle.metadata.scenario_hash;
+                    computeSegmentWeights(baselineBundle);
+                }
+
+                const meta = getMetadata();
+                const segments = getSegmentsInROI();
+                const poeCount = Object.keys(baselineBundle.segment_load_kg_by_poe_hs2 || {}).length;
+                bundleInfo.innerHTML = `
+                    Layer: ${meta.layer}<br>
+                    Segments: ${segments.length}<br>
+                    POEs: ${poeCount}<br>
+                    Mode: ${interserranaBundleLoaded ? 'Dual-scenario' : 'Single-scenario'}<br>
+                    Generated: ${new Date(meta.generated_at).toLocaleString()}
+                `;
+
+                scenarioAdapter = createScenarioAdapter();
+                geometryProvider = createFieldGeometryProvider();
+
+                // Initialize macro particle layer
+                macroParticles = new MacroParticleLayer({
+                    maxParticles: 20000,
+                    targetAvgLifeSec: 6,
+                    spawnEpsilon: 1e-6,
+                    minSpeed: 5000,
+                    maxSpeed: 50000,
+                });
+
+                // Populate with segments
+                for (const seg of segments) {
+                    const weight = getSegmentWeight(seg.segment_id);
+                    macroParticles.addSegment(
+                        seg.segment_id,
+                        seg.points.map(p => ({ x: p.x, y: p.y })),
+                        weight
+                    );
+                }
+
+                // Extract per-segment POE distributions for EACH scenario separately
+                // (they represent different realities, not blendable)
+                const baselinePoeDistribution = getSegmentPoeDistribution(baselineBundle);
+                const interserranaPoeDistribution = interserranaBundle
+                    ? getSegmentPoeDistribution(interserranaBundle)
+                    : null;
+                macroParticles.setScenarioPoeDistributions(baselinePoeDistribution, interserranaPoeDistribution);
+
+                // Immediately populate particles so they're visible on first frame
+                macroParticles.populateImmediate();
+
+                // Log active vs empty segments
+                let nonZero = 0, zero = 0;
+                for (const seg of segments) {
+                    const w = getSegmentWeight(seg.segment_id);
+                    if (w > 0) nonZero++; else zero++;
+                }
+                console.log(`[MacroParticles] segments total=${segments.length}, active=${nonZero}, empty=${zero}`);
+
+                // Log top-weight segments
+                const top = segments
+                    .map(s => ({ id: s.segment_id, w: getSegmentWeight(s.segment_id) }))
+                    .sort((a, b) => b.w - a.w)
+                    .slice(0, 10);
+                console.table(top);
+
+                console.log('[Bundle] Loaded, segments:', segments.length);
+                console.log('[MacroParticles] Initialized with', segments.length, 'segments');
+
+                // Precompute bounding boxes for CIEN segments (avoid N² bbox calc per frame)
+                _cienSegmentsWithBbox = segments.map(seg => {
+                    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                    for (const pt of seg.points) {
+                        if (pt.x < minX) minX = pt.x;
+                        if (pt.x > maxX) maxX = pt.x;
+                        if (pt.y < minY) minY = pt.y;
+                        if (pt.y > maxY) maxY = pt.y;
+                    }
+                    return { seg, minX, maxX, minY, maxY };
+                });
+                console.log('[LOCAL] CIEN segments with bbox cached:', _cienSegmentsWithBbox.length);
+
+                // Pre-transform city segments to world coords (avoid latLonToWorld per frame)
+                _citySegmentsTransformed = reynosaCitySegments.map(seg => {
+                    if (!seg.geometry_coordinates || seg.geometry_coordinates.length < 2) return null;
+                    const points = seg.geometry_coordinates.map(([lat, lon]) => latLonToWorld(lat, lon));
+                    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                    for (const pt of points) {
+                        if (pt.x < minX) minX = pt.x;
+                        if (pt.x > maxX) maxX = pt.x;
+                        if (pt.y < minY) minY = pt.y;
+                        if (pt.y > maxY) maxY = pt.y;
+                    }
+                    return { points, minX, maxX, minY, maxY };
+                }).filter(Boolean);
+                console.log('[LOCAL] City segments transformed and cached:', _citySegmentsTransformed.length);
+
+                // PRECOMPUTE: Initialize field physics at startup for smooth zoom-in
+                const precomputeStart = performance.now();
+                await ReynosaEastOverlay.onAttach(createRendererContext());
+                // Pass city segments to overlay so it can draw them on top of parks
+                ReynosaEastOverlay.setCitySegments(_citySegmentsTransformed);
+                setLocalScenario({ renderMode: 'particles' });
+                fieldAttached = true;
+                fieldInitialized = true;
+                const precomputeTime = performance.now() - precomputeStart;
+                console.log('[Precompute] FIELD ready in', precomputeTime.toFixed(0), 'ms');
+
+            } catch (err) {
+                bundleStatus.className = 'error';
+                bundleStatus.textContent = 'Error: ' + err.message;
+                console.error('[Bundle] Failed:', err);
+            }
+        }
+
+        function createRendererContext() {
+            if (!geometryProvider) {
+                return { geometry: null, scenario: scenarioAdapter };
+            }
+
+            // Get CIEN segments
+            const cienSegments = geometryProvider.getRoadSegments();
+
+            // Transform and merge Reynosa city segments
+            const citySegmentsTransformed = reynosaCitySegments.map(seg => ({
+                id: seg.segment_id,
+                points: seg.geometry_coordinates.map(([lat, lon]) => latLonToWorld(lat, lon)),
+            }));
+
+            // Merge both segment sets for FIELD view
+            const allSegments = [...cienSegments, ...citySegmentsTransformed];
+            console.log('[Geometry] CIEN segments:', cienSegments.length, '+ City segments:', citySegmentsTransformed.length, '= Total:', allSegments.length);
+
+            return {
+                geometry: {
+                    worldBounds: geometryProvider.getWorldBounds(),
+                    poePoints: { PHARR: getPharrWorldCoords() },
+                    roadSegments: allSegments,
+                },
+                scenario: scenarioAdapter,
+            };
+        }
+
+        // =====================================================================
+        // CAMERA
+        // =====================================================================
+
+        class Camera {
+            constructor(w, h) {
+                this.canvasWidth = w;
+                this.canvasHeight = h;
+                this.centerWorld = { x: 9880, y: 382686 };
+                this.zoom = 0.00043;  // Start zoomed out (MACRO)
+                this._updateViewport();
+            }
+
+            _updateViewport() {
+                const halfW = (this.canvasWidth / 2) / this.zoom;
+                const halfH = (this.canvasHeight / 2) / this.zoom;
+                this.viewportWorld = {
+                    minX: this.centerWorld.x - halfW,
+                    maxX: this.centerWorld.x + halfW,
+                    minY: this.centerWorld.y - halfH,
+                    maxY: this.centerWorld.y + halfH,
+                };
+            }
+
+            worldToScreen(wx, wy) {
+                return {
+                    x: this.canvasWidth / 2 + (wx - this.centerWorld.x) * this.zoom,
+                    y: this.canvasHeight / 2 - (wy - this.centerWorld.y) * this.zoom,
+                };
+            }
+
+            screenToWorld(sx, sy) {
+                return {
+                    x: this.centerWorld.x + (sx - this.canvasWidth / 2) / this.zoom,
+                    y: this.centerWorld.y - (sy - this.canvasHeight / 2) / this.zoom,
+                };
+            }
+
+            metersToPixels(m) { return m * this.zoom; }
+
+            pan(dx, dy) {
+                this.centerWorld.x -= dx / this.zoom;
+                this.centerWorld.y += dy / this.zoom;
+                this._updateViewport();
+            }
+
+            setZoom(z) {
+                this.zoom = Math.max(0.0002, Math.min(1.0, z));
+                this._updateViewport();
+            }
+
+            zoomAt(factor, sx, sy) {
+                const before = this.screenToWorld(sx, sy);
+                this.zoom *= factor;
+                this.zoom = Math.max(0.0002, Math.min(1.0, this.zoom));
+                this._updateViewport();
+                const after = this.screenToWorld(sx, sy);
+                this.centerWorld.x += before.x - after.x;
+                this.centerWorld.y += before.y - after.y;
+                this._updateViewport();
+            }
+
+            // Smooth zoom to target
+            zoomTo(targetZoom, duration = 500) {
+                // Implemented via animation in frame loop
+            }
+
+            focusMacro() {
+                // Center on network centroid, zoomed out to see corridors
+                this.centerWorld = { x: 0, y: 80000 };  // Slightly north
+                this.zoom = 0.0003;  // Zoomed out for macro view
+                this._updateViewport();
+            }
+
+            focusLocal() {
+                // Center on east corridor injection area
+                this.centerWorld = { x: -8518, y: -5971 };
+                this.zoom = 0.044355;
+                this._updateViewport();
+            }
+        }
+
+        // =====================================================================
+        // TIME
+        // =====================================================================
+
+        class SimTime {
+            constructor() {
+                this.simTimeSeconds = 8 * 3600;
+                this.paused = false;
+                // R key cycles: 0=normal, 1=real-time(1:1), 2=5x normal
+                this.speedMode = 0;
+                this.speedModes = [
+                    { name: 'NORMAL', mult: 1.0 },
+                    { name: 'REAL-TIME', mult: null },    // null = use 1.0 (real-time)
+                    { name: '5x', mult: 5.0 },
+                ];
+            }
+
+            get currentHour() { return Math.floor(this.simTimeSeconds / 3600) % 24; }
+            get simTimeHours() { return this.simTimeSeconds / 3600; }
+
+            // Use authoritative SIM_TIME_SCALE from FIELD, multiplied by speed mode
+            // null mult = real-time (1:1), otherwise mult * SIM_TIME_SCALE
+            get timeScale() {
+                const mode = this.speedModes[this.speedMode];
+                return mode.mult !== null ? mode.mult * ReynosaEastOverlay.SIM_TIME_SCALE : 1.0;
+            }
+
+            get speedModeName() {
+                return this.speedModes[this.speedMode].name;
+            }
+
+            tick(dtReal) {
+                // Advance sim time using authoritative scale
+                // dtReal is in milliseconds
+                if (!this.paused) {
+                    this.simTimeSeconds += (dtReal / 1000) * this.timeScale;
+                }
+            }
+
+            setHour(h) { this.simTimeSeconds = h * 3600; }
+            togglePause() { this.paused = !this.paused; }
+            cycleSpeedMode() {
+                this.speedMode = (this.speedMode + 1) % this.speedModes.length;
+                return this.speedModes[this.speedMode];
+            }
+        }
+
+        // =====================================================================
+        // SETUP
+        // =====================================================================
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const wrapper = document.getElementById('canvas-wrapper');
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
+
+        // WebGL canvas overlay for GPU-accelerated particle rendering
+        const glCanvas = document.createElement('canvas');
+        glCanvas.id = 'gl-canvas';
+        glCanvas.width = canvas.width;
+        glCanvas.height = canvas.height;
+        glCanvas.style.position = 'absolute';
+        glCanvas.style.left = '0';
+        glCanvas.style.top = '0';
+        glCanvas.style.pointerEvents = 'none';  // Pass clicks through to main canvas
+        wrapper.appendChild(glCanvas);
+
+        // Initialize WebGL particle renderer
+        const glRenderer = new ParticleRenderer(glCanvas);
+        if (glRenderer.isAvailable()) {
+            setWebGLRenderer(glRenderer);
+            console.log('[INIT] WebGL particle renderer enabled');
+        } else {
+            console.warn('[INIT] WebGL not available, using Canvas 2D fallback');
+        }
+
+        const camera = new Camera(canvas.width, canvas.height);
+        const time = new SimTime();
+
+        // =====================================================================
+        // DIRECTOR
+        // =====================================================================
+
+        const directorStatus = document.getElementById('director-status');
+        const director = new Director(camera, time, {
+            getPharrCoords: () => bundleLoaded ? getPharrWorldCoords() : { x: 0, y: 6000 },
+            onPlay: () => {
+                document.getElementById('btn-director-play').textContent = 'Pause';
+                directorStatus.textContent = 'Playing...';
+                directorStatus.style.color = '#4f4';
+            },
+            onPause: () => {
+                document.getElementById('btn-director-play').textContent = 'Play';
+                directorStatus.textContent = 'Paused';
+                directorStatus.style.color = '#ff0';
+            },
+            onStop: () => {
+                document.getElementById('btn-director-play').textContent = 'Play';
+                directorStatus.textContent = 'Ready';
+                directorStatus.style.color = '#666';
+            },
+            onInstructionStart: (instr, idx) => {
+                const total = director.script.length;
+                directorStatus.textContent = `[${idx + 1}/${total}] ${instr.type}`;
+            },
+        });
+
+        // Load default script
+        director.load(Scripts.intro());
+
+        function resize() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            glCanvas.width = canvas.width;
+            glCanvas.height = canvas.height;
+            if (glRenderer.isAvailable()) {
+                glRenderer.resize(canvas.width, canvas.height);
+            }
+            camera.canvasWidth = canvas.width;
+            camera.canvasHeight = canvas.height;
+            camera._updateViewport();
+        }
+        window.addEventListener('resize', resize);
+
+        // =====================================================================
+        // CONTROLS
+        // =====================================================================
+
+        const hourSlider = document.getElementById('hour-slider');
+        const hourValue = document.getElementById('hour-value');
+        const zoomSlider = document.getElementById('zoom-slider');
+
+        hourSlider.addEventListener('input', () => {
+            time.setHour(parseInt(hourSlider.value));
+            hourValue.textContent = hourSlider.value.padStart(2, '0') + ':00';
+        });
+
+        // Display authoritative time scale (no longer editable)
+        document.getElementById('timescale-value').textContent =
+            `${ReynosaEastOverlay.SIM_TIME_SCALE.toFixed(0)} sim-s/real-s`;
+
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            time.togglePause();
+            document.getElementById('btn-pause').textContent = time.paused ? 'Resume' : 'Pause';
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            time.simTimeSeconds = 8 * 3600;
+            if (fieldAttached) {
+                ReynosaEastOverlay.onDetach();
+                fieldAttached = false;
+                fieldInitialized = false;
+            }
+            if (currentZoomState === ZoomState.LOCAL_FIELD) {
+                initFieldFromCien();
+            }
+        });
+
+        document.getElementById('btn-macro').addEventListener('click', () => {
+            camera.focusMacro();
+            updateZoomSlider();
+        });
+
+        document.getElementById('btn-local').addEventListener('click', () => {
+            camera.focusLocal();
+            updateZoomSlider();
+        });
+
+        // Clear debug cache button
+        document.getElementById('btn-clear-debug-cache').addEventListener('click', clearDebugCache);
+
+        // Interserrana toggle button
+        const btnInterserrana = document.getElementById('btn-interserrana');
+        btnInterserrana.addEventListener('click', () => {
+            if (!interserranaBundleLoaded) return;
+
+            // Toggle target
+            macroTargetAlpha = macroTargetAlpha === 0 ? 1 : 0;
+            macroRampStartTime = performance.now();
+            macroRampStartAlpha = macroAlpha;
+
+            // Update button state
+            btnInterserrana.classList.toggle('active', macroTargetAlpha === 1);
+            btnInterserrana.textContent = macroTargetAlpha === 1 ? '← Baseline' : 'Interserrana →';
+
+            console.log('[Scenario] Target α:', macroTargetAlpha);
+        });
+
+        // Twin Span toggle button (independent of Interserrana)
+        const btnTwinSpan = document.getElementById('btn-twin-span');
+        btnTwinSpan.addEventListener('click', () => {
+            twinSpanTargetAlpha = twinSpanTargetAlpha === 0 ? 1 : 0;
+            twinSpanRampStartTime = performance.now();
+            twinSpanRampStartAlpha = twinSpanAlpha;
+
+            btnTwinSpan.classList.toggle('active', twinSpanTargetAlpha === 1);
+            btnTwinSpan.textContent = twinSpanTargetAlpha === 1 ? '← Single Span' : 'Twin Span →';
+
+            console.log('[Twin Span] Target α:', twinSpanTargetAlpha);
+        });
+
+        // INOVUS toggle button (FASE 1 & FASE 2 phases as lots)
+        const btnInovus = document.getElementById('btn-inovus');
+        btnInovus.addEventListener('click', async () => {
+            const result = await ReynosaEastOverlay.togglePhasesAsLots();
+            const isActive = ReynosaEastOverlay.isPhasesAsLots();
+            btnInovus.classList.toggle('active', isActive);
+            btnInovus.textContent = isActive ? '← INOVUS OFF' : 'INOVUS →';
+        });
+
+        // Headless A/B comparison test button
+        const btnHeadlessTest = document.getElementById('btn-headless-test');
+        const headlessStatus = document.getElementById('headless-status');
+
+        // Config
+        const DAYS = 7;
+        const HOUR = 3600;
+        const TEST_DURATION = DAYS * 24 * HOUR;  // 7 days
+        const WARMUP = 6 * HOUR;  // 6 hour warmup for mean calculation
+        const SAMPLE_INTERVAL = 300;  // 5 minutes
+        const DT = 1.0;
+        const CHUNK_SIZE = 3600;  // 1 hour per chunk (prevents browser freeze)
+        const TRUCK_KG = 9000;
+        const MASS_TOL = 10000;
+
+        // Run single scenario (async, chunked)
+        async function runScenario(name, applyScenario) {
+            headlessStatus.textContent = `${name}: Applying scenario...`;
+            await applyScenario();
+            reset();
+            setSimTime(0);
+
+            const startMetrics = getMetricsPhase1();
+            const samples = [];
+            const violations = [];
+            let prev = null;
+            let simTime = 0;
+            let nextSample = 0;
+
+            while (simTime < TEST_DURATION) {
+                // Run chunk
+                const chunkEnd = Math.min(simTime + CHUNK_SIZE, TEST_DURATION);
+                while (simTime < chunkEnd) {
+                    setSimTime(simTime);
+                    step(DT);
+                    simTime += DT;
+
+                    if (simTime >= nextSample) {
+                        const raw = getMetricsPhase1();
+
+                        // Mass invariant on RAW
+                        const massError = Math.abs(
+                            (raw.injectedKg - raw.exitedKg) - (raw.activeParticles * TRUCK_KG)
+                        );
+                        if (massError > MASS_TOL) {
+                            violations.push({ type: 'mass', t: simTime, error: massError });
+                        }
+
+                        // Rate bound invariant: rate <= activeParticles + 1
+                        if (raw.truckHoursLostRate > raw.activeParticles + 1) {
+                            violations.push({
+                                type: 'rateBound',
+                                t: simTime,
+                                rate: raw.truckHoursLostRate,
+                                particles: raw.activeParticles
+                            });
+                        }
+
+                        // Delta accounting for reporting
+                        const m = {
+                            t: simTime,
+                            injectedKg: raw.injectedKg - startMetrics.injectedKg,
+                            exitedKg: raw.exitedKg - startMetrics.exitedKg,
+                            activeParticles: raw.activeParticles,
+                            truckHoursLost: raw.truckHoursLost - startMetrics.truckHoursLost,
+                            truckHoursLostRate: raw.truckHoursLostRate,
+                            stallTonHours: raw.stallTonHours - startMetrics.stallTonHours,
+                        };
+
+                        // Monotonicity
+                        if (prev && m.truckHoursLost < prev.truckHoursLost - 1e-6) {
+                            violations.push({ type: 'monotonicLoss', t: simTime });
+                        }
+
+                        samples.push(m);
+                        prev = m;
+                        nextSample += SAMPLE_INTERVAL;
+                    }
+                }
+
+                // Update progress
+                const pct = Math.floor((simTime / TEST_DURATION) * 100);
+                const days = (simTime / 86400).toFixed(1);
+                headlessStatus.textContent = `${name}: ${pct}% (${days}d)`;
+
+                // Yield to browser
+                await new Promise(r => setTimeout(r, 0));
+            }
+
+            const final = samples.at(-1);
+            const hours = TEST_DURATION / 3600;
+
+            // Post-warmup samples for mean calculation
+            const postWarmup = samples.filter(s => s.t >= WARMUP);
+            const rateSum = postWarmup.reduce((acc, s) => acc + s.truckHoursLostRate, 0);
+            const rateMean = postWarmup.length > 0 ? rateSum / postWarmup.length : 0;
+            const postWarmupHours = (TEST_DURATION - WARMUP) / 3600;
+
+            return {
+                name,
+                config: { duration: TEST_DURATION, warmup: WARMUP, dt: DT, sampleInterval: SAMPLE_INTERVAL },
+                final,
+                summary: {
+                    truckHoursLost_final: final.truckHoursLost,
+                    truckHoursLostRate_mean: rateMean,
+                    throughputKgPerHour: final.exitedKg / postWarmupHours,
+                },
+                samples: samples.slice(-10),  // Last 10 for output
+                violations,
+                passed: violations.length === 0,
+            };
+        }
+
+        // Download JSON helper
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        btnHeadlessTest.addEventListener('click', async () => {
+            btnHeadlessTest.disabled = true;
+            headlessStatus.textContent = 'Starting A/B comparison...';
+            headlessStatus.style.color = '#ff0';
+
+            // Pause main animation
+            const wasPaused = time.paused;
+            if (!wasPaused) time.togglePause();
+
+            try {
+                // Run baseline (Inovus OFF)
+                const baseline = await runScenario('Baseline', async () => {
+                    if (ReynosaEastOverlay.isPhasesAsLots()) {
+                        await ReynosaEastOverlay.togglePhasesAsLots();
+                    }
+                    setTwinSpanCapacityMultiplier(1.0);
+                });
+
+                // Run treatment (Inovus ON)
+                const treatment = await runScenario('Inovus', async () => {
+                    if (!ReynosaEastOverlay.isPhasesAsLots()) {
+                        await ReynosaEastOverlay.togglePhasesAsLots();
+                    }
+                    setTwinSpanCapacityMultiplier(1.0);
+                });
+
+                // Compute delta
+                const deltaRate = treatment.summary.truckHoursLostRate_mean - baseline.summary.truckHoursLostRate_mean;
+                const pctChange = baseline.summary.truckHoursLostRate_mean !== 0
+                    ? (deltaRate / baseline.summary.truckHoursLostRate_mean) * 100
+                    : 0;
+
+                const headline = deltaRate < 0
+                    ? `Congestion reduced by ${Math.abs(pctChange).toFixed(1)}% (rate)`
+                    : deltaRate > 0
+                    ? `Congestion increased by ${pctChange.toFixed(1)}% (rate)`
+                    : 'No change in congestion rate';
+
+                const result = {
+                    meta: {
+                        timestamp: new Date().toISOString(),
+                        scenarios: {
+                            baseline: 'Inovus OFF, TwinSpan 1.0',
+                            treatment: 'Inovus ON, TwinSpan 1.0',
+                        },
+                        duration: `${DAYS} days`,
+                    },
+                    baseline,
+                    treatment,
+                    delta: {
+                        truckHoursLost: treatment.final.truckHoursLost - baseline.final.truckHoursLost,
+                        truckHoursLostRate_mean: deltaRate,
+                        throughputKg: treatment.final.exitedKg - baseline.final.exitedKg,
+                    },
+                    headline,
+                };
+
+                // Log and download
+                console.log('[A/B COMPARISON] Result:', result);
+                downloadJSON(result, `baseline_vs_inovus_${DAYS}d.json`);
+
+                // Update status
+                const totalViolations = baseline.violations.length + treatment.violations.length;
+                if (totalViolations === 0) {
+                    headlessStatus.innerHTML = `DONE — ${headline}<br><small>JSON downloaded</small>`;
+                    headlessStatus.style.color = '#0f0';
+                } else {
+                    headlessStatus.innerHTML = `DONE — ${totalViolations} violations<br><small>JSON downloaded</small>`;
+                    headlessStatus.style.color = '#f66';
+                }
+
+            } catch (err) {
+                console.error('[A/B COMPARISON] Failed:', err);
+                headlessStatus.textContent = `ERROR: ${err.message}`;
+                headlessStatus.style.color = '#f66';
+            }
+
+            btnHeadlessTest.disabled = false;
+            if (!wasPaused) time.togglePause();
+        });
+
+        // Director controls
+        document.getElementById('btn-director-play').addEventListener('click', () => {
+            if (director.isPlaying()) {
+                director.pause();
+            } else {
+                director.play();
+            }
+        });
+
+        document.getElementById('btn-director-stop').addEventListener('click', () => {
+            director.stop();
+            updateZoomSlider();
+        });
+
+        document.getElementById('director-script').addEventListener('change', (e) => {
+            const scriptName = e.target.value;
+            switch (scriptName) {
+                case 'intro':
+                    director.load(Scripts.intro());
+                    break;
+                case 'corridorTour':
+                    director.load(Scripts.corridorTour());
+                    break;
+                case 'zoomCycle':
+                    director.load(Scripts.zoomCycle());
+                    break;
+            }
+            directorStatus.textContent = 'Ready';
+            directorStatus.style.color = '#666';
+        });
+
+        function updateZoomSlider() {
+            zoomSlider.value = camera.zoom * 1000;
+            document.getElementById('zoom-value').textContent = camera.zoom.toFixed(3);
+        }
+
+        // Mouse controls
+        let isDragging = false;
+        let lastMouse = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                camera.pan(e.clientX - lastMouse.x, e.clientY - lastMouse.y);
+                lastMouse = { x: e.clientX, y: e.clientY };
+            }
+        });
+        canvas.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mouseleave', () => isDragging = false);
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            camera.zoomAt(e.deltaY > 0 ? 0.85 : 1.18, e.offsetX, e.offsetY);
+            updateZoomSlider();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // SPACEBAR = pause/resume sim completely
+            if (e.key === ' ') {
+                e.preventDefault();
+                time.togglePause();
+                document.getElementById('btn-pause').textContent = time.paused ? 'Resume' : 'Pause';
+                console.log(`[SIM] ${time.paused ? 'PAUSED' : 'RESUMED'}`);
+                return;
+            }
+
+            // 'r' = cycle speed modes: NORMAL → REAL-TIME (1:1) → 5x NORMAL
+            if (e.key === 'r' || e.key === 'R') {
+                const mode = time.cycleSpeedMode();
+                const scale = time.timeScale;
+                const scaleText = mode.mult === null
+                    ? `1 sim-s/real-s (REAL-TIME)`
+                    : `${scale.toFixed(0)} sim-s/real-s (${mode.name})`;
+                document.getElementById('timescale-value').textContent = scaleText;
+                console.log(`[SIM] Speed: ${mode.name} (${scale.toFixed(0)}x)`);
+                return;
+            }
+
+            // 'b' = coordinate picker
+            if (e.key === 'b' || e.key === 'B') {
+                toggleCoordPicker();
+                return;
+            }
+
+            // 'd' = physics X-ray overlay (freezes sim)
+            if (e.key === 'd' || e.key === 'D') {
+                togglePhysicsDebug();
+                return;
+            }
+
+            // TAB = cycle debug layers (when debug active)
+            if (e.key === 'Tab' && showPhysicsDebug) {
+                e.preventDefault();
+                cycleDebugLayer();
+                return;
+            }
+
+            // '`' = Toggle dark mode (canvas bg + macro particles + overlay)
+            if (e.key === '`') {
+                canvasBgDark = !canvasBgDark;
+                if (macroParticles) macroParticles.toggleDarkMode();
+                toggleDarkMode();
+                console.log(`[Theme] Dark mode: ${canvasBgDark ? 'ON' : 'OFF'}`);
+                return;
+            }
+
+            if (!macroParticles) return;
+
+            // 'x' = flickering lightshow tracers
+            if (e.key === 'x' || e.key === 'X') {
+                macroParticles.toggleDebugTracers();
+            }
+            // 'c' = stable diagnostic tracers
+            if (e.key === 'c' || e.key === 'C') {
+                macroParticles.toggleDebugTracersStable();
+            }
+            // 'p' = Pharr highlight mode (Pharr particles black, others faint grey)
+            if (e.key === 'p' || e.key === 'P') {
+                macroParticles.togglePharrHighlight();
+            }
+            // 'm' = cycle particle color modes: OFF → STALL → SOURCE → OFF
+            if (e.key === 'm' || e.key === 'M') {
+                cycleParticleColorMode();
+            }
+            // 'c' = congestion heatmap (cyan cells showing congestion intensity)
+            if (e.key === 'c' || e.key === 'C') {
+                const on = toggleCongestionHeatmap();
+                console.log(`[CONGESTION HEATMAP] ${on ? 'ON - cyan = congested cells' : 'OFF'}`);
+            }
+            // 'a' = ALTO - block bridge (test congestion shockwave)
+            if (e.key === 'a' || e.key === 'A') {
+                ReynosaEastOverlay.toggleBlockBridge();
+            }
+            // 'v' = View capture - capture current camera position for director script
+            if (e.key === 'v' || e.key === 'V') {
+                captureView();
+            }
+            // 't' = Commuter friction debug (full visibility into effects)
+            if (e.key === 't' || e.key === 'T') {
+                toggleCommuterDebug();
+            }
+        });
+
+        // Coordinate picker click handler
+        canvas.addEventListener('click', (e) => {
+            if (!coordPickerActive) return;
+            const rect = canvas.getBoundingClientRect();
+            const screenX = e.clientX - rect.left;
+            const screenY = e.clientY - rect.top;
+            const world = camera.screenToWorld(screenX, screenY);
+            addCoordinate(world.x, world.y);
+        });
+
+        // Coordinate picker buttons
+        document.getElementById('copy-coords-btn').addEventListener('click', copyCoords);
+        document.getElementById('clear-coords-btn').addEventListener('click', clearCoords);
+
+        // =====================================================================
+        // RENDERERS
+        // =====================================================================
+
+        /**
+         * Get segment weight: interpolated if dual-scenario, local map otherwise.
+         */
+        function getSegmentWeight(segmentId) {
+            if (interserranaBundleLoaded && hasWeightMaps()) {
+                return getInterpolatedWeight(segmentId, macroAlpha);
+            }
+            return segmentWeights.get(segmentId) || 0;
+        }
+
+        /**
+         * Smooth color interpolation using HSL for perceptually uniform blending.
+         * Goes from deep blue (low) → cyan → green → yellow → orange (high)
+         */
+        function weightToColor(weight) {
+            // Clamp weight to [0, 1]
+            const w = Math.max(0, Math.min(1, weight));
+
+            // Use sqrt for perceptual scaling (like map_generator.py)
+            const t = Math.sqrt(w);
+
+            // HSL interpolation: hue goes from 220 (blue) → 180 (cyan) → 120 (green) → 60 (yellow) → 30 (orange)
+            // Simplified: interpolate hue from 220 (blue) down to 30 (orange)
+            const hue = 220 - t * 190;  // 220 → 30
+            const sat = 70 + t * 20;     // 70% → 90% saturation
+            const lit = 45 + t * 15;     // 45% → 60% lightness
+
+            return `hsl(${hue}, ${sat}%, ${lit}%)`;
+        }
+
+        // Cache for sorted segments (recompute only when bundle changes)
+        let _sortedSegmentsCache = null;
+        let _sortedSegmentsCacheHash = null;
+
+        function getSortedSegments() {
+            const hash = `${bundleLoaded}_${macroAlpha.toFixed(3)}`;
+            if (_sortedSegmentsCache && _sortedSegmentsCacheHash === hash) {
+                return _sortedSegmentsCache;
+            }
+
+            const segments = getSegmentsInROI()
+                .map(seg => ({ seg, weight: getSegmentWeight(seg.segment_id) }))
+                .sort((a, b) => b.weight - a.weight)
+                .map(({ seg }) => seg);
+            const segmentsWithWeights = [];
+
+            for (const seg of segments) {
+                if (seg.points.length < 2) continue;
+                const weight = getSegmentWeight(seg.segment_id);
+
+                // Precompute bounding box for culling
+                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                for (const pt of seg.points) {
+                    if (pt.x < minX) minX = pt.x;
+                    if (pt.x > maxX) maxX = pt.x;
+                    if (pt.y < minY) minY = pt.y;
+                    if (pt.y > maxY) maxY = pt.y;
+                }
+
+                segmentsWithWeights.push({ seg, weight, minX, maxX, minY, maxY });
+            }
+
+            // Sort by weight descending
+            segmentsWithWeights.sort((a, b) => b.weight - a.weight);
+
+            _sortedSegmentsCache = segmentsWithWeights;
+            _sortedSegmentsCacheHash = hash;
+            return segmentsWithWeights;
+        }
+
+        /**
+         * MACRO_CIEN Renderer
+         * Shows: Faint segment guides + black particle streams
+         * Authority: CIEN
+         *
+         * Design: Motion alone communicates direction + magnitude
+         *         No color encoding, no thickness variation
+         *         Particles follow segment geometry
+         */
+        function renderMacroCien(ctx, camera, alpha = 1.0) {
+            if (!bundleLoaded) return;
+
+            ctx.globalAlpha = alpha;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Draw road network (faint, only when X tracer mode is active) - BATCHED
+            if (_cienSegmentsWithBbox && macroParticles?.debugTracers) {
+                ctx.strokeStyle = 'rgba(90, 106, 122, 0.4)';
+                ctx.lineWidth = Math.max(1, camera.metersToPixels(800));
+                ctx.beginPath();
+                for (const { seg } of _cienSegmentsWithBbox) {
+                    if (!seg.points || seg.points.length < 2) continue;
+                    const first = camera.worldToScreen(seg.points[0].x, seg.points[0].y);
+                    ctx.moveTo(first.x, first.y);
+                    for (let i = 1; i < seg.points.length; i++) {
+                        const pt = camera.worldToScreen(seg.points[i].x, seg.points[i].y);
+                        ctx.lineTo(pt.x, pt.y);
+                    }
+                }
+                ctx.stroke();
+            }
+
+            // Draw particles
+            if (macroParticles) {
+                const tDrawParticlesStart = performance.now();
+                macroParticles.draw(ctx, camera);
+                const tDrawParticlesEnd = performance.now();
+                // Throttle timing logs (console logging is expensive)
+                if (!renderMacroCien._timingFrames) {
+                    renderMacroCien._timingFrames = 0;
+                    renderMacroCien._timingPartAccum = 0;
+                }
+                renderMacroCien._timingFrames++;
+                renderMacroCien._timingPartAccum += (tDrawParticlesEnd - tDrawParticlesStart);
+                if (renderMacroCien._timingFrames >= 60) {
+                    console.log(
+                        `[TIMING] particlesDraw=${(renderMacroCien._timingPartAccum / 60).toFixed(2)}ms`
+                    );
+                    renderMacroCien._timingFrames = 0;
+                    renderMacroCien._timingPartAccum = 0;
+                }
+            }
+
+            ctx.globalAlpha = alpha;
+            ctx.globalAlpha = 1.0;
+        }
+
+        /**
+         * LOCAL_FIELD Renderer
+         * Shows: Density field heatmap, local roads
+         * Authority: FIELD
+         */
+        function renderLocalField(ctx, camera, alpha = 1.0) {
+            if (!bundleLoaded || !fieldAttached) return;
+
+            ctx.globalAlpha = alpha;
+
+            // Overlay handles all rendering: lots, roads (on top), particles
+            ReynosaEastOverlay.draw(ctx, camera);
+
+            ctx.globalAlpha = 1.0;
+        }
+
+        /**
+         * Transition renderer - visual interpolation only
+         * No physics computation during transitions
+         */
+        function renderTransition(ctx, camera, progress, direction) {
+            // direction: 'in' = macro->local, 'out' = local->macro
+            const macroAlpha = direction === 'in' ? (1 - progress) : progress;
+            const localAlpha = direction === 'in' ? progress : (1 - progress);
+
+            // Render both with appropriate alpha
+            if (macroAlpha > 0.01) {
+                renderMacroCien(ctx, camera, macroAlpha);
+            }
+            if (localAlpha > 0.01 && fieldInitialized) {
+                renderLocalField(ctx, camera, localAlpha);
+            }
+        }
+
+        // =====================================================================
+        // PERFORMANCE PROBE (MACRO)
+        // =====================================================================
+
+        let _perfFrames = 0;
+        let _perfAccum = 0;
+        let _perfLast = performance.now();
+
+        function logMacroPerf(startMs, endMs) {
+            _perfAccum += (endMs - startMs);
+            _perfFrames++;
+            if (_perfFrames === 60) {
+                console.log(`[PERF] macro avg frame = ${(_perfAccum / 60).toFixed(2)} ms`);
+                _perfFrames = 0;
+                _perfAccum = 0;
+            }
+        }
+
+        // =====================================================================
+        // MAIN FRAME LOOP
+        // =====================================================================
+
+        let lastFrameTime = performance.now();
+
+        // Frame timing instrumentation
+        const _frameTiming = {
+            frameCount: 0,
+            accumDt: 0,
+            accumZoomState: 0,
+            accumTimeTick: 0,
+            accumAlphaRamp: 0,
+            accumWeightsUpdate: 0,
+            accumParticleUpdate: 0,
+            accumFieldPhysics: 0,
+            accumClear: 0,
+            accumRender: 0,
+            accumCoordMarkers: 0,
+            accumPhysicsDebug: 0,
+            accumUpdateUI: 0,
+            accumTotal: 0,
+            lastLogTime: 0,
+        };
+
+        function frame(now) {
+            const tFrameStart = performance.now();
+            const dt = now - lastFrameTime;
+            lastFrameTime = now;
+
+            // 1. Update zoom state machine
+            const t1 = performance.now();
+            const stateChanged = updateZoomState(camera.zoom, now);
+            const t2 = performance.now();
+
+            // 2. Tick time (always, for UI display)
+            const prevHour = time.currentHour;
+            time.tick(dt);
+
+            // 2b. Tick director (camera animations)
+            director.tick(dt, now);
+            if (director.isPlaying()) {
+                updateZoomSlider();
+            }
+            const t3 = performance.now();
+
+            // 3. Update hour display
+            const h = time.currentHour;
+            hourSlider.value = h;
+            hourValue.textContent = h.toString().padStart(2, '0') + ':00';
+
+            // Day wrap diagnostic
+            if (prevHour === 23 && h === 0) {
+                const dayEndTime = performance.now();
+                if (window._dayStartTime) {
+                    const dayDurationSec = (dayEndTime - window._dayStartTime) / 1000;
+                    console.log(`[TIME] Day completed in ${dayDurationSec.toFixed(1)}s (expected: 75s)`);
+                }
+                window._dayStartTime = dayEndTime;
+            }
+            if (!window._dayStartTime && h === 0) {
+                window._dayStartTime = performance.now();
+            }
+
+            // 4. Update MACRO α (smooth ramp toward target)
+            let weightsUpdated = false;
+            const t4 = performance.now();
+            if (macroAlpha !== macroTargetAlpha && macroRampStartTime !== null) {
+                const elapsed = now - macroRampStartTime;
+                const t = Math.min(1, elapsed / MACRO_RAMP_DURATION);
+                // Smoothstep easing
+                const eased = t * t * (3 - 2 * t);
+                macroAlpha = macroRampStartAlpha + (macroTargetAlpha - macroRampStartAlpha) * eased;
+
+                if (t >= 1) {
+                    macroAlpha = macroTargetAlpha;
+                    macroRampStartTime = null;
+                }
+
+                // Update macro particle weights (smooth interpolation)
+                if (macroParticles && interserranaBundleLoaded) {
+                    const tWeights0 = performance.now();
+                    macroParticles.updateWeights(segId => getSegmentWeight(segId));
+                    // Sync scenario alpha so new particles use correct POE distribution
+                    macroParticles.setScenarioAlpha(macroAlpha);
+                    // Also sync to FIELD overlay for injection interpolation
+                    setScenarioAlpha(macroAlpha);
+                    const tWeights1 = performance.now();
+                    _frameTiming.accumWeightsUpdate += (tWeights1 - tWeights0);
+                    weightsUpdated = true;
+                }
+            }
+
+            // 4b. Update TWIN SPAN α (smooth ramp, independent of Interserrana)
+            if (twinSpanAlpha !== twinSpanTargetAlpha && twinSpanRampStartTime !== null) {
+                const elapsed = now - twinSpanRampStartTime;
+                const t = Math.min(1, elapsed / TWIN_SPAN_RAMP_DURATION);
+                const eased = t * t * (3 - 2 * t);
+                twinSpanAlpha = twinSpanRampStartAlpha + (twinSpanTargetAlpha - twinSpanRampStartAlpha) * eased;
+
+                if (t >= 1) {
+                    twinSpanAlpha = twinSpanTargetAlpha;
+                    twinSpanRampStartTime = null;
+                }
+
+                updateTwinSpanState(twinSpanAlpha);
+            }
+            const t5 = performance.now();
+
+            // 5. Update macro particles
+            const t6 = performance.now();
+            if (macroParticles) {
+                macroParticles.update(dt / 1000, camera);  // dt in seconds
+            }
+            const t7 = performance.now();
+
+            // 6. Run physics ONLY if FIELD has authority
+            const t8 = performance.now();
+            if (currentZoomState === ZoomState.LOCAL_FIELD && fieldAttached) {
+                const realDeltaSeconds = dt / 1000;
+                ReynosaEastOverlay.onFrame(camera, time, realDeltaSeconds);
+            }
+            const t9 = performance.now();
+
+            // 7. Clear canvas
+            const t10 = performance.now();
+            ctx.fillStyle = canvasBgDark ? '#000000' : '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Hide WebGL overlay when not in local view (prevents stale particles/lots)
+            const showLocalElements = currentZoomState === ZoomState.LOCAL_FIELD ||
+                                       currentZoomState === ZoomState.TRANSITION_IN ||
+                                       currentZoomState === ZoomState.TRANSITION_OUT;
+            glCanvas.style.display = showLocalElements ? 'block' : 'none';
+            const t11 = performance.now();
+
+            // 8. Render based on state
+            const t12 = performance.now();
+            switch (currentZoomState) {
+                case ZoomState.MACRO_CIEN: {
+                    const t0 = performance.now();
+                    renderMacroCien(ctx, camera);
+                    const t1 = performance.now();
+                    logMacroPerf(t0, t1);
+                    break;
+                }
+
+                case ZoomState.TRANSITION_IN:
+                    renderTransition(ctx, camera, transitionProgress, 'in');
+                    break;
+
+                case ZoomState.LOCAL_FIELD:
+                    renderLocalField(ctx, camera);
+                    break;
+
+                case ZoomState.TRANSITION_OUT:
+                    renderTransition(ctx, camera, transitionProgress, 'out');
+                    break;
+            }
+            const t13 = performance.now();
+
+            // 9. Draw coordinate picker markers on top
+            drawCoordMarkers(ctx, camera);
+            const t14 = performance.now();
+
+            // 10. Draw physics debug overlay
+            drawPhysicsDebug(ctx, camera);
+            const t15 = performance.now();
+
+            // 11. Update UI
+            updateUI();
+            const t16 = performance.now();
+
+            // Accumulate timing
+            _frameTiming.frameCount++;
+            _frameTiming.accumDt += dt;
+            _frameTiming.accumZoomState += (t2 - t1);
+            _frameTiming.accumTimeTick += (t3 - t2);
+            _frameTiming.accumAlphaRamp += (t5 - t4);
+            _frameTiming.accumParticleUpdate += (t7 - t6);
+            _frameTiming.accumFieldPhysics += (t9 - t8);
+            _frameTiming.accumClear += (t11 - t10);
+            _frameTiming.accumRender += (t13 - t12);
+            _frameTiming.accumCoordMarkers += (t14 - t13);
+            _frameTiming.accumPhysicsDebug += (t15 - t14);
+            _frameTiming.accumUpdateUI += (t16 - t15);
+            _frameTiming.accumTotal += (t16 - tFrameStart);
+
+            // Log every 2 seconds
+            if (now - _frameTiming.lastLogTime > 2000) {
+                const n = _frameTiming.frameCount || 1;
+                const avgDt = _frameTiming.accumDt / n;
+                const fps = 1000 / avgDt;
+                console.log(`[FRAME INSTRUMENTATION] frames=${n} avgDt=${avgDt.toFixed(1)}ms (${fps.toFixed(1)}fps)`);
+                console.log(`  zoomState=${(_frameTiming.accumZoomState/n).toFixed(2)}ms timeTick=${(_frameTiming.accumTimeTick/n).toFixed(2)}ms alphaRamp=${(_frameTiming.accumAlphaRamp/n).toFixed(2)}ms`);
+                console.log(`  weightsUpdate=${(_frameTiming.accumWeightsUpdate/n).toFixed(2)}ms particleUpdate=${(_frameTiming.accumParticleUpdate/n).toFixed(2)}ms fieldPhysics=${(_frameTiming.accumFieldPhysics/n).toFixed(2)}ms`);
+                console.log(`  clear=${(_frameTiming.accumClear/n).toFixed(2)}ms render=${(_frameTiming.accumRender/n).toFixed(2)}ms coordMarkers=${(_frameTiming.accumCoordMarkers/n).toFixed(2)}ms`);
+                console.log(`  physicsDebug=${(_frameTiming.accumPhysicsDebug/n).toFixed(2)}ms updateUI=${(_frameTiming.accumUpdateUI/n).toFixed(2)}ms TOTAL=${(_frameTiming.accumTotal/n).toFixed(2)}ms`);
+
+                // Reset accumulators
+                _frameTiming.frameCount = 0;
+                _frameTiming.accumDt = 0;
+                _frameTiming.accumZoomState = 0;
+                _frameTiming.accumTimeTick = 0;
+                _frameTiming.accumAlphaRamp = 0;
+                _frameTiming.accumWeightsUpdate = 0;
+                _frameTiming.accumParticleUpdate = 0;
+                _frameTiming.accumFieldPhysics = 0;
+                _frameTiming.accumClear = 0;
+                _frameTiming.accumRender = 0;
+                _frameTiming.accumCoordMarkers = 0;
+                _frameTiming.accumPhysicsDebug = 0;
+                _frameTiming.accumUpdateUI = 0;
+                _frameTiming.accumTotal = 0;
+                _frameTiming.lastLogTime = now;
+            }
+
+            requestAnimationFrame(frame);
+        }
+
+        // Cache DOM elements once (getElementById is expensive)
+        const _uiCache = {
+            stateEl: null,
+            authEl: null,
+            inflowEl: null,
+            capEl: null,
+            segmentsEl: null,
+            alphaEl: null,
+            throughputEl: null,
+            backlogEl: null,
+            totalEl: null,
+            lastUpdate: 0,
+            lastState: null,
+            lastHour: -1,
+        };
+
+        function initUICache() {
+            _uiCache.stateEl = document.getElementById('zoom-state');
+            _uiCache.authEl = document.getElementById('authority-indicator');
+            _uiCache.inflowEl = document.getElementById('m-inflow');
+            _uiCache.capEl = document.getElementById('m-cap');
+            _uiCache.segmentsEl = document.getElementById('m-segments');
+            _uiCache.alphaEl = document.getElementById('m-alpha');
+            _uiCache.throughputEl = document.getElementById('m-throughput');
+            _uiCache.backlogEl = document.getElementById('m-backlog');
+            _uiCache.totalEl = document.getElementById('m-total');
+        }
+
+        function updateUI() {
+            // Throttle UI updates to every 200ms (5 fps for UI is plenty)
+            const now = performance.now();
+            if (now - _uiCache.lastUpdate < 200) return;
+            _uiCache.lastUpdate = now;
+
+            // Init cache on first call
+            if (!_uiCache.stateEl) initUICache();
+
+            // Zoom state indicator (only update if changed)
+            if (_uiCache.lastState !== currentZoomState) {
+                _uiCache.lastState = currentZoomState;
+                switch (currentZoomState) {
+                    case ZoomState.MACRO_CIEN:
+                        _uiCache.stateEl.className = 'macro';
+                        _uiCache.stateEl.textContent = 'MACRO_CIEN';
+                        _uiCache.authEl.textContent = 'Authority: CIEN (equilibrium)';
+                        _uiCache.authEl.style.color = '#6af';
+                        break;
+                    case ZoomState.TRANSITION_IN:
+                        _uiCache.stateEl.className = 'transition';
+                        _uiCache.authEl.textContent = 'Authority: NONE (visual only)';
+                        _uiCache.authEl.style.color = '#ff0';
+                        break;
+                    case ZoomState.LOCAL_FIELD:
+                        _uiCache.stateEl.className = 'local';
+                        _uiCache.stateEl.textContent = 'LOCAL_FIELD';
+                        _uiCache.authEl.textContent = 'Authority: FIELD (evolving)';
+                        _uiCache.authEl.style.color = '#6f6';
+                        break;
+                    case ZoomState.TRANSITION_OUT:
+                        _uiCache.stateEl.className = 'transition';
+                        _uiCache.authEl.textContent = 'Authority: NONE (visual only)';
+                        _uiCache.authEl.style.color = '#ff0';
+                        break;
+                }
+            }
+
+            // Update transition progress text if in transition
+            if (currentZoomState === ZoomState.TRANSITION_IN || currentZoomState === ZoomState.TRANSITION_OUT) {
+                _uiCache.stateEl.textContent = `${currentZoomState === ZoomState.TRANSITION_IN ? 'TRANSITION_IN' : 'TRANSITION_OUT'} (${(transitionProgress * 100).toFixed(0)}%)`;
+            }
+
+            // Metrics (only update if hour changed or every 200ms)
+            if (!bundleLoaded) return;
+
+            const h = time.currentHour;
+            if (_uiCache.lastHour !== h) {
+                _uiCache.lastHour = h;
+                const inflow = getHourlyInflow(h);
+                const cap = getHourlyCapacity(h);
+                // Real daily values - no scaling
+                _uiCache.inflowEl.textContent = (inflow.total_kg / 1000).toFixed(0) + ' t/hr';
+                _uiCache.capEl.textContent = (cap / 1000).toFixed(0) + ' t/hr';
+            }
+
+            // Segment count (expensive - only update every 200ms via throttle)
+            // Skip getSegmentsInROI call - it's too expensive and segment count rarely changes
+            // _uiCache.segmentsEl.textContent = getSegmentsInROI().length;
+
+            // Scenario α
+            if (interserranaBundleLoaded) {
+                _uiCache.alphaEl.textContent = macroAlpha.toFixed(2);
+                _uiCache.alphaEl.style.color = macroAlpha > 0 ? '#fa0' : '#0f0';
+            }
+
+            // FIELD metrics only in LOCAL_FIELD
+            if (currentZoomState === ZoomState.LOCAL_FIELD && fieldAttached) {
+                const m = getMetrics();
+                _uiCache.throughputEl.textContent = (m.throughput_kg_per_hr / 1000).toFixed(0) + ' t/hr';
+                _uiCache.backlogEl.textContent = (m.backlog_near_pharr / 1000).toFixed(1) + ' t';
+                _uiCache.totalEl.textContent = (m.total / 1000).toFixed(1) + ' t';
+            } else if (_uiCache.throughputEl.textContent !== '--') {
+                _uiCache.throughputEl.textContent = '--';
+                _uiCache.backlogEl.textContent = '--';
+                _uiCache.totalEl.textContent = '--';
+            }
+        }
+
+        // =====================================================================
+        // START
+        // =====================================================================
+
+        await loadBundleFromFile();
+        camera.focusMacro();  // Start in macro view
+        updateZoomSlider();
+        requestAnimationFrame(frame);
+
+        console.log('='.repeat(60));
+        console.log('CIEN/FIELD Viewer initialized');
+        console.log('Zoom states: MACRO_CIEN -> TRANSITION_IN -> LOCAL_FIELD -> TRANSITION_OUT');
+        console.log('Z_MACRO:', Z_MACRO, ' Z_LOCAL:', Z_LOCAL);
+        console.log('='.repeat(60));
+
+        // Expose debug functions to console
+        window.viewerDebug = {
+            forceRebuildPhiBase,
+            isPhiRebuilding,
+            captureView,
+            getSourceShares,
+            printSourceShares,
+            get capturedViews() { return capturedViews; },
+            exportViews: () => {
+                const beats = capturedViews.map(v => `{ x: ${v.x}, y: ${v.y}, zoom: ${v.zoom} }`);
+                const output = `[\n  ${beats.join(',\n  ')}\n]`;
+                console.log('[VIEW] All captured beats:');
+                console.log(output);
+                navigator.clipboard.writeText(output);
+                return output;
+            },
+            clearViews: () => { capturedViews = []; console.log('[VIEW] Cleared'); },
+        };
+        console.log('[DEBUG] window.viewerDebug available: printSourceShares(), getSourceShares()');
+        console.log('[VIEW] Press V to capture camera position. viewerDebug.exportViews() to get all.');
+    </script>
+</body>
+</html>

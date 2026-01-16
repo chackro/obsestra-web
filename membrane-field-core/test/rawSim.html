@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raw Simulation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        /* Setup Screen */
+        #setup-screen {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        #setup-screen.hidden { display: none; }
+
+        .setup-title {
+            font-size: 24px;
+            margin-bottom: 40px;
+            color: #fff;
+        }
+
+        .setup-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .setup-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .option-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .option-btn {
+            padding: 12px 24px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #888;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .option-btn:hover { border-color: #555; color: #fff; }
+        .option-btn.selected {
+            background: #0066ff;
+            border-color: #0066ff;
+            color: #fff;
+        }
+        .option-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        #start-btn {
+            margin-top: 40px;
+            padding: 16px 48px;
+            background: #00aa44;
+            border: none;
+            color: #fff;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #start-btn:hover { background: #00cc55; }
+        #start-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+
+        #setup-status {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Simulation Screen */
+        #sim-screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+        }
+        #sim-screen.active { display: block; }
+
+        #canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gl-canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            pointer-events: none;
+        }
+
+        /* HUD Overlay */
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 16px 20px;
+            border: 1px solid #333;
+            font-size: 13px;
+            line-height: 1.6;
+            z-index: 100;
+        }
+
+        .hud-title {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .hud-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+        }
+        .hud-label { color: #888; }
+        .hud-value { color: #fff; font-weight: bold; }
+
+        .hud-divider {
+            border: none;
+            border-top: 1px solid #333;
+            margin: 10px 0;
+        }
+
+        /* Controls overlay */
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 12px 16px;
+            border: 1px solid #333;
+            font-size: 12px;
+            color: #666;
+        }
+        #controls kbd {
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #aaa;
+        }
+
+        /* Scenario indicator */
+        #scenario-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            padding: 10px 16px;
+            border: 1px solid #333;
+            font-size: 13px;
+        }
+        .badge-scenario { color: #0af; font-weight: bold; }
+        .badge-params { color: #888; font-size: 11px; margin-top: 4px; }
+    </style>
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+        <div class="setup-title">Raw Simulation</div>
+
+        <div class="setup-section">
+            <div class="setup-label">Baseline Scenario</div>
+            <div class="option-group" id="baseline-options">
+                <button class="option-btn" data-value="baseline">Baseline</button>
+                <button class="option-btn" data-value="interserrana">Interserrana</button>
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <div class="setup-label">Twin Span</div>
+            <div class="option-group" id="twinspan-options">
+                <button class="option-btn selected" data-value="off">Off</button>
+                <button class="option-btn" data-value="on">On (2x capacity)</button>
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <div class="setup-label">Simulation Duration</div>
+            <div class="option-group" id="duration-options">
+                <button class="option-btn" data-value="1">1 Day</button>
+                <button class="option-btn selected" data-value="7">7 Days</button>
+                <button class="option-btn" data-value="14">14 Days</button>
+            </div>
+        </div>
+
+        <div class="setup-section">
+            <div class="setup-label">Speed</div>
+            <div class="option-group" id="speed-options">
+                <button class="option-btn" data-value="1">1x</button>
+                <button class="option-btn selected" data-value="5">5x</button>
+                <button class="option-btn" data-value="10">10x</button>
+            </div>
+        </div>
+
+        <button id="start-btn" disabled>Loading bundles...</button>
+        <div id="setup-status"></div>
+    </div>
+
+    <!-- Simulation Screen -->
+    <div id="sim-screen">
+        <div id="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+
+        <div id="hud">
+            <div class="hud-title">Simulation Metrics</div>
+            <div class="hud-row">
+                <span class="hud-label">Day</span>
+                <span class="hud-value" id="hud-day">0</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">Hour</span>
+                <span class="hud-value" id="hud-hour">08:00</span>
+            </div>
+            <hr class="hud-divider">
+            <div class="hud-row">
+                <span class="hud-label">Injected</span>
+                <span class="hud-value" id="hud-injected">0 t</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">Exited</span>
+                <span class="hud-value" id="hud-exited">0 t</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">In System</span>
+                <span class="hud-value" id="hud-insystem">0 t</span>
+            </div>
+            <hr class="hud-divider">
+            <div class="hud-row">
+                <span class="hud-label">Road Mass</span>
+                <span class="hud-value" id="hud-road">0 t</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">Lot Mass</span>
+                <span class="hud-value" id="hud-lot">0 t</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">Queue</span>
+                <span class="hud-value" id="hud-queue">0 t</span>
+            </div>
+            <hr class="hud-divider">
+            <div class="hud-row">
+                <span class="hud-label">Truck-Hours Lost</span>
+                <span class="hud-value" id="hud-truckhours">0</span>
+            </div>
+            <div class="hud-row">
+                <span class="hud-label">CBP Throughput</span>
+                <span class="hud-value" id="hud-cbp">0/hr</span>
+            </div>
+        </div>
+
+        <div id="scenario-badge">
+            <div class="badge-scenario" id="badge-scenario">--</div>
+            <div class="badge-params" id="badge-params">--</div>
+        </div>
+
+        <div id="controls">
+            <kbd>Space</kbd> Pause/Resume &nbsp;
+            <kbd>R</kbd> Speed &nbsp;
+            <kbd>D</kbd> Debug
+        </div>
+    </div>
+
+    <script type="module">
+        import { loadBundle, loadScenarioPairBundles, getSegmentsInROI, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
+        import { ReynosaEastOverlay, getMetrics, setLocalScenario, getPhysicsDebugData, setWebGLRenderer, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, step, reset, setSimTime, getSimTime, getMetricsPhase1 } from '../overlay/reynosaOverlay_v2.js';
+        import { ParticleRenderer } from '../overlay/particleRenderer.js';
+        import { loadWeightMaps } from '../overlay/segmentWeights.js';
+
+        // =====================================================================
+        // CONFIG
+        // =====================================================================
+
+        const config = {
+            baseline: 'baseline',  // 'baseline' or 'interserrana'
+            twinSpan: false,
+            durationDays: 7,
+            speedMult: 5,
+        };
+
+        // =====================================================================
+        // STATE
+        // =====================================================================
+
+        let bundleLoaded = false;
+        let simRunning = false;
+        let simPaused = false;
+        let baselineBundle = null;
+        let interserranaBundle = null;
+        let scenarioAdapter = null;
+        let geometryProvider = null;
+        let fieldInitialized = false;
+        let glRenderer = null;
+        let reynosaCitySegments = [];
+        let _citySegmentsTransformed = null;
+
+        // =====================================================================
+        // SETUP UI
+        // =====================================================================
+
+        function setupOptionButtons() {
+            document.querySelectorAll('.option-group').forEach(group => {
+                group.querySelectorAll('.option-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        group.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        updateConfig();
+                    });
+                });
+            });
+        }
+
+        function updateConfig() {
+            const baseline = document.querySelector('#baseline-options .selected')?.dataset.value || 'baseline';
+            const twinSpan = document.querySelector('#twinspan-options .selected')?.dataset.value === 'on';
+            const duration = parseInt(document.querySelector('#duration-options .selected')?.dataset.value || '7');
+            const speed = parseInt(document.querySelector('#speed-options .selected')?.dataset.value || '5');
+
+            config.baseline = baseline;
+            config.twinSpan = twinSpan;
+            config.durationDays = duration;
+            config.speedMult = speed;
+        }
+
+        // =====================================================================
+        // BUNDLE LOADING
+        // =====================================================================
+
+        async function loadBundles() {
+            const status = document.getElementById('setup-status');
+            const startBtn = document.getElementById('start-btn');
+
+            status.textContent = 'Loading bundles...';
+
+            const cacheBust = '?t=' + Date.now();
+            const [baselineResponse, interserranaResponse, cityResponse] = await Promise.all([
+                fetch('./bundle_baseline.json' + cacheBust),
+                fetch('./interserrana_bundle.json' + cacheBust).catch(() => null),
+                fetch('./reynosa_city_bundle.json' + cacheBust).catch(() => null),
+            ]);
+
+            if (!baselineResponse.ok) {
+                status.textContent = 'ERROR: Failed to load baseline bundle';
+                return;
+            }
+
+            baselineBundle = await baselineResponse.json();
+
+            if (interserranaResponse?.ok) {
+                interserranaBundle = await interserranaResponse.json();
+            }
+
+            if (cityResponse?.ok) {
+                const cityBundle = await cityResponse.json();
+                reynosaCitySegments = cityBundle.geometry?.segments_in_roi || [];
+            }
+
+            // Load into consumer
+            if (interserranaBundle) {
+                loadScenarioPairBundles(baselineBundle, interserranaBundle);
+                loadWeightMaps(baselineBundle, interserranaBundle, { hs2Filter: null, poeFilter: null });
+            } else {
+                loadBundle(baselineBundle);
+            }
+
+            scenarioAdapter = createScenarioAdapter();
+            geometryProvider = createFieldGeometryProvider();
+
+            // Transform city segments
+            _citySegmentsTransformed = reynosaCitySegments.map(seg => {
+                if (!seg.geometry_coordinates || seg.geometry_coordinates.length < 2) return null;
+                const points = seg.geometry_coordinates.map(([lat, lon]) => latLonToWorld(lat, lon));
+                return { points };
+            }).filter(Boolean);
+
+            bundleLoaded = true;
+            status.textContent = 'Bundles loaded. Select options and start.';
+            startBtn.textContent = 'Start Simulation';
+            startBtn.disabled = false;
+
+            console.log('[Setup] Bundles loaded');
+        }
+
+        // =====================================================================
+        // SIMULATION SETUP
+        // =====================================================================
+
+        function createRendererContext() {
+            const cienSegments = geometryProvider.getRoadSegments();
+            const citySegsForField = _citySegmentsTransformed.map(s => ({ id: 'city', points: s.points }));
+            const allSegments = [...cienSegments, ...citySegsForField];
+
+            return {
+                geometry: {
+                    worldBounds: geometryProvider.getWorldBounds(),
+                    poePoints: { PHARR: getPharrWorldCoords() },
+                    roadSegments: allSegments,
+                },
+                scenario: scenarioAdapter,
+            };
+        }
+
+        async function initSimulation() {
+            console.log('[Sim] Initializing with config:', config);
+
+            // Set scenario alpha (0 = baseline, 1 = interserrana)
+            const alpha = config.baseline === 'interserrana' ? 1.0 : 0.0;
+            setScenarioAlpha(alpha);
+
+            // Set interserrana scenario adapter if available
+            if (interserranaBundle) {
+                const interserranaScenarioAdapter = {
+                    getPharrInflow(hour) {
+                        const h = Math.floor(hour) % 24;
+                        const total = interserranaBundle.inflow?.hourly_kg?.[h] || 0;
+                        const byHs2 = interserranaBundle.inflow?.hourly_kg_by_hs2?.[h];
+                        return { hs2_kg: byHs2 || { "99": total } };
+                    },
+                    getPharrGateCapacity(hour) {
+                        const h = Math.floor(hour) % 24;
+                        const cap = interserranaBundle.capacity?.hourly_kg?.[h] || 0;
+                        return { cap_kg_per_hour: cap };
+                    },
+                };
+                setInterserranaScenario(interserranaScenarioAdapter);
+            }
+
+            // Twin span
+            setTwinSpanCapacityMultiplier(config.twinSpan ? 2.0 : 1.0);
+
+            // Initialize overlay
+            await ReynosaEastOverlay.onAttach(createRendererContext());
+            ReynosaEastOverlay.setCitySegments(_citySegmentsTransformed);
+            setLocalScenario({ renderMode: 'particles' });
+
+            fieldInitialized = true;
+            console.log('[Sim] Field initialized');
+        }
+
+        // =====================================================================
+        // CAMERA
+        // =====================================================================
+
+        class Camera {
+            constructor(w, h) {
+                this.canvasWidth = w;
+                this.canvasHeight = h;
+                // Reynosa local view
+                this.centerWorld = { x: -8491, y: -5982 };
+                this.zoom = 0.04;
+                this._updateViewport();
+            }
+
+            _updateViewport() {
+                const halfW = (this.canvasWidth / 2) / this.zoom;
+                const halfH = (this.canvasHeight / 2) / this.zoom;
+                this.viewportWorld = {
+                    minX: this.centerWorld.x - halfW,
+                    maxX: this.centerWorld.x + halfW,
+                    minY: this.centerWorld.y - halfH,
+                    maxY: this.centerWorld.y + halfH,
+                };
+            }
+
+            worldToScreen(wx, wy) {
+                return {
+                    x: this.canvasWidth / 2 + (wx - this.centerWorld.x) * this.zoom,
+                    y: this.canvasHeight / 2 - (wy - this.centerWorld.y) * this.zoom,
+                };
+            }
+
+            screenToWorld(sx, sy) {
+                return {
+                    x: this.centerWorld.x + (sx - this.canvasWidth / 2) / this.zoom,
+                    y: this.centerWorld.y - (sy - this.canvasHeight / 2) / this.zoom,
+                };
+            }
+
+            metersToPixels(m) { return m * this.zoom; }
+
+            pan(dx, dy) {
+                this.centerWorld.x -= dx / this.zoom;
+                this.centerWorld.y += dy / this.zoom;
+                this._updateViewport();
+            }
+
+            zoomBy(factor, sx, sy) {
+                const worldBefore = this.screenToWorld(sx, sy);
+                this.zoom *= factor;
+                this.zoom = Math.max(0.001, Math.min(0.2, this.zoom));
+                this._updateViewport();
+                const worldAfter = this.screenToWorld(sx, sy);
+                this.centerWorld.x += worldBefore.x - worldAfter.x;
+                this.centerWorld.y += worldBefore.y - worldAfter.y;
+                this._updateViewport();
+            }
+
+            resize(w, h) {
+                this.canvasWidth = w;
+                this.canvasHeight = h;
+                this._updateViewport();
+            }
+        }
+
+        // =====================================================================
+        // TIME
+        // =====================================================================
+
+        class SimTime {
+            constructor() {
+                this.simTimeSeconds = 8 * 3600;  // Start at 08:00
+                this.paused = false;
+                this.speedMult = 5;
+            }
+
+            get currentHour() { return Math.floor(this.simTimeSeconds / 3600) % 24; }
+            get currentDay() { return Math.floor(this.simTimeSeconds / (24 * 3600)); }
+            get simTimeHours() { return this.simTimeSeconds / 3600; }
+
+            get timeScale() {
+                return this.speedMult * ReynosaEastOverlay.SIM_TIME_SCALE;
+            }
+
+            tick(dtReal) {
+                if (!this.paused) {
+                    this.simTimeSeconds += (dtReal / 1000) * this.timeScale;
+                }
+            }
+
+            setHour(h) { this.simTimeSeconds = h * 3600; }
+            togglePause() { this.paused = !this.paused; }
+        }
+
+        // =====================================================================
+        // MAIN
+        // =====================================================================
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        let camera = null;
+        let time = null;
+
+        function resizeCanvas() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            if (glRenderer) {
+                const glCanvas = document.getElementById('gl-canvas');
+                if (glCanvas) {
+                    glCanvas.width = canvas.width;
+                    glCanvas.height = canvas.height;
+                }
+            }
+            if (camera) {
+                camera.resize(canvas.width, canvas.height);
+            }
+        }
+
+        async function startSim() {
+            // Hide setup, show sim
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('sim-screen').classList.add('active');
+
+            // Resize canvas
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Create WebGL canvas
+            const glCanvas = document.createElement('canvas');
+            glCanvas.id = 'gl-canvas';
+            glCanvas.width = canvas.width;
+            glCanvas.height = canvas.height;
+            wrapper.appendChild(glCanvas);
+
+            // Init WebGL renderer
+            glRenderer = new ParticleRenderer(glCanvas);
+            if (glRenderer.isAvailable()) {
+                setWebGLRenderer(glRenderer);
+                console.log('[Sim] WebGL enabled');
+            }
+
+            // Create camera and time
+            camera = new Camera(canvas.width, canvas.height);
+            time = new SimTime();
+            time.speedMult = config.speedMult;
+
+            // Initialize simulation
+            await initSimulation();
+
+            // Update badge
+            document.getElementById('badge-scenario').textContent =
+                config.baseline === 'interserrana' ? 'INTERSERRANA' : 'BASELINE';
+            document.getElementById('badge-params').textContent =
+                `${config.durationDays}d | ${config.speedMult}x | Twin: ${config.twinSpan ? 'ON' : 'OFF'}`;
+
+            // Start simulation
+            simRunning = true;
+            requestAnimationFrame(frame);
+
+            console.log('[Sim] Started');
+        }
+
+        // =====================================================================
+        // RENDER LOOP
+        // =====================================================================
+
+        let lastFrameTime = performance.now();
+        let showDebug = false;
+        let debugLayer = 0;
+        const DEBUG_LAYERS = ['K', 'phi', 'connect', 'roadtype', 'density'];
+
+        function frame(now) {
+            if (!simRunning) return;
+
+            const dt = now - lastFrameTime;
+            lastFrameTime = now;
+
+            // Check if simulation complete
+            if (time.currentDay >= config.durationDays) {
+                simRunning = false;
+                time.paused = true;
+                console.log('[Sim] Complete - Day', time.currentDay);
+            }
+
+            // Tick time
+            time.tick(dt);
+
+            // Run physics
+            if (fieldInitialized && !time.paused) {
+                const realDeltaSeconds = dt / 1000;
+                ReynosaEastOverlay.onFrame(camera, time, realDeltaSeconds);
+            }
+
+            // Clear and render
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (fieldInitialized) {
+                ReynosaEastOverlay.drawSegments(ctx, camera, 1.0);
+            }
+
+            // Debug overlay
+            if (showDebug) {
+                drawDebug(ctx, camera);
+            }
+
+            // Update HUD
+            updateHUD();
+
+            requestAnimationFrame(frame);
+        }
+
+        function updateHUD() {
+            const metrics = getMetrics();
+            const phase1 = getMetricsPhase1();
+
+            document.getElementById('hud-day').textContent = time.currentDay;
+            document.getElementById('hud-hour').textContent =
+                time.currentHour.toString().padStart(2, '0') + ':00';
+
+            document.getElementById('hud-injected').textContent =
+                (metrics.injected / 1000).toFixed(1) + ' t';
+            document.getElementById('hud-exited').textContent =
+                (metrics.exited / 1000).toFixed(1) + ' t';
+            document.getElementById('hud-insystem').textContent =
+                ((metrics.injected - metrics.exited) / 1000).toFixed(1) + ' t';
+
+            document.getElementById('hud-road').textContent =
+                ((phase1.roadMassKg || 0) / 1000).toFixed(1) + ' t';
+            document.getElementById('hud-lot').textContent =
+                ((phase1.lotMassKg || 0) / 1000).toFixed(1) + ' t';
+            document.getElementById('hud-queue').textContent =
+                ((phase1.queueMassKg || 0) / 1000).toFixed(1) + ' t';
+
+            document.getElementById('hud-truckhours').textContent =
+                (phase1.truckHoursLost || 0).toFixed(1);
+            document.getElementById('hud-cbp').textContent =
+                (phase1.cbpThroughputPerHour || 0).toFixed(0) + '/hr';
+        }
+
+        function drawDebug(ctx, camera) {
+            const debug = getPhysicsDebugData();
+            if (!debug || !debug.N) return;
+
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            ctx.font = '14px monospace';
+            ctx.fillText(`Debug: ${DEBUG_LAYERS[debugLayer]} (TAB to cycle)`, 20, 30);
+        }
+
+        // =====================================================================
+        // INPUT
+        // =====================================================================
+
+        document.addEventListener('keydown', (e) => {
+            if (!simRunning) return;
+
+            switch (e.code) {
+                case 'Space':
+                    time.togglePause();
+                    e.preventDefault();
+                    break;
+                case 'KeyR':
+                    time.speedMult = time.speedMult === 1 ? 5 : time.speedMult === 5 ? 10 : 1;
+                    document.getElementById('badge-params').textContent =
+                        `${config.durationDays}d | ${time.speedMult}x | Twin: ${config.twinSpan ? 'ON' : 'OFF'}`;
+                    break;
+                case 'KeyD':
+                    showDebug = !showDebug;
+                    break;
+                case 'Tab':
+                    if (showDebug) {
+                        debugLayer = (debugLayer + 1) % DEBUG_LAYERS.length;
+                        e.preventDefault();
+                    }
+                    break;
+            }
+        });
+
+        // Mouse pan/zoom
+        let isDragging = false;
+        let lastMouse = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !camera) return;
+            const dx = e.clientX - lastMouse.x;
+            const dy = e.clientY - lastMouse.y;
+            camera.pan(dx, dy);
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mouseup', () => { isDragging = false; });
+        canvas.addEventListener('mouseleave', () => { isDragging = false; });
+
+        canvas.addEventListener('wheel', (e) => {
+            if (!camera) return;
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            camera.zoomBy(factor, e.clientX, e.clientY);
+        });
+
+        // =====================================================================
+        // INIT
+        // =====================================================================
+
+        setupOptionButtons();
+
+        document.getElementById('start-btn').addEventListener('click', startSim);
+
+        loadBundles();
+    </script>
+</body>
+</html>

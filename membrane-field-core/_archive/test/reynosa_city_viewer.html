@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reynosa City Network</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: 'Consolas', monospace;
+        }
+        #container { display: flex; height: 100vh; }
+        #canvas-wrapper { flex: 1; position: relative; }
+        canvas { display: block; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px;
+            font-size: 12px;
+            border: 1px solid #333;
+        }
+        #legend {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 12px;
+            font-size: 11px;
+            border: 1px solid #333;
+        }
+        .bridge { color: #f66; }
+        .city { color: #6af; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+            <div id="info">Loading...</div>
+            <div id="legend">
+                <div class="bridge">Bridge points (MEX/USA)</div>
+                <div class="city">City network points</div>
+                <div style="margin-top: 8px; color: #888;">
+                    Scroll to zoom, drag to pan
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+        const info = document.getElementById('info');
+
+        // Canvas setup
+        function resize() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Camera
+        let camera = {
+            centerX: 0,
+            centerY: 0,
+            zoom: 0.008,  // pixels per meter
+        };
+
+        // Transform functions
+        const ORIGIN_LAT = 26.06669701044433;  // PHARR
+        const ORIGIN_LON = -98.20517760083658;
+        const M_PER_DEG_LAT = 111320;
+        const M_PER_DEG_LON = 111320 * Math.cos(ORIGIN_LAT * Math.PI / 180);
+
+        function latLonToWorld(lat, lon) {
+            return {
+                x: (lon - ORIGIN_LON) * M_PER_DEG_LON,
+                y: (lat - ORIGIN_LAT) * M_PER_DEG_LAT,
+            };
+        }
+
+        function worldToScreen(wx, wy) {
+            return {
+                x: canvas.width / 2 + (wx - camera.centerX) * camera.zoom,
+                y: canvas.height / 2 - (wy - camera.centerY) * camera.zoom,
+            };
+        }
+
+        function screenToWorld(sx, sy) {
+            return {
+                x: camera.centerX + (sx - canvas.width / 2) / camera.zoom,
+                y: camera.centerY - (sy - canvas.height / 2) / camera.zoom,
+            };
+        }
+
+        // Mouse controls
+        let isDragging = false;
+        let lastMouse = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                camera.centerX -= (e.clientX - lastMouse.x) / camera.zoom;
+                camera.centerY += (e.clientY - lastMouse.y) / camera.zoom;
+                lastMouse = { x: e.clientX, y: e.clientY };
+            }
+        });
+        canvas.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mouseleave', () => isDragging = false);
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.85 : 1.18;
+            const before = screenToWorld(e.offsetX, e.offsetY);
+            camera.zoom *= factor;
+            camera.zoom = Math.max(0.0001, Math.min(0.5, camera.zoom));
+            const after = screenToWorld(e.offsetX, e.offsetY);
+            camera.centerX += before.x - after.x;
+            camera.centerY += before.y - after.y;
+        });
+
+        // Data
+        let bundle = null;
+
+        async function loadBundle() {
+            try {
+                const resp = await fetch('./reynosa_city_bundle.json?t=' + Date.now());
+                bundle = await resp.json();
+                info.innerHTML = `
+                    <strong>${bundle.metadata.description}</strong><br>
+                    Segments: ${bundle.metadata.segment_count}<br>
+                    POEs: ${Object.keys(bundle.geometry.poe_points).join(', ')}
+                `;
+
+                // Center on network
+                const allCoords = [];
+                for (const seg of bundle.geometry.segments_in_roi) {
+                    for (const [lat, lon] of seg.geometry_coordinates) {
+                        const w = latLonToWorld(lat, lon);
+                        allCoords.push(w);
+                    }
+                }
+                if (allCoords.length > 0) {
+                    let sumX = 0, sumY = 0;
+                    for (const c of allCoords) {
+                        sumX += c.x;
+                        sumY += c.y;
+                    }
+                    camera.centerX = sumX / allCoords.length;
+                    camera.centerY = sumY / allCoords.length;
+                }
+            } catch (e) {
+                info.textContent = 'Error loading bundle: ' + e.message;
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = '#0a0a12';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!bundle) {
+                requestAnimationFrame(draw);
+                return;
+            }
+
+            // Draw segments
+            ctx.strokeStyle = '#4a6a9a';
+            ctx.lineWidth = Math.max(2, camera.zoom * 80);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            for (const seg of bundle.geometry.segments_in_roi) {
+                if (seg.geometry_coordinates.length < 2) continue;
+                ctx.beginPath();
+                for (let i = 0; i < seg.geometry_coordinates.length; i++) {
+                    const [lat, lon] = seg.geometry_coordinates[i];
+                    const world = latLonToWorld(lat, lon);
+                    const screen = worldToScreen(world.x, world.y);
+                    if (i === 0) ctx.moveTo(screen.x, screen.y);
+                    else ctx.lineTo(screen.x, screen.y);
+                }
+                ctx.stroke();
+            }
+
+            // Draw POE points
+            for (const [name, poe] of Object.entries(bundle.geometry.poe_points)) {
+                const world = latLonToWorld(poe.lat, poe.lon);
+                const screen = worldToScreen(world.x, world.y);
+
+                // Marker
+                ctx.fillStyle = poe.type.includes('usa') ? '#6f6' : '#f66';
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = '11px Consolas';
+                ctx.fillText(name, screen.x + 12, screen.y + 4);
+            }
+
+            // Draw PHARR reference
+            const pharr = worldToScreen(0, 0);
+            ctx.fillStyle = '#ff0';
+            ctx.beginPath();
+            ctx.arc(pharr.x, pharr.y, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillText('PHARR', pharr.x + 10, pharr.y + 4);
+
+            requestAnimationFrame(draw);
+        }
+
+        await loadBundle();
+        draw();
+    </script>
+</body>
+</html>

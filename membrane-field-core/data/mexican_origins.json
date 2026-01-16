@@ -1,0 +1,60 @@
+{
+  "_comment": "City-level origin coordinates from CITY_ORIGIN_SPLITS in mexican_origin_deterministic_model.py",
+
+  "ciudad_juarez": {"lat": 31.6904, "lon": -106.4245, "state": "chihuahua", "share": 0.70},
+  "chihuahua_city": {"lat": 28.6353, "lon": -106.0889, "state": "chihuahua", "share": 0.30},
+  "chihuahua": {"lat": 28.6353, "lon": -106.0889, "state": "chihuahua", "share": 0.30},
+
+  "leon": {"lat": 21.1250, "lon": -101.6859, "state": "guanajuato", "share": 0.40},
+  "silao": {"lat": 20.9188, "lon": -101.4267, "state": "guanajuato", "share": 0.35},
+  "celaya": {"lat": 20.5239, "lon": -100.8157, "state": "guanajuato", "share": 0.25},
+
+  "veracruz": {"lat": 19.1738, "lon": -96.1342, "state": "veracruz", "share": 0.50},
+  "coatzacoalcos": {"lat": 18.1340, "lon": -94.4583, "state": "veracruz", "share": 0.30},
+  "cordoba": {"lat": 18.8791, "lon": -96.9267, "state": "veracruz", "share": 0.20},
+
+  "culiacan": {"lat": 24.8091, "lon": -107.3940, "state": "sinaloa", "share": 0.45},
+  "mazatlan": {"lat": 23.2494, "lon": -106.4194, "state": "sinaloa", "share": 0.35},
+  "los_mochis": {"lat": 25.7930, "lon": -109.0229, "state": "sinaloa", "share": 0.20},
+
+  "hermosillo": {"lat": 29.0729, "lon": -110.9559, "state": "sonora", "share": 1.00},
+
+  "toluca": {"lat": 19.2826, "lon": -99.6557, "state": "estado_de_mexico", "share": 0.60},
+  "tlalnepantla": {"lat": 19.5389, "lon": -99.2042, "state": "estado_de_mexico", "share": 0.40},
+
+  "reynosa": {"lat": 26.0508, "lon": -98.2980, "state": "tamaulipas", "share": 0.60},
+  "matamoros": {"lat": 25.8683, "lon": -97.5047, "state": "tamaulipas", "share": 0.22},
+  "nuevo_laredo": {"lat": 27.47983, "lon": -99.62877, "state": "tamaulipas", "share": 0.16},
+  "tampico": {"lat": 22.2331, "lon": -97.8661, "state": "tamaulipas", "share": 0.02},
+
+  "guadalajara": {"lat": 20.6597, "lon": -103.3496, "state": "jalisco", "share": 0.70},
+  "lagos_de_moreno": {"lat": 21.3563, "lon": -101.9429, "state": "jalisco", "share": 0.30},
+
+  "aguascalientes": {"lat": 21.8069, "lon": -102.0579, "state": "aguascalientes", "share": 1.0},
+
+  "colima": {"lat": 19.2452, "lon": -103.7240, "state": "colima", "share": 1.0},
+
+  "tepic": {"lat": 21.7514, "lon": -104.8455, "state": "nayarit", "share": 1.0},
+
+  "monterrey": {"lat": 25.6866, "lon": -100.3161, "state": "nuevo_leon", "share": 1.0},
+  "saltillo": {"lat": 25.4383, "lon": -101.0053, "state": "coahuila", "share": 1.0},
+  "durango": {"lat": 24.0277, "lon": -104.6532, "state": "durango", "share": 1.0},
+  "zacatecas": {"lat": 22.7749, "lon": -102.5835, "state": "zacatecas", "share": 1.0},
+  "san_luis_potosi": {"lat": 22.1565, "lon": -100.9855, "state": "san_luis_potosi", "share": 1.0},
+  "queretaro": {"lat": 20.5888, "lon": -100.3899, "state": "queretaro", "share": 1.0},
+  "morelia": {"lat": 19.7060, "lon": -101.1950, "state": "michoacan", "share": 1.0},
+  "pachuca": {"lat": 20.0911, "lon": -98.7624, "state": "hidalgo", "share": 1.0},
+  "tlaxcala": {"lat": 19.3139, "lon": -98.2404, "state": "tlaxcala", "share": 1.0},
+  "puebla": {"lat": 19.0413, "lon": -98.2062, "state": "puebla", "share": 1.0},
+  "cuernavaca": {"lat": 18.6813, "lon": -99.1013, "state": "morelos", "share": 1.0},
+  "mexico_city": {"lat": 19.4326, "lon": -99.1332, "state": "ciudad_de_mexico", "share": 1.0},
+  "chilpancingo": {"lat": 17.5528, "lon": -99.5039, "state": "guerrero", "share": 1.0},
+  "oaxaca": {"lat": 17.0732, "lon": -96.7266, "state": "oaxaca", "share": 1.0},
+  "tuxtla_gutierrez": {"lat": 16.7569, "lon": -93.1292, "state": "chiapas", "share": 1.0},
+  "villahermosa": {"lat": 17.9869, "lon": -92.9470, "state": "tabasco", "share": 1.0},
+  "campeche": {"lat": 19.8301, "lon": -90.5349, "state": "campeche", "share": 1.0},
+  "merida": {"lat": 20.9670, "lon": -89.5926, "state": "yucatan", "share": 1.0},
+  "cancun": {"lat": 21.1619, "lon": -86.8515, "state": "quintana_roo", "share": 1.0},
+  "tijuana": {"lat": 32.4674, "lon": -116.9127, "state": "baja_california", "share": 1.0},
+  "la_paz": {"lat": 24.1426, "lon": -110.3128, "state": "baja_california_sur", "share": 1.0}
+}

@@ -1,0 +1,682 @@
+{
+  "validation_timestamp": "2025-12-24T01:33:40.120428",
+  "total_export_volume_tons": 56580655.155999996,
+  "total_import_volume_tons": 56577123.903,
+  "total_states_analyzed": 32,
+  "total_commodities_analyzed": 97,
+  "top_states_analysis": {
+    "Nuevo Leon": {
+      "rank": 1,
+      "total_tons": 5941004.584656754,
+      "share_percent": 10.50006326062619,
+      "total_kg": 5941004584.656754
+    },
+    "Chihuahua": {
+      "rank": 2,
+      "total_tons": 5677870.699163388,
+      "share_percent": 10.035003453934536,
+      "total_kg": 5677870699.163388
+    },
+    "Coahuila": {
+      "rank": 3,
+      "total_tons": 5327321.859379011,
+      "share_percent": 9.415447461134754,
+      "total_kg": 5327321859.379011
+    },
+    "Baja California": {
+      "rank": 4,
+      "total_tons": 5034322.24490472,
+      "share_percent": 8.897603308099669,
+      "total_kg": 5034322244.90472
+    },
+    "Sonora": {
+      "rank": 5,
+      "total_tons": 4271849.452414738,
+      "share_percent": 7.550017652918141,
+      "total_kg": 4271849452.4147377
+    },
+    "Jalisco": {
+      "rank": 6,
+      "total_tons": 4089874.51519787,
+      "share_percent": 7.228397239165171,
+      "total_kg": 4089874515.19787
+    },
+    "Michoacan": {
+      "rank": 7,
+      "total_tons": 3193108.317237869,
+      "share_percent": 5.643462961738543,
+      "total_kg": 3193108317.237869
+    },
+    "Tamaulipas": {
+      "rank": 8,
+      "total_tons": 3172043.488108787,
+      "share_percent": 5.606233224700322,
+      "total_kg": 3172043488.108787
+    },
+    "Guanajuato": {
+      "rank": 9,
+      "total_tons": 3078117.8285405673,
+      "share_percent": 5.44023009287151,
+      "total_kg": 3078117828.5405674
+    },
+    "Estado de Mexico": {
+      "rank": 10,
+      "total_tons": 2530568.9896509233,
+      "share_percent": 4.472498564524971,
+      "total_kg": 2530568989.6509233
+    }
+  },
+  "commodity_analysis": {
+    "87": {
+      "rank": 1,
+      "total_tons": 7546198.5,
+      "share_percent": 13.337064548288069,
+      "description": "Vehicles and automotive parts"
+    },
+    "07": {
+      "rank": 2,
+      "total_tons": 6915295.700000001,
+      "share_percent": 12.222014186533647,
+      "description": "Edible vegetables and roots"
+    },
+    "84": {
+      "rank": 3,
+      "total_tons": 5029369.3,
+      "share_percent": 8.888849530167855,
+      "description": "Nuclear reactors, boilers, machinery"
+    },
+    "08": {
+      "rank": 4,
+      "total_tons": 4682364.4,
+      "share_percent": 8.275557055834952,
+      "description": "Edible fruit and nuts"
+    },
+    "85": {
+      "rank": 5,
+      "total_tons": 4490334.0,
+      "share_percent": 7.936164732662751,
+      "description": "Electrical machinery and equipment"
+    },
+    "25": {
+      "rank": 6,
+      "total_tons": 4234076.0,
+      "share_percent": 7.483257287011116,
+      "description": "Unknown commodity"
+    },
+    "22": {
+      "rank": 7,
+      "total_tons": 3137344.500000001,
+      "share_percent": 5.544906631692311,
+      "description": "Unknown commodity"
+    },
+    "39": {
+      "rank": 8,
+      "total_tons": 1808142.1,
+      "share_percent": 3.195689578027551,
+      "description": "Plastics and articles thereof"
+    },
+    "73": {
+      "rank": 9,
+      "total_tons": 1759473.8999999997,
+      "share_percent": 3.1096739603825876,
+      "description": "Articles of iron or steel"
+    },
+    "94": {
+      "rank": 10,
+      "total_tons": 1539245.0,
+      "share_percent": 2.7204439322169525,
+      "description": "Furniture, bedding, lamps"
+    }
+  },
+  "mexican_origin_analysis": {
+    "top_cities": {
+      "Monterrey": {
+        "rank": 1,
+        "total_tons": 5941004.5846567545,
+        "share_percent": 10.500063260626193,
+        "total_kg": 5941004584.6567545
+      },
+      "Saltillo": {
+        "rank": 2,
+        "total_tons": 5327321.859379011,
+        "share_percent": 9.415447461134754,
+        "total_kg": 5327321859.379011
+      },
+      "Tijuana": {
+        "rank": 3,
+        "total_tons": 5034322.244904721,
+        "share_percent": 8.897603308099669,
+        "total_kg": 5034322244.904721
+      },
+      "Hermosillo": {
+        "rank": 4,
+        "total_tons": 4271849.452414738,
+        "share_percent": 7.550017652918141,
+        "total_kg": 4271849452.4147377
+      },
+      "Ciudad Juarez": {
+        "rank": 5,
+        "total_tons": 3974509.489414371,
+        "share_percent": 7.0245024177541735,
+        "total_kg": 3974509489.414371
+      },
+      "Morelia": {
+        "rank": 6,
+        "total_tons": 3193108.3172378666,
+        "share_percent": 5.643462961738539,
+        "total_kg": 3193108317.2378664
+      },
+      "Guadalajara": {
+        "rank": 7,
+        "total_tons": 2862912.160638509,
+        "share_percent": 5.05987806741562,
+        "total_kg": 2862912160.638509
+      },
+      "Reynosa": {
+        "rank": 8,
+        "total_tons": 1903226.0928652722,
+        "share_percent": 3.363739934820193,
+        "total_kg": 1903226092.8652723
+      },
+      "Chihuahua": {
+        "rank": 9,
+        "total_tons": 1703361.209749017,
+        "share_percent": 3.0105010361803615,
+        "total_kg": 1703361209.749017
+      },
+      "San Luis Potosi": {
+        "rank": 10,
+        "total_tons": 1584778.0466027134,
+        "share_percent": 2.80091851575999,
+        "total_kg": 1584778046.6027133
+      }
+    }
+  },
+  "us_destination_analysis": {
+    "top_states": {
+      "Texas": {
+        "rank": 1,
+        "total_tons": 21884646.318878043,
+        "share_percent": 38.68108664625423,
+        "total_kg": 21884646318.878044
+      },
+      "California": {
+        "rank": 2,
+        "total_tons": 8512595.086140124,
+        "share_percent": 15.04600180937926,
+        "total_kg": 8512595086.140124
+      },
+      "Arizona": {
+        "rank": 3,
+        "total_tons": 3900947.9063916937,
+        "share_percent": 6.894920839524763,
+        "total_kg": 3900947906.3916936
+      },
+      "Michigan": {
+        "rank": 4,
+        "total_tons": 3551200.890224153,
+        "share_percent": 6.276743399527686,
+        "total_kg": 3551200890.224153
+      },
+      "Illinois": {
+        "rank": 5,
+        "total_tons": 2873935.9532683482,
+        "share_percent": 5.079678419489185,
+        "total_kg": 2873935953.268348
+      },
+      "Georgia": {
+        "rank": 6,
+        "total_tons": 2268046.7005865253,
+        "share_percent": 4.008769877512742,
+        "total_kg": 2268046700.5865254
+      },
+      "Kentucky": {
+        "rank": 7,
+        "total_tons": 1278747.8089285477,
+        "share_percent": 2.2601852492907333,
+        "total_kg": 1278747808.9285476
+      },
+      "Ohio": {
+        "rank": 8,
+        "total_tons": 1154687.072763652,
+        "share_percent": 2.040908043935448,
+        "total_kg": 1154687072.763652
+      },
+      "Florida": {
+        "rank": 9,
+        "total_tons": 954151.2017679762,
+        "share_percent": 1.6864611276526595,
+        "total_kg": 954151201.7679762
+      },
+      "North Carolina": {
+        "rank": 10,
+        "total_tons": 854812.380454465,
+        "share_percent": 1.5108798777400183,
+        "total_kg": 854812380.454465
+      }
+    },
+    "top_cities": {
+      "Dallas": {
+        "rank": 1,
+        "total_tons": 3605164.0308929905,
+        "share_percent": 7.380282858223201,
+        "total_kg": 3605164030.8929906
+      },
+      "Newark": {
+        "rank": 2,
+        "total_tons": 3049782.233959191,
+        "share_percent": 6.243337432007896,
+        "total_kg": 3049782233.959191
+      },
+      "Houston": {
+        "rank": 3,
+        "total_tons": 2650020.3658884014,
+        "share_percent": 5.424968104839352,
+        "total_kg": 2650020365.8884015
+      },
+      "San Francisco": {
+        "rank": 4,
+        "total_tons": 2463956.5988735226,
+        "share_percent": 5.044069144772837,
+        "total_kg": 2463956598.8735228
+      },
+      "Rio Grande Valley": {
+        "rank": 5,
+        "total_tons": 2286854.1552221286,
+        "share_percent": 4.681515286521325,
+        "total_kg": 2286854155.2221284
+      },
+      "Miami": {
+        "rank": 6,
+        "total_tons": 1904317.2539687143,
+        "share_percent": 3.89840791310756,
+        "total_kg": 1904317253.9687142
+      },
+      "Atlanta": {
+        "rank": 7,
+        "total_tons": 1841961.3947656616,
+        "share_percent": 3.770756612128592,
+        "total_kg": 1841961394.7656615
+      },
+      "Phoenix": {
+        "rank": 8,
+        "total_tons": 1763478.8452363096,
+        "share_percent": 3.6100916853741616,
+        "total_kg": 1763478845.2363095
+      },
+      "Philadelphia": {
+        "rank": 9,
+        "total_tons": 1529068.5157015196,
+        "share_percent": 3.130220444556433,
+        "total_kg": 1529068515.7015195
+      },
+      "Chicago": {
+        "rank": 10,
+        "total_tons": 1436137.7840019502,
+        "share_percent": 2.9399780366417545,
+        "total_kg": 1436137784.0019503
+      },
+      "Detroit": {
+        "rank": 11,
+        "total_tons": 1146050.4804437247,
+        "share_percent": 2.34612812149416,
+        "total_kg": 1146050480.4437246
+      },
+      "Los Angeles": {
+        "rank": 12,
+        "total_tons": 1127184.704020897,
+        "share_percent": 2.307507197412107,
+        "total_kg": 1127184704.020897
+      },
+      "Savannah": {
+        "rank": 13,
+        "total_tons": 1043369.6161891676,
+        "share_percent": 2.135925807304938,
+        "total_kg": 1043369616.1891676
+      },
+      "Austin": {
+        "rank": 14,
+        "total_tons": 929365.3067114414,
+        "share_percent": 1.9025427923319336,
+        "total_kg": 929365306.7114414
+      },
+      "Boston": {
+        "rank": 15,
+        "total_tons": 857180.5293539617,
+        "share_percent": 1.7547702997654562,
+        "total_kg": 857180529.3539617
+      }
+    },
+    "top_hs2": {
+      "87": {
+        "rank": 1,
+        "total_tons": 7545989.344,
+        "share_percent": 13.33752729625741,
+        "description": "Vehicles and automotive parts",
+        "total_kg": 7545989344.0
+      },
+      "07": {
+        "rank": 2,
+        "total_tons": 6914955.892,
+        "share_percent": 12.222176411539602,
+        "description": "Edible vegetables and roots",
+        "total_kg": 6914955892.0
+      },
+      "84": {
+        "rank": 3,
+        "total_tons": 5028594.637,
+        "share_percent": 8.888035110482805,
+        "description": "Nuclear reactors, boilers, machinery",
+        "total_kg": 5028594637.0
+      },
+      "08": {
+        "rank": 4,
+        "total_tons": 4682363.333,
+        "share_percent": 8.276071687609624,
+        "description": "Edible fruit and nuts",
+        "total_kg": 4682363333.0
+      },
+      "85": {
+        "rank": 5,
+        "total_tons": 4489596.509,
+        "share_percent": 7.935356552760258,
+        "description": "Electrical machinery and equipment",
+        "total_kg": 4489596509.0
+      },
+      "25": {
+        "rank": 6,
+        "total_tons": 4234077.996,
+        "share_percent": 7.483727881359285,
+        "description": "Unknown commodity",
+        "total_kg": 4234077996.0
+      },
+      "22": {
+        "rank": 7,
+        "total_tons": 3137178.662,
+        "share_percent": 5.544959597767131,
+        "description": "Unknown commodity",
+        "total_kg": 3137178662.0
+      },
+      "39": {
+        "rank": 8,
+        "total_tons": 1808090.811,
+        "share_percent": 3.1957983832828343,
+        "description": "Plastics and articles thereof",
+        "total_kg": 1808090811.0
+      },
+      "73": {
+        "rank": 9,
+        "total_tons": 1758530.269,
+        "share_percent": 3.108200183549369,
+        "description": "Articles of iron or steel",
+        "total_kg": 1758530269.0
+      },
+      "94": {
+        "rank": 10,
+        "total_tons": 1539226.325,
+        "share_percent": 2.7205807202907013,
+        "description": "Furniture, bedding, lamps",
+        "total_kg": 1539226325.0
+      }
+    },
+    "faf_region_city_totals_kg": {
+      "Dallas": 3605164030.8929906,
+      "Newark": 3049782233.959191,
+      "Houston": 2650020365.8884015,
+      "San Francisco": 2463956598.8735228,
+      "Rio Grande Valley": 2286854155.2221284,
+      "Miami": 1904317253.9687142,
+      "Atlanta": 1841961394.7656615,
+      "Phoenix": 1763478845.2363095,
+      "Philadelphia": 1529068515.7015195,
+      "Chicago": 1436137784.0019503,
+      "Detroit": 1146050480.4437246,
+      "Los Angeles": 1127184704.020897,
+      "Savannah": 1043369616.1891676,
+      "Austin": 929365306.7114414,
+      "Boston": 857180529.3539617,
+      "Pittsburgh": 806512118.1161785,
+      "Mississippi": 797902342.5771443,
+      "San Antonio": 786640458.9511963,
+      "Grand Rapids": 705180359.9349763,
+      "Cincinnati": 695468717.5897125,
+      "Louisville": 682268833.657191,
+      "New Orleans": 662335842.179439,
+      "Nashville": 660751489.8490434,
+      "Charlotte": 652944990.1086359,
+      "Indianapolis": 605185590.55212,
+      "Milwaukee": 586898009.6745878,
+      "Minneapolis": 537433801.0636085,
+      "Tucson": 504586091.2867632,
+      "St. Louis": 484865833.6323791,
+      "Washington": 473779749.3604137,
+      "Iowa": 469694305.9069659,
+      "Kansas City": 443079492.1587482,
+      "Tampa": 439532550.1697784,
+      "Birmingham": 427127018.3538473,
+      "Raleigh-Durham": 422398598.5000835,
+      "Columbus": 371694838.1088855,
+      "Lubbock": 364515343.53372854,
+      "Cleveland": 356453363.11350226,
+      "Orlando": 353000332.8805645,
+      "San Diego": 341625173.87840885,
+      "Sacramento": 330220265.23781145,
+      "Columbia": 304631032.90096587,
+      "Amarillo": 283938267.5946938,
+      "Waco": 272427256.7462602,
+      "Springfield": 272126132.64795876,
+      "Portland": 246173058.201389,
+      "Tyler": 245568231.4332487,
+      "Seattle": 237273197.29557502,
+      "Baton Rouge": 231854392.41988856,
+      "Riverside": 224324691.29983288,
+      "Odessa": 222546209.73638162,
+      "Richmond": 219500868.63432372,
+      "Greenville": 219146138.20287228,
+      "Memphis": 204572033.041835,
+      "El Paso": 193522520.79888648,
+      "Greensboro--Winston-Salem--High Point": 192172825.8983125,
+      "Baltimore": 190877468.34145752,
+      "Knoxville": 189245732.31700188,
+      "Arkansas": 189005576.46445116,
+      "Beaumont": 172797636.69692314,
+      "Denver": 172391720.91052034,
+      "Corpus Christi": 171925558.69743317,
+      "New Mexico": 162111970.94610038,
+      "Killeen": 161154151.87806946,
+      "Buffalo": 155403417.18013167,
+      "Las Vegas": 152425983.77665234,
+      "Dayton": 141733509.60293934,
+      "Charleston": 123396548.38405776,
+      "Lake Charles-Jennings": 117363306.40852065,
+      "Salt Lake City": 101836697.94047788,
+      "Virginia Beach-Norfolk": 95872746.7826778,
+      "Fresno": 92324369.14834534,
+      "Oklahoma City": 88047895.01166709,
+      "Fort Wayne": 83772032.5804253,
+      "Jacksonville": 79843070.16220714,
+      "Tulsa": 72537533.40265961,
+      "Hartford": 62049958.626386166,
+      "Rest of CO": 58714447.74041504,
+      "Mobile": 57998673.34708529,
+      "Rest of MA": 56350157.344300784,
+      "Idaho": 55590971.00197805,
+      "Laredo": 54645330.21380812,
+      "Rest of OR": 52783709.013612434,
+      "Wichita": 47785742.80007352,
+      "Rest of KS": 47364085.08975626,
+      "Rest of MD": 45816577.52484159,
+      "Rest of WA": 45577805.78616533,
+      "Rest of OK": 44792298.639547,
+      "Rochester": 44502627.392127834,
+      "Rest of NE": 43551318.85101175,
+      "Albany": 41526877.92803937,
+      "Maine": 38506399.737592965,
+      "Omaha": 35154651.98304304,
+      "Rest of NV": 33683474.41516407,
+      "South Dakota": 18693016.24718997,
+      "Rest of CT": 16276508.015558228,
+      "Rest of UT": 14191070.88914479,
+      "Vermont": 10197971.717216507,
+      "North Dakota": 9777795.081781335,
+      "Rest of NH": 8624086.855988005,
+      "Wyoming": 7338009.699713356,
+      "West Virginia": 7192963.247822236,
+      "Rest of DE": 6020046.926496156,
+      "Montana": 3662309.323775545,
+      "Honolulu": 388875.9638603341
+    }
+  },
+  "specialization_analysis": {
+    "Nuevo Leon": {
+      "27": {
+        "location_quotient": 3.127585525816718,
+        "tons": 90690.61688543666,
+        "description": "HS2-27"
+      },
+      "44": {
+        "location_quotient": 2.7170197339233897,
+        "tons": 173512.7281911276,
+        "description": "HS2-44"
+      },
+      "68": {
+        "location_quotient": 2.5206313399774913,
+        "tons": 348627.89623801317,
+        "description": "HS2-68"
+      }
+    },
+    "Chihuahua": {
+      "03": {
+        "location_quotient": 3.924842694304413,
+        "tons": 17630.060594878785,
+        "description": "HS2-03"
+      },
+      "91": {
+        "location_quotient": 3.8229589769643177,
+        "tons": 849.0558444284178,
+        "description": "HS2-91"
+      },
+      "90": {
+        "location_quotient": 3.114365740373625,
+        "tons": 155076.07208803174,
+        "description": "Optical, measuring, medical instruments"
+      }
+    },
+    "Coahuila": {
+      "81": {
+        "location_quotient": 3.8365258444468213,
+        "tons": 3346.086622705031,
+        "description": "HS2-81"
+      },
+      "75": {
+        "location_quotient": 3.836525553099006,
+        "tons": 2685.6145219884393,
+        "description": "HS2-75"
+      },
+      "74": {
+        "location_quotient": 3.836525532391271,
+        "tons": 41356.7208609436,
+        "description": "HS2-74"
+      }
+    },
+    "Baja California": {
+      "95": {
+        "location_quotient": 4.569062186912488,
+        "tons": 25995.51429894826,
+        "description": "HS2-95"
+      },
+      "45": {
+        "location_quotient": 4.569062177899628,
+        "tons": 23.565731872508657,
+        "description": "HS2-45"
+      },
+      "65": {
+        "location_quotient": 4.5690621380392695,
+        "tons": 2903.5540970750567,
+        "description": "HS2-65"
+      }
+    },
+    "Sonora": {
+      "03": {
+        "location_quotient": 4.134295567793881,
+        "tons": 13972.158784436657,
+        "description": "HS2-03"
+      },
+      "71": {
+        "location_quotient": 4.0594037533931076,
+        "tons": 1360.7600361324432,
+        "description": "HS2-71"
+      },
+      "26": {
+        "location_quotient": 4.04831809282624,
+        "tons": 3467.809806742881,
+        "description": "HS2-26"
+      }
+    }
+  },
+  "validation_results": {
+    "major_manufacturing": {
+      "matches": 4,
+      "total_expected": 5,
+      "match_rate": 80.0,
+      "missing_states": [
+        "Nuevo Le\u00f3n"
+      ]
+    },
+    "automotive_hubs": {
+      "matches": 3,
+      "total_expected": 5,
+      "match_rate": 60.0,
+      "missing_states": [
+        "Nuevo Le\u00f3n",
+        "Aguascalientes"
+      ]
+    },
+    "agricultural_states": {
+      "matches": 2,
+      "total_expected": 5,
+      "match_rate": 40.0,
+      "missing_states": [
+        "Sinaloa",
+        "Michoac\u00e1n",
+        "Veracruz"
+      ]
+    },
+    "border_states": {
+      "matches": 5,
+      "total_expected": 6,
+      "match_rate": 83.33333333333334,
+      "missing_states": [
+        "Nuevo Le\u00f3n"
+      ]
+    },
+    "maquiladora_centers": {
+      "matches": 4,
+      "total_expected": 5,
+      "match_rate": 80.0,
+      "missing_states": [
+        "Nuevo Le\u00f3n"
+      ]
+    },
+    "hs27_filtering_needed": false,
+    "hs27_truck_ratio": 0.19698962491948288,
+    "mx_hs27_production_million_kg": 1857.9904,
+    "us_hs27_truck_imports_million_kg": 366.00483199999996
+  },
+  "data_quality": {
+    "estimation_methods": {
+      "model_aligned_bts_constrained": "2017"
+    },
+    "record_count_stats": {
+      "mean": 63.03125,
+      "median": 67.5,
+      "min": 15,
+      "max": 90
+    }
+  },
+  "recommendations": [
+    "\u26a0\ufe0f Major manufacturing states missing from top 5: Nuevo Le\u00f3n, Tamaulipas",
+    "\u2705 Automotive commodities well represented: HS2-87, HS2-84, HS2-85",
+    "\u2705 Strong border state representation: 5/6 border states in top 10"
+  ]
+}

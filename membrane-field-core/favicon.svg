@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 32 32"
+     width="32"
+     height="32">
+
+  <!-- background -->
+  <rect x="0" y="0" width="32" height="32" fill="#000"/>
+
+  <!-- potential field contours -->
+  <path d="M4 20 C10 14, 18 12, 28 10"
+        fill="none"
+        stroke="#fff"
+        stroke-width="1.2"
+        opacity="0.9"/>
+
+  <path d="M4 24 C12 18, 20 16, 28 14"
+        fill="none"
+        stroke="#fff"
+        stroke-width="0.9"
+        opacity="0.7"/>
+
+  <path d="M4 28 C14 22, 22 20, 28 18"
+        fill="none"
+        stroke="#fff"
+        stroke-width="0.7"
+        opacity="0.5"/>
+
+  <!-- sink marker -->
+  <circle cx="26" cy="9" r="2" fill="#fff"/>
+
+</svg>

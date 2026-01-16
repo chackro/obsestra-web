@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Congestion Test</title>
+    <style>
+        body { background: #1a1a2e; color: #e0e0e0; font-family: monospace; padding: 20px; }
+        pre { background: #0a0a12; padding: 15px; border: 1px solid #333; overflow-x: auto; }
+        .pass { color: #0f0; }
+        .fail { color: #f00; }
+        .warn { color: #ff0; }
+        h2 { color: #888; margin-top: 20px; }
+        #canvas { border: 1px solid #333; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Congestion Mechanism Test</h1>
+    <p>Testing: capacity &lt; inflow → congestion at sink → upstream shockwave</p>
+
+    <h2>Test Parameters</h2>
+    <pre id="params"></pre>
+
+    <h2>Simulation Progress</h2>
+    <pre id="log"></pre>
+
+    <h2>Visual (optional)</h2>
+    <canvas id="canvas" width="400" height="300"></canvas>
+
+    <script type="module">
+        import * as overlay from '../overlay/reynosaOverlay_v2.js';
+        import { createTestRendererContext } from './stubGeometryProvider.js';
+
+        const log = document.getElementById('log');
+        const paramsEl = document.getElementById('params');
+
+        function print(msg, cls = '') {
+            const line = document.createElement('div');
+            line.className = cls;
+            line.textContent = msg;
+            log.appendChild(line);
+            console.log(msg);
+        }
+
+        // Test configuration: CAPACITY < INFLOW to force congestion
+        const TEST_CONFIG = {
+            inflowKgPerHour: 500000,    // 500 t/hr inflow (~55 trucks/hr)
+            capacityKgPerHour: 100000,  // 100 t/hr capacity (~11 trucks/hr)
+            // Ratio: 5:1 — heavy constraint, should build queue fast
+        };
+
+        paramsEl.textContent = JSON.stringify(TEST_CONFIG, null, 2) + '\n\n' +
+            `Inflow: ${(TEST_CONFIG.inflowKgPerHour/1000).toFixed(0)} t/hr\n` +
+            `Capacity: ${(TEST_CONFIG.capacityKgPerHour/1000).toFixed(0)} t/hr\n` +
+            `Ratio: ${(TEST_CONFIG.inflowKgPerHour/TEST_CONFIG.capacityKgPerHour).toFixed(1)}:1 (inflow:capacity)`;
+
+        // Create context with constrained capacity
+        const ctx = createTestRendererContext(TEST_CONFIG);
+
+        // Attach overlay
+        print('Attaching overlay...');
+        overlay.onAttach(ctx);
+        print('Overlay attached.');
+
+        // Create mock camera
+        const mockCamera = {
+            zoom: 0.01,
+            centerWorld: ctx.geometry.poePoints.PHARR,
+            viewportWorld: {
+                minX: ctx.geometry.poePoints.PHARR.x - 50000,
+                maxX: ctx.geometry.poePoints.PHARR.x + 50000,
+                minY: ctx.geometry.poePoints.PHARR.y - 50000,
+                maxY: ctx.geometry.poePoints.PHARR.y + 50000,
+            },
+            worldToScreen: (x, y) => ({ x: 200 + (x - ctx.geometry.poePoints.PHARR.x) * 0.004, y: 150 - (y - ctx.geometry.poePoints.PHARR.y) * 0.004 }),
+            metersToPixels: (m) => m * 0.004,
+        };
+
+        // Run simulation
+        const SIM_HOURS = 4;  // Simulate 4 hours
+        const DT_SIM = 60;    // 1 minute per step (sim time)
+        const STEPS = SIM_HOURS * 60;  // 240 steps
+
+        print(`\nRunning ${SIM_HOURS} hours of simulation (${STEPS} steps, dt=${DT_SIM}s)...\n`);
+
+        let lastMetrics = null;
+        const snapshots = [];
+
+        for (let i = 0; i < STEPS; i++) {
+            const simTime = i * DT_SIM;
+            overlay.onFrame(mockCamera, { simTimeSeconds: simTime, currentHour: Math.floor(simTime / 3600) % 24 });
+
+            // Log every 30 minutes (30 steps)
+            if (i % 30 === 0 || i === STEPS - 1) {
+                const m = overlay.getMetrics();
+                const hours = (simTime / 3600).toFixed(1);
+                const stalledT = (m.stalledMassKg / 1000).toFixed(1);
+                const sinkQueueT = (m.sinkQueueKg / 1000).toFixed(1);
+                const stallTonHrs = m.stallTonHours.toFixed(1);
+                const injectedT = (m.injected / 1000).toFixed(0);
+                const exitedT = (m.exited / 1000).toFixed(0);
+
+                print(`t=${hours}h | injected=${injectedT}t exited=${exitedT}t | sinkQueue=${sinkQueueT}t stalledMass=${stalledT}t | stallTonHours=${stallTonHrs}`);
+
+                snapshots.push({
+                    hour: parseFloat(hours),
+                    sinkQueueKg: m.sinkQueueKg,
+                    stalledMassKg: m.stalledMassKg,
+                    stallTonHours: m.stallTonHours,
+                });
+
+                lastMetrics = m;
+            }
+        }
+
+        // Validate results
+        print('\n─────────────────────────────────────────');
+        print('VALIDATION:');
+
+        const finalSinkQueue = lastMetrics.sinkQueueKg;
+        const finalStallTonHours = lastMetrics.stallTonHours;
+        const backlogBuilt = finalSinkQueue > 50000;  // >50t in queue
+        const stallTimeAccumulated = finalStallTonHours > 10;  // >10 ton-hours
+
+        if (backlogBuilt) {
+            print(`✓ Sink queue built up: ${(finalSinkQueue/1000).toFixed(1)}t`, 'pass');
+        } else {
+            print(`✗ Sink queue too small: ${(finalSinkQueue/1000).toFixed(1)}t (expected >50t)`, 'fail');
+        }
+
+        if (stallTimeAccumulated) {
+            print(`✓ Stall time accumulated: ${finalStallTonHours.toFixed(1)} ton-hours`, 'pass');
+        } else {
+            print(`✗ Stall time too low: ${finalStallTonHours.toFixed(1)} ton-hours (expected >10)`, 'fail');
+        }
+
+        // Check for upstream congestion propagation
+        const midpoint = snapshots[Math.floor(snapshots.length / 2)];
+        const endpoint = snapshots[snapshots.length - 1];
+
+        if (endpoint.stalledMassKg > midpoint.stalledMassKg) {
+            print(`✓ Congestion grew over time: ${(midpoint.stalledMassKg/1000).toFixed(1)}t → ${(endpoint.stalledMassKg/1000).toFixed(1)}t`, 'pass');
+        } else if (endpoint.stalledMassKg > 0) {
+            print(`~ Congestion present but not growing: ${(endpoint.stalledMassKg/1000).toFixed(1)}t`, 'warn');
+        } else {
+            print(`✗ No congestion detected (stalledMassKg=0)`, 'fail');
+        }
+
+        // Summary
+        print('\n─────────────────────────────────────────');
+        const allPass = backlogBuilt && stallTimeAccumulated;
+        if (allPass) {
+            print('ALL TESTS PASSED', 'pass');
+        } else {
+            print('SOME TESTS FAILED', 'fail');
+        }
+
+        // Optional: draw final state
+        const canvas = document.getElementById('canvas');
+        const drawCtx = canvas.getContext('2d');
+        drawCtx.fillStyle = '#1a1a2e';
+        drawCtx.fillRect(0, 0, 400, 300);
+        drawCtx.fillStyle = '#e0e0e0';
+        drawCtx.font = '12px monospace';
+        drawCtx.fillText('(Visual rendering not implemented in headless test)', 20, 150);
+    </script>
+</body>
+</html>

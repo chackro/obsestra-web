@@ -1,0 +1,10 @@
+{
+  "_comment": "PLACEHOLDER - Replace with output from: node runComparison.js Baseline Twinspan Interserrana InovusTwinspanInterserrana",
+  "meta": {
+    "timestamp": null,
+    "scenarioNames": ["Baseline", "Twinspan", "Interserrana", "InovusTwinspanInterserrana"],
+    "runOpts": { "days": 7, "warmupSeconds": 86400, "dt": 10, "sampleInterval": 300 }
+  },
+  "scenarios": [],
+  "deltas": []
+}

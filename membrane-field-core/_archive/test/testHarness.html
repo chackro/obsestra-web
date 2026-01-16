@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reynosa Overlay Test Harness</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0a0f;
+            color: #fff;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow: hidden;
+        }
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+        #canvas-wrapper {
+            flex: 1;
+            position: relative;
+        }
+        canvas {
+            display: block;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        #controls {
+            width: 280px;
+            background: #12121a;
+            padding: 16px;
+            overflow-y: auto;
+            border-left: 1px solid #2a2a3e;
+        }
+        h2 {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .control-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .value {
+            font-size: 13px;
+            color: #0f0;
+        }
+        button {
+            background: #2a2a4e;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            margin: 4px 4px 4px 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #3a3a6e;
+        }
+        button.active {
+            background: #0a6;
+        }
+        #metrics {
+            background: #0a0a12;
+            padding: 12px;
+            font-size: 12px;
+            line-height: 1.6;
+            border: 1px solid #2a2a3e;
+        }
+        #metrics .label {
+            color: #666;
+        }
+        #metrics .value {
+            color: #0f0;
+            float: right;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        #overlay-state {
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        #overlay-state.off { background: #400; color: #f66; }
+        #overlay-state.warm { background: #440; color: #ff0; }
+        #overlay-state.on { background: #040; color: #0f0; }
+        #instructions {
+            font-size: 10px;
+            color: #444;
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="controls">
+            <h2>Reynosa Overlay Test</h2>
+
+            <div id="overlay-state" class="off">OVERLAY: OFF</div>
+
+            <div class="control-group">
+                <label>Simulation Hour</label>
+                <input type="range" id="hour-slider" min="0" max="23" value="8">
+                <span class="value" id="hour-value">08:00</span>
+            </div>
+
+            <div class="control-group">
+                <label>Time Scale (sim min / real sec)</label>
+                <input type="range" id="timescale-slider" min="0" max="120" value="60">
+                <span class="value" id="timescale-value">60</span>
+            </div>
+
+            <div class="control-group">
+                <label>Zoom</label>
+                <input type="range" id="zoom-slider" min="1" max="200" value="15">
+                <span class="value" id="zoom-value">0.15</span>
+            </div>
+
+            <div class="control-group">
+                <button id="btn-pause">Pause</button>
+                <button id="btn-reset">Reset</button>
+                <button id="btn-focus">Focus Reynosa</button>
+            </div>
+
+            <h2>Metrics</h2>
+            <div id="metrics">
+                <div class="metric-row">
+                    <span class="label">Inflow:</span>
+                    <span class="value" id="m-inflow">0 t/hr</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Throughput:</span>
+                    <span class="value" id="m-throughput">0 t/hr</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Backlog:</span>
+                    <span class="value" id="m-backlog">0 t</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Total Mass:</span>
+                    <span class="value" id="m-total">0 t</span>
+                </div>
+                <div class="metric-row">
+                    <span class="label">Gate Cap:</span>
+                    <span class="value" id="m-cap">0 t/hr</span>
+                </div>
+            </div>
+
+            <div id="instructions">
+                <strong>Controls:</strong><br>
+                Drag to pan<br>
+                Scroll to zoom<br>
+                Zoom in to activate overlay<br>
+                <br>
+                WARM at zoom > 0.05<br>
+                ON at zoom > 0.08<br>
+                (when near Reynosa)
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import {
+            StubCamera,
+            StubTime,
+            createRendererContext,
+            drawBaseMap,
+            stubScenario
+        } from './stubRenderer.js';
+
+        import {
+            ReynosaEastOverlay,
+            getMetrics,
+            getState
+        } from '../overlay/reynosaOverlay.js';
+
+        // ─────────────────────────────────────────────────────────────────────
+        // SETUP
+        // ─────────────────────────────────────────────────────────────────────
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            if (camera) {
+                camera.canvasWidth = canvas.width;
+                camera.canvasHeight = canvas.height;
+                camera._updateViewport();
+            }
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const camera = new StubCamera(canvas.width, canvas.height);
+        const time = new StubTime();
+        const rendererContext = createRendererContext();
+
+        // Attach overlay
+        ReynosaEastOverlay.onAttach(rendererContext);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // CONTROLS
+        // ─────────────────────────────────────────────────────────────────────
+
+        const hourSlider = document.getElementById('hour-slider');
+        const hourValue = document.getElementById('hour-value');
+        const timescaleSlider = document.getElementById('timescale-slider');
+        const timescaleValue = document.getElementById('timescale-value');
+        const zoomSlider = document.getElementById('zoom-slider');
+        const zoomValue = document.getElementById('zoom-value');
+
+        hourSlider.addEventListener('input', () => {
+            const h = parseInt(hourSlider.value);
+            time.setHour(h);
+            hourValue.textContent = h.toString().padStart(2, '0') + ':00';
+        });
+
+        timescaleSlider.addEventListener('input', () => {
+            const scale = parseInt(timescaleSlider.value);
+            time.setTimeScale(scale);
+            timescaleValue.textContent = scale;
+        });
+
+        zoomSlider.addEventListener('input', () => {
+            const z = parseInt(zoomSlider.value) / 100;
+            camera.setZoom(z);
+            zoomValue.textContent = z.toFixed(2);
+        });
+
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            time.togglePause();
+            document.getElementById('btn-pause').textContent = time.paused ? 'Resume' : 'Pause';
+            document.getElementById('btn-pause').classList.toggle('active', time.paused);
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            time.simTimeSeconds = 0;
+            ReynosaEastOverlay.onDetach();
+            ReynosaEastOverlay.onAttach(rendererContext);
+        });
+
+        document.getElementById('btn-focus').addEventListener('click', () => {
+            camera.focusOnReynosa();
+            zoomSlider.value = camera.zoom * 100;
+            zoomValue.textContent = camera.zoom.toFixed(2);
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // MOUSE INTERACTION
+        // ─────────────────────────────────────────────────────────────────────
+
+        let isDragging = false;
+        let lastMouse = { x: 0, y: 0 };
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = e.clientX - lastMouse.x;
+                const dy = e.clientY - lastMouse.y;
+                camera.pan(dx, dy);
+                lastMouse = { x: e.clientX, y: e.clientY };
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const factor = e.deltaY > 0 ? 0.9 : 1.1;
+            camera.zoomAt(factor, e.offsetX, e.offsetY);
+            zoomSlider.value = camera.zoom * 100;
+            zoomValue.textContent = camera.zoom.toFixed(2);
+        });
+
+        // ─────────────────────────────────────────────────────────────────────
+        // RENDER LOOP
+        // ─────────────────────────────────────────────────────────────────────
+
+        let lastTime = performance.now();
+
+        function frame(now) {
+            const dt = now - lastTime;
+            lastTime = now;
+
+            // Update time
+            time.tick(dt);
+
+            // Update hour display
+            const h = time.currentHour;
+            hourSlider.value = h;
+            hourValue.textContent = h.toString().padStart(2, '0') + ':00';
+
+            // Run overlay frame
+            ReynosaEastOverlay.onFrame(camera, time);
+
+            // Clear and draw
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBaseMap(ctx, camera);
+            ReynosaEastOverlay.draw(ctx, camera);
+
+            // Update UI
+            updateMetricsUI();
+            updateStateUI();
+
+            requestAnimationFrame(frame);
+        }
+
+        function updateMetricsUI() {
+            const m = getMetrics();
+            document.getElementById('m-inflow').textContent =
+                (m.inflow_kg_per_hr / 1000).toFixed(0) + ' t/hr';
+            document.getElementById('m-throughput').textContent =
+                (m.throughput_kg_per_hr / 1000).toFixed(0) + ' t/hr';
+            document.getElementById('m-backlog').textContent =
+                (m.backlog_near_pharr / 1000).toFixed(1) + ' t';
+            document.getElementById('m-total').textContent =
+                (m.total / 1000).toFixed(1) + ' t';
+
+            // Gate capacity for current hour
+            const cap = stubScenario.getPharrGateCapacity(time.currentHour);
+            document.getElementById('m-cap').textContent =
+                (cap.cap_kg_per_hour / 1000).toFixed(0) + ' t/hr';
+        }
+
+        function updateStateUI() {
+            const state = getState();
+            const el = document.getElementById('overlay-state');
+            el.className = state.toLowerCase();
+            el.textContent = 'OVERLAY: ' + state;
+        }
+
+        // Start
+        requestAnimationFrame(frame);
+
+        console.log('Test harness loaded. Zoom in to activate overlay.');
+    </script>
+</body>
+</html>

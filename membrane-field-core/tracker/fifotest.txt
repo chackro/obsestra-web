@@ -1,0 +1,78 @@
+// fifoTest.js — Drop in tracker/ and run with: node fifoTest.js
+
+// Simulates the bug: 4h particle behind 24h particle
+function testOldFIFO() {
+    const queue = [];
+    const simTime = 100 * 3600; // 100 hours in
+    
+    // Particle A: arrived at hour 76, needs 24h dwell (ready at hour 100)
+    // Particle B: arrived at hour 90, needs 4h dwell (ready at hour 94)
+    queue.push({ id: 'A', parkArrivalTime: 76 * 3600, parkDwell24h: true });
+    queue.push({ id: 'B', parkArrivalTime: 90 * 3600, parkDwell24h: false });
+    
+    const PARK_DWELL_S = 4 * 3600;
+    const PARK_DWELL_24H_S = 24 * 3600;
+    
+    // Old FIFO logic
+    const released = [];
+    while (queue.length > 0) {
+        const p = queue[0];
+        const waited = simTime - p.parkArrivalTime;
+        const requiredDwell = p.parkDwell24h ? PARK_DWELL_24H_S : PARK_DWELL_S;
+        if (waited < requiredDwell) break;  // BUG: stops scanning
+        released.push(p.id);
+        queue.shift();
+    }
+    
+    console.log('OLD FIFO released:', released);
+    console.log('OLD FIFO stuck:', queue.map(p => p.id));
+    console.log('B waited:', (simTime - 90 * 3600) / 3600, 'hours (needed 4)');
+    return released.includes('B') ? 'PASS' : 'FAIL — B stuck behind A';
+}
+
+function testNewScan() {
+    const queue = [];
+    const simTime = 100 * 3600;
+    
+    queue.push({ id: 'A', parkArrivalTime: 76 * 3600, parkDwell24h: true });
+    queue.push({ id: 'B', parkArrivalTime: 90 * 3600, parkDwell24h: false });
+    
+    const PARK_DWELL_S = 4 * 3600;
+    const PARK_DWELL_24H_S = 24 * 3600;
+    
+    // New scan logic
+    const released = [];
+    let i = 0;
+    while (i < queue.length) {
+        const p = queue[i];
+        const waited = simTime - p.parkArrivalTime;
+        const requiredDwell = p.parkDwell24h ? PARK_DWELL_24H_S : PARK_DWELL_S;
+        if (waited >= requiredDwell) {
+            released.push(p.id);
+            queue.splice(i, 1);
+        } else {
+            i++;
+        }
+    }
+    
+    console.log('NEW SCAN released:', released);
+    console.log('NEW SCAN stuck:', queue.map(p => p.id));
+    return released.includes('B') ? 'PASS' : 'FAIL';
+}
+
+console.log('\n=== FIFO BUG TEST ===\n');
+console.log('OLD:', testOldFIFO());
+console.log('NEW:', testNewScan());
+```
+
+**Expected output:**
+```
+=== FIFO BUG TEST ===
+
+OLD FIFO released: [ 'A' ]
+OLD FIFO stuck: [ 'B' ]
+B waited: 10 hours (needed 4)
+OLD: FAIL — B stuck behind A
+NEW SCAN released: [ 'A', 'B' ]
+NEW SCAN stuck: []
+NEW: PASS
