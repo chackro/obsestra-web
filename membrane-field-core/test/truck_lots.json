@@ -1,3 +1,3690 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:bbe8104f8d270de7caf6c6dc59174ee1ec1738a5e73cd117c9bd73404fdf4528
-size 89148
+{
+  "version": "2.0",
+  "generated": "2025-12-19",
+  "source_kmz": "MERCADO TRANSPORTE.kmz",
+  "transform": {
+    "origin_lat": 26.06669701044433,
+    "origin_lon": -98.20517760083658,
+    "meters_per_deg_lat": 111320,
+    "meters_per_deg_lon": 99996.88,
+    "notes": "PHARR POE is coordinate origin (0,0). Same as bundle transform."
+  },
+  "layers": {
+    "lots": {
+      "enabled": true,
+      "style": {}
+    }
+  },
+  "lots": [
+    {
+      "id": "lots_001",
+      "name": "TRANSFER 1",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00788011697187,
+              -98.20782516099003
+            ],
+            [
+              26.0079894141662,
+              -98.20760743702726
+            ],
+            [
+              26.00779902680666,
+              -98.20748974742786
+            ],
+            [
+              26.00786777797446,
+              -98.20738186639042
+            ],
+            [
+              26.00696872635134,
+              -98.20737990340479
+            ],
+            [
+              26.00695462204244,
+              -98.20774473598645
+            ],
+            [
+              26.00788011697187,
+              -98.20782516099003
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_002",
+      "name": "TRANSFER 2",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01502672524014,
+              -98.20233568704488
+            ],
+            [
+              26.01492839602901,
+              -98.20177207833295
+            ],
+            [
+              26.01717027823223,
+              -98.20140019732243
+            ],
+            [
+              26.01724157535845,
+              -98.20183960625772
+            ],
+            [
+              26.01720134342258,
+              -98.20192885721387
+            ],
+            [
+              26.01502672524014,
+              -98.20233568704488
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_003",
+      "name": "TRANSFER 3",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0196990594158,
+              -98.21018888397492
+            ],
+            [
+              26.01954207278992,
+              -98.20868163614844
+            ],
+            [
+              26.02049755834085,
+              -98.20863790139674
+            ],
+            [
+              26.02064763374515,
+              -98.20991978908064
+            ],
+            [
+              26.02037396895024,
+              -98.21013626111704
+            ],
+            [
+              26.02050500372284,
+              -98.2109674541891
+            ],
+            [
+              26.02049554360539,
+              -98.21108894081806
+            ],
+            [
+              26.02002413624531,
+              -98.21126103035643
+            ],
+            [
+              26.01994279423148,
+              -98.21013455441637
+            ],
+            [
+              26.0196990594158,
+              -98.21018888397492
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_004",
+      "name": "TRANSFER 4",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02223802938516,
+              -98.21108021917024
+            ],
+            [
+              26.02219837151436,
+              -98.20970646530776
+            ],
+            [
+              26.02179223579382,
+              -98.20967339478732
+            ],
+            [
+              26.02180853744092,
+              -98.20864469684608
+            ],
+            [
+              26.02316757646514,
+              -98.20864215067999
+            ],
+            [
+              26.02315956654358,
+              -98.2095653655293
+            ],
+            [
+              26.02313504245122,
+              -98.21089841780618
+            ],
+            [
+              26.02223802938516,
+              -98.21108021917024
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_005",
+      "name": "TRANSFER 4",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02563968225594,
+              -98.21024186169566
+            ],
+            [
+              26.02626829492622,
+              -98.21013651215203
+            ],
+            [
+              26.02609275206369,
+              -98.20900767992252
+            ],
+            [
+              26.02622030609687,
+              -98.20890361382337
+            ],
+            [
+              26.02616300593563,
+              -98.20862966446488
+            ],
+            [
+              26.02532458290259,
+              -98.20864699697289
+            ],
+            [
+              26.02563968225594,
+              -98.21024186169566
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_006",
+      "name": "TRANSFER 5",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04344739571338,
+              -98.21485127627824
+            ],
+            [
+              26.04353614513609,
+              -98.21503132412599
+            ],
+            [
+              26.04358572136218,
+              -98.21598928045435
+            ],
+            [
+              26.04283981938733,
+              -98.21608620769999
+            ],
+            [
+              26.04265615367656,
+              -98.21426077486456
+            ],
+            [
+              26.04334120393811,
+              -98.21419887708912
+            ],
+            [
+              26.04344739571338,
+              -98.21485127627824
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_007",
+      "name": "TRANSFER 6",
+      "comment": "",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04149011128747,
+              -98.21424386757101
+            ],
+            [
+              26.04081926091605,
+              -98.21433490753778
+            ],
+            [
+              26.04059607348107,
+              -98.21358799920984
+            ],
+            [
+              26.04143560257592,
+              -98.21352997294946
+            ],
+            [
+              26.04149011128747,
+              -98.21424386757101
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_008",
+      "name": "yarda 1",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03794668203451,
+              -98.21203017988086
+            ],
+            [
+              26.03747118006093,
+              -98.21042211445993
+            ],
+            [
+              26.03793415491915,
+              -98.21036008400512
+            ],
+            [
+              26.03848085481261,
+              -98.21194859594225
+            ],
+            [
+              26.03794668203451,
+              -98.21203017988086
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_009",
+      "name": "yarda 2",
+      "comment": "con suelo mejorado\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04334495848169,
+              -98.21417827480613
+            ],
+            [
+              26.04299543978276,
+              -98.21420530709327
+            ],
+            [
+              26.04294827329542,
+              -98.2134247761778
+            ],
+            [
+              26.04478873497744,
+              -98.21325235766126
+            ],
+            [
+              26.04486240914752,
+              -98.21327863800654
+            ],
+            [
+              26.04489281918876,
+              -98.21335587639736
+            ],
+            [
+              26.04487517623554,
+              -98.21422101379272
+            ],
+            [
+              26.04339187633449,
+              -98.2143402651684
+            ],
+            [
+              26.04334495848169,
+              -98.21417827480613
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_010",
+      "name": "yarda 3",
+      "comment": "con suelo mejorado\ncon control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04269895634046,
+              -98.21502776747857
+            ],
+            [
+              26.04257259763807,
+              -98.21428656396326
+            ],
+            [
+              26.04124005139048,
+              -98.2144958568071
+            ],
+            [
+              26.04130064857885,
+              -98.21478610139907
+            ],
+            [
+              26.04145680059649,
+              -98.2148036254972
+            ],
+            [
+              26.04152118827374,
+              -98.21518994445485
+            ],
+            [
+              26.04269895634046,
+              -98.21502776747857
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_011",
+      "name": "yarda 4",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04297806038089,
+              -98.21412700384164
+            ],
+            [
+              26.04151820455768,
+              -98.21422098842142
+            ],
+            [
+              26.04147382712202,
+              -98.21353064422213
+            ],
+            [
+              26.04289568046818,
+              -98.21343915359532
+            ],
+            [
+              26.04297806038089,
+              -98.21412700384164
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_012",
+      "name": "yarda 5",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04456519555856,
+              -98.21169384930849
+            ],
+            [
+              26.04294201594334,
+              -98.21199538025202
+            ],
+            [
+              26.04274816120115,
+              -98.21095826791645
+            ],
+            [
+              26.04292496290912,
+              -98.21044162162377
+            ],
+            [
+              26.04371837641058,
+              -98.21018876243487
+            ],
+            [
+              26.04403332176566,
+              -98.21035275018185
+            ],
+            [
+              26.04418706187439,
+              -98.21061361240413
+            ],
+            [
+              26.04457579158655,
+              -98.21162694309663
+            ],
+            [
+              26.04456519555856,
+              -98.21169384930849
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_013",
+      "name": "yarda 7",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03103094977743,
+              -98.20723037815303
+            ],
+            [
+              26.03005065822762,
+              -98.20727867979605
+            ],
+            [
+              26.02957672160314,
+              -98.20683040954141
+            ],
+            [
+              26.03087404721402,
+              -98.20665921994127
+            ],
+            [
+              26.03103775318678,
+              -98.20685588308955
+            ],
+            [
+              26.03107889771772,
+              -98.20706024957947
+            ],
+            [
+              26.03103094977743,
+              -98.20723037815303
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_014",
+      "name": "yarda 8",
+      "comment": "sin pavimento\ncon control de acceso\ncon instalaciones (2)",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03378988919055,
+              -98.20198494769559
+            ],
+            [
+              26.03209130802056,
+              -98.20282449377233
+            ],
+            [
+              26.03272720702717,
+              -98.20419970591502
+            ],
+            [
+              26.03413716538244,
+              -98.2039141117005
+            ],
+            [
+              26.03378988919055,
+              -98.20198494769559
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_015",
+      "name": "yarda 9",
+      "comment": "con suelo mejorado\ncon barda perimetral\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02974517270755,
+              -98.21391423186594
+            ],
+            [
+              26.02845282589421,
+              -98.21401313526289
+            ],
+            [
+              26.02845904026755,
+              -98.21344942978112
+            ],
+            [
+              26.02971153574485,
+              -98.21337729920707
+            ],
+            [
+              26.02974517270755,
+              -98.21391423186594
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_016",
+      "name": "yarda 10",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02568311899243,
+              -98.2112564171813
+            ],
+            [
+              26.02492216135051,
+              -98.21121162744073
+            ],
+            [
+              26.02492840329466,
+              -98.21049035614108
+            ],
+            [
+              26.02558301135256,
+              -98.21049527756225
+            ],
+            [
+              26.02568311899243,
+              -98.2112564171813
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_017",
+      "name": "yarda 11",
+      "comment": "sin pavimentos\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02565337191951,
+              -98.21025421071349
+            ],
+            [
+              26.02573110239731,
+              -98.21067436818853
+            ],
+            [
+              26.02612891281773,
+              -98.2105560834694
+            ],
+            [
+              26.02619922108104,
+              -98.21038078202912
+            ],
+            [
+              26.02626085453682,
+              -98.2102105919549
+            ],
+            [
+              26.02624882505089,
+              -98.21013958133575
+            ],
+            [
+              26.02565337191951,
+              -98.21025421071349
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_018",
+      "name": "yarda 12",
+      "comment": "sin pavimentos\nbarda perimetral\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02556767871326,
+              -98.21048270728413
+            ],
+            [
+              26.02493265310949,
+              -98.2104471834756
+            ],
+            [
+              26.02490013188821,
+              -98.20864995441649
+            ],
+            [
+              26.02524810840554,
+              -98.20862496363087
+            ],
+            [
+              26.02556767871326,
+              -98.21048270728413
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_019",
+      "name": "yarda 12",
+      "comment": "suelo mejorado\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02169328576865,
+              -98.20867253278368
+            ],
+            [
+              26.02056207515151,
+              -98.20867662606402
+            ],
+            [
+              26.0208324208023,
+              -98.21102856712233
+            ],
+            [
+              26.02132349509851,
+              -98.21118666716026
+            ],
+            [
+              26.02176308264347,
+              -98.21117255722415
+            ],
+            [
+              26.02169328576865,
+              -98.20867253278368
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_020",
+      "name": "yarda 13",
+      "comment": "sin pavimentos\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02834829287774,
+              -98.20815395459117
+            ],
+            [
+              26.02811295445775,
+              -98.20818366847926
+            ],
+            [
+              26.0277564173438,
+              -98.20720090559259
+            ],
+            [
+              26.02906202764459,
+              -98.20704685583922
+            ],
+            [
+              26.02834829287774,
+              -98.20815395459117
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_021",
+      "name": "yarda 14",
+      "comment": "con suelo mejorado\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02098078802955,
+              -98.20599704759648
+            ],
+            [
+              26.01976434777649,
+              -98.20680980683206
+            ],
+            [
+              26.01925213104258,
+              -98.20502474959979
+            ],
+            [
+              26.02060546150482,
+              -98.2047424852045
+            ],
+            [
+              26.02098078802955,
+              -98.20599704759648
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_022",
+      "name": "yarda 15",
+      "comment": "sin pavimento\ncon control de acceso\nbarda perimetral",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02146563626222,
+              -98.20312599904047
+            ],
+            [
+              26.02007356450928,
+              -98.203379771851
+            ],
+            [
+              26.0198737800594,
+              -98.2022014750445
+            ],
+            [
+              26.02129885486368,
+              -98.20193046798319
+            ],
+            [
+              26.02146563626222,
+              -98.20312599904047
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_023",
+      "name": "yarda 16",
+      "comment": "con pavimento\ncon barda perimetral\ncon control de acceso\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01654344254218,
+              -98.19965937332735
+            ],
+            [
+              26.01633800110683,
+              -98.19817003201706
+            ],
+            [
+              26.01812202255531,
+              -98.19778612027199
+            ],
+            [
+              26.01831579293678,
+              -98.19923067535022
+            ],
+            [
+              26.017603570228,
+              -98.1993902008287
+            ],
+            [
+              26.01746308986244,
+              -98.19896557702471
+            ],
+            [
+              26.0173749432765,
+              -98.1990146265683
+            ],
+            [
+              26.01737221227755,
+              -98.19943283583045
+            ],
+            [
+              26.01654344254218,
+              -98.19965937332735
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_024",
+      "name": "Yarda 17",
+      "comment": "con pavimento\ncon barda perimetral\ncon control de acceso\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01651742064365,
+              -98.19967107481271
+            ],
+            [
+              26.01564492859448,
+              -98.19985828092076
+            ],
+            [
+              26.01571687278572,
+              -98.19831102118005
+            ],
+            [
+              26.01629333014261,
+              -98.19817929998253
+            ],
+            [
+              26.01651742064365,
+              -98.19967107481271
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_025",
+      "name": "yarda 18",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01402675842035,
+              -98.20030226458425
+            ],
+            [
+              26.01406029179435,
+              -98.20016505343926
+            ],
+            [
+              26.01421362315327,
+              -98.20012279246879
+            ],
+            [
+              26.01415373634261,
+              -98.19971339219583
+            ],
+            [
+              26.01485558850509,
+              -98.19955371177365
+            ],
+            [
+              26.01547112359633,
+              -98.19835942369991
+            ],
+            [
+              26.01568414073712,
+              -98.19829812568791
+            ],
+            [
+              26.01558455867571,
+              -98.19988480995725
+            ],
+            [
+              26.01402675842035,
+              -98.20030226458425
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_026",
+      "name": "yarda 19",
+      "comment": "sin pavimento\nsin control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01601734989536,
+              -98.1973363830678
+            ],
+            [
+              26.0139487228994,
+              -98.1977322017023
+            ],
+            [
+              26.01391184915413,
+              -98.19751194733291
+            ],
+            [
+              26.01459226096035,
+              -98.19726233612596
+            ],
+            [
+              26.01482722353002,
+              -98.19698479851125
+            ],
+            [
+              26.01574457222002,
+              -98.19679797917247
+            ],
+            [
+              26.01593974242618,
+              -98.19686273787256
+            ],
+            [
+              26.01601734989536,
+              -98.1973363830678
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_027",
+      "name": "yarda 20",
+      "comment": "sin pavimento\nsin barda\ncon control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01348815356024,
+              -98.19369895500982
+            ],
+            [
+              26.01306275210229,
+              -98.19382643002875
+            ],
+            [
+              26.01303354113942,
+              -98.1939470037413
+            ],
+            [
+              26.0122735892225,
+              -98.19414877416615
+            ],
+            [
+              26.01211629294442,
+              -98.19352607536342
+            ],
+            [
+              26.0133785048445,
+              -98.19325341899446
+            ],
+            [
+              26.01348815356024,
+              -98.19369895500982
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_028",
+      "name": "yarda 21",
+      "comment": "sin pavimento\nsin barda\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01182623701373,
+              -98.1947023335009
+            ],
+            [
+              26.01061371194048,
+              -98.1948816765009
+            ],
+            [
+              26.01047351862766,
+              -98.19426990773766
+            ],
+            [
+              26.0106991562,
+              -98.19422152031294
+            ],
+            [
+              26.01070880937542,
+              -98.19413346895291
+            ],
+            [
+              26.0115924608615,
+              -98.19391188204357
+            ],
+            [
+              26.01182623701373,
+              -98.1947023335009
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_029",
+      "name": "yarda 22",
+      "comment": "sin pavimento\nsin barda\ncon control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01136056772476,
+              -98.19313180863175
+            ],
+            [
+              26.01029232212377,
+              -98.19336688664394
+            ],
+            [
+              26.01012663376769,
+              -98.19280528612887
+            ],
+            [
+              26.01124705169561,
+              -98.19250516418667
+            ],
+            [
+              26.01136056772476,
+              -98.19313180863175
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_030",
+      "name": "yarda 22",
+      "comment": "sin pavimento\nsin barda\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00972015315122,
+              -98.19887848617867
+            ],
+            [
+              26.00897335905318,
+              -98.19902206105887
+            ],
+            [
+              26.00918082656632,
+              -98.20020112526046
+            ],
+            [
+              26.01055686153121,
+              -98.19993270828698
+            ],
+            [
+              26.01048566202916,
+              -98.19894398354464
+            ],
+            [
+              26.00981970922313,
+              -98.19911711686413
+            ],
+            [
+              26.00972015315122,
+              -98.19887848617867
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_031",
+      "name": "yarda 23",
+      "comment": "sin pavimento\nsin barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01240827987008,
+              -98.19703670449077
+            ],
+            [
+              26.01102153268934,
+              -98.19728369800153
+            ],
+            [
+              26.01080145946289,
+              -98.19626753357717
+            ],
+            [
+              26.01216989918029,
+              -98.19594313504213
+            ],
+            [
+              26.01240827987008,
+              -98.19703670449077
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_032",
+      "name": "yarda 24",
+      "comment": "con barda\nsin pavimento\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00771120765442,
+              -98.19007939862566
+            ],
+            [
+              26.00643502376638,
+              -98.19006588947937
+            ],
+            [
+              26.00641892751604,
+              -98.18867701375623
+            ],
+            [
+              26.00759236340847,
+              -98.18871606336448
+            ],
+            [
+              26.00771120765442,
+              -98.19007939862566
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_033",
+      "name": "yarda 25",
+      "comment": "sin pavimento\nsin barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00630750918219,
+              -98.19003267265772
+            ],
+            [
+              26.00518184839546,
+              -98.1900632179197
+            ],
+            [
+              26.00513589486287,
+              -98.18872821188728
+            ],
+            [
+              26.00629125634384,
+              -98.18872913792114
+            ],
+            [
+              26.00630750918219,
+              -98.19003267265772
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_034",
+      "name": "yarda 26",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02508069517568,
+              -98.19770037073673
+            ],
+            [
+              26.02401289179844,
+              -98.19791901179802
+            ],
+            [
+              26.02397765252369,
+              -98.19743133289673
+            ],
+            [
+              26.02500593815896,
+              -98.19722913331904
+            ],
+            [
+              26.02508069517568,
+              -98.19770037073673
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_035",
+      "name": "yarda 27",
+      "comment": "sin avimento\ncon control\ncon barda\ncon instalaciion",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02165631244625,
+              -98.19885348913296
+            ],
+            [
+              26.02045392544392,
+              -98.1988628834755
+            ],
+            [
+              26.02075982530729,
+              -98.19932059659763
+            ],
+            [
+              26.02089585821902,
+              -98.19970753277936
+            ],
+            [
+              26.02166399076649,
+              -98.19973669352794
+            ],
+            [
+              26.02165631244625,
+              -98.19885348913296
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_036",
+      "name": "yarda 28",
+      "comment": "sin pavimento\ncon barda\ncon control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02278110048883,
+              -98.19888276611974
+            ],
+            [
+              26.02171192331473,
+              -98.19883214021115
+            ],
+            [
+              26.02172349263246,
+              -98.19970065146596
+            ],
+            [
+              26.02247829484285,
+              -98.19976392812165
+            ],
+            [
+              26.02249186404602,
+              -98.19992165051171
+            ],
+            [
+              26.02277932236055,
+              -98.19993736197277
+            ],
+            [
+              26.02278110048883,
+              -98.19888276611974
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_037",
+      "name": "yarda 29",
+      "comment": "sin pavimento\nsin control\nsin barda \ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0240288772457,
+              -98.19990905841108
+            ],
+            [
+              26.02331912928519,
+              -98.19991200589196
+            ],
+            [
+              26.02328571296219,
+              -98.19886855705111
+            ],
+            [
+              26.02350636613743,
+              -98.1988278683538
+            ],
+            [
+              26.0240288772457,
+              -98.19990905841108
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_038",
+      "name": "yarda 30",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03164757794264,
+              -98.19809191652502
+            ],
+            [
+              26.03139812065784,
+              -98.19731489124445
+            ],
+            [
+              26.03169490210513,
+              -98.19718821765822
+            ],
+            [
+              26.03156225439303,
+              -98.19660785459907
+            ],
+            [
+              26.03184704339487,
+              -98.19651261211837
+            ],
+            [
+              26.03216795677932,
+              -98.19693453446429
+            ],
+            [
+              26.03253089303843,
+              -98.1977787327261
+            ],
+            [
+              26.03164757794264,
+              -98.19809191652502
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_039",
+      "name": "yarda 31",
+      "comment": "sin pavimento\nsin barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03345633077771,
+              -98.19866730854335
+            ],
+            [
+              26.03230989013665,
+              -98.1985528770422
+            ],
+            [
+              26.0322587461061,
+              -98.19882075995152
+            ],
+            [
+              26.03257138297975,
+              -98.1992365076129
+            ],
+            [
+              26.03276306928763,
+              -98.199616221482
+            ],
+            [
+              26.03345633077771,
+              -98.19866730854335
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_040",
+      "name": "yarda 32",
+      "comment": "suelo mejorado\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01828835217569,
+              -98.20694711602722
+            ],
+            [
+              26.01704354971879,
+              -98.20739738466533
+            ],
+            [
+              26.016306523226,
+              -98.20637767868055
+            ],
+            [
+              26.01624349501166,
+              -98.20620340313847
+            ],
+            [
+              26.01803327462942,
+              -98.20579180508975
+            ],
+            [
+              26.01828835217569,
+              -98.20694711602722
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_041",
+      "name": "yarda 33",
+      "comment": "con suelo mejorado\nsin barda\nsin control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0142742815172,
+              -98.20665858764193
+            ],
+            [
+              26.01200953620268,
+              -98.20736485693851
+            ],
+            [
+              26.0131764329521,
+              -98.2078195100124
+            ],
+            [
+              26.01342664518741,
+              -98.20783324740349
+            ],
+            [
+              26.01379344431885,
+              -98.20764292023112
+            ],
+            [
+              26.01395725762566,
+              -98.20745782603821
+            ],
+            [
+              26.0142742815172,
+              -98.20665858764193
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_042",
+      "name": "yarda 34",
+      "comment": "sin pavimento\ncon barda\nsin control\ncon instalacion crossdock",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04468808871676,
+              -98.21687968191296
+            ],
+            [
+              26.04473347417398,
+              -98.2158476093683
+            ],
+            [
+              26.04250319715165,
+              -98.21620268787446
+            ],
+            [
+              26.04263247671568,
+              -98.21725191226264
+            ],
+            [
+              26.04298048023104,
+              -98.21704395759095
+            ],
+            [
+              26.04468808871676,
+              -98.21687968191296
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_043",
+      "name": "yarda 35",
+      "comment": "con pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04258607077694,
+              -98.21731898106951
+            ],
+            [
+              26.04249518475273,
+              -98.21644469285846
+            ],
+            [
+              26.04193540548668,
+              -98.21654015210953
+            ],
+            [
+              26.04206235781852,
+              -98.21749527322646
+            ],
+            [
+              26.0423429243713,
+              -98.21744341119718
+            ],
+            [
+              26.04238003992693,
+              -98.21774543203634
+            ],
+            [
+              26.04258607077694,
+              -98.21731898106951
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_044",
+      "name": "yarda 36",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0407349282993,
+              -98.21495402295412
+            ],
+            [
+              26.04061083551817,
+              -98.21497317982374
+            ],
+            [
+              26.04064460040682,
+              -98.2155260471991
+            ],
+            [
+              26.04049088971646,
+              -98.21553442887843
+            ],
+            [
+              26.0405152201797,
+              -98.21567387996899
+            ],
+            [
+              26.04000428255016,
+              -98.2157373743263
+            ],
+            [
+              26.04002801663864,
+              -98.2143282727188
+            ],
+            [
+              26.04043245800671,
+              -98.21415712359676
+            ],
+            [
+              26.0407349282993,
+              -98.21495402295412
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_045",
+      "name": "yarda 37",
+      "comment": "con pavimento\ncon barda\ncon control\ncon instalaciones crossdock",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.04004650264924,
+              -98.21796945356247
+            ],
+            [
+              26.0400141754654,
+              -98.21653946566532
+            ],
+            [
+              26.04121459394336,
+              -98.21635396974446
+            ],
+            [
+              26.04162866399745,
+              -98.21764455778467
+            ],
+            [
+              26.04160044219588,
+              -98.21777666381338
+            ],
+            [
+              26.04154407573824,
+              -98.21792901937876
+            ],
+            [
+              26.04145498045255,
+              -98.21797916445979
+            ],
+            [
+              26.04132725248189,
+              -98.21800632554041
+            ],
+            [
+              26.04004650264924,
+              -98.21796945356247
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_046",
+      "name": "yarda 38",
+      "comment": "sin pavimento\ncon instalaciones\ncon barda\ncon control de acceso",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98871908348761,
+              -98.20611809222288
+            ],
+            [
+              25.98581056605458,
+              -98.20606577161224
+            ],
+            [
+              25.98577820721039,
+              -98.20464677622873
+            ],
+            [
+              25.98875023366545,
+              -98.20466633429159
+            ],
+            [
+              25.98871908348761,
+              -98.20611809222288
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_047",
+      "name": "yarda 39",
+      "comment": "sin pavimento\ncon bardas\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.99177905976148,
+              -98.19216855235803
+            ],
+            [
+              25.99049857774962,
+              -98.19215072105119
+            ],
+            [
+              25.99049120668671,
+              -98.19079789281699
+            ],
+            [
+              25.99178808378898,
+              -98.19073157405914
+            ],
+            [
+              25.99177905976148,
+              -98.19216855235803
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_048",
+      "name": "yarda 40",
+      "comment": "con pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03956457421668,
+              -98.22040317623826
+            ],
+            [
+              26.03967792950938,
+              -98.22055893635563
+            ],
+            [
+              26.03966965849266,
+              -98.22123453692065
+            ],
+            [
+              26.03894341147895,
+              -98.22150499578811
+            ],
+            [
+              26.03898470039918,
+              -98.221687277017
+            ],
+            [
+              26.03915591982384,
+              -98.22161617894622
+            ],
+            [
+              26.03929400065835,
+              -98.22286462912069
+            ],
+            [
+              26.03722562198168,
+              -98.22315795975926
+            ],
+            [
+              26.03697248865134,
+              -98.2213848785139
+            ],
+            [
+              26.03847167315218,
+              -98.22110382565154
+            ],
+            [
+              26.03844146136558,
+              -98.22059429346382
+            ],
+            [
+              26.03956457421668,
+              -98.22040317623826
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_049",
+      "name": "yarda 41",
+      "comment": "con suelo mejorado\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03703757574536,
+              -98.22282694747902
+            ],
+            [
+              26.03681848651587,
+              -98.22289010996714
+            ],
+            [
+              26.03668838661979,
+              -98.2224428480884
+            ],
+            [
+              26.03698931936878,
+              -98.22236548035623
+            ],
+            [
+              26.03703757574536,
+              -98.22282694747902
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_050",
+      "name": "yarda 42",
+      "comment": "con mavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03504229741095,
+              -98.22291392580225
+            ],
+            [
+              26.03492573147201,
+              -98.22244499003008
+            ],
+            [
+              26.03542704965673,
+              -98.2222742601266
+            ],
+            [
+              26.03553358338178,
+              -98.2227355584656
+            ],
+            [
+              26.03504229741095,
+              -98.22291392580225
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_051",
+      "name": "yarda 43",
+      "comment": "con paivmento\ncon bardas\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03594423748345,
+              -98.22250881977402
+            ],
+            [
+              26.03559322502815,
+              -98.22263377771368
+            ],
+            [
+              26.03537590612852,
+              -98.22177264860058
+            ],
+            [
+              26.03571399955614,
+              -98.22164659956215
+            ],
+            [
+              26.03594423748345,
+              -98.22250881977402
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_052",
+      "name": "yarda 44",
+      "comment": "con pavimento viejo\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0192791734143,
+              -98.20090180081314
+            ],
+            [
+              26.01769579353662,
+              -98.20118230997467
+            ],
+            [
+              26.01742744615726,
+              -98.19962863894943
+            ],
+            [
+              26.01856112493383,
+              -98.19931035852888
+            ],
+            [
+              26.01870091853526,
+              -98.19983270077184
+            ],
+            [
+              26.01901195412156,
+              -98.19970428769848
+            ],
+            [
+              26.0192791734143,
+              -98.20090180081314
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_053",
+      "name": "yarda 45",
+      "comment": "sin pavimento\ncon barda\ncon control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01541489632232,
+              -98.19546386774556
+            ],
+            [
+              26.01480484037332,
+              -98.19562924957152
+            ],
+            [
+              26.01444854967274,
+              -98.19431364494842
+            ],
+            [
+              26.01508836303217,
+              -98.19416374155928
+            ],
+            [
+              26.01541489632232,
+              -98.19546386774556
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_054",
+      "name": "yarda 46",
+      "comment": "sin pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01392080948481,
+              -98.19504452400048
+            ],
+            [
+              26.01249633182588,
+              -98.19531509366175
+            ],
+            [
+              26.01236793504594,
+              -98.19480656602671
+            ],
+            [
+              26.01377920132001,
+              -98.1944509345718
+            ],
+            [
+              26.01392080948481,
+              -98.19504452400048
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_055",
+      "name": "yarda 47",
+      "comment": "con pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.97602687784731,
+              -98.27337848521003
+            ],
+            [
+              25.9749860821401,
+              -98.27330774823659
+            ],
+            [
+              25.97465782814109,
+              -98.27089866575423
+            ],
+            [
+              25.97567588171794,
+              -98.27073910756022
+            ],
+            [
+              25.97602687784731,
+              -98.27337848521003
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_056",
+      "name": "yarda 48",
+      "comment": "con suelo mejorado\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98639772250656,
+              -98.26892988231523
+            ],
+            [
+              25.98382994625605,
+              -98.269326092232
+            ],
+            [
+              25.98366940307016,
+              -98.2683973610426
+            ],
+            [
+              25.98495120178983,
+              -98.26818042227701
+            ],
+            [
+              25.98467755867548,
+              -98.26650618771396
+            ],
+            [
+              25.98603692453289,
+              -98.26626493706861
+            ],
+            [
+              25.98639772250656,
+              -98.26892988231523
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_057",
+      "name": "yarda 49",
+      "comment": "con suelo mejorado\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98934143175502,
+              -98.25674185334879
+            ],
+            [
+              25.9890967756816,
+              -98.25504938014387
+            ],
+            [
+              25.98999727372434,
+              -98.25498948776777
+            ],
+            [
+              25.99020367409551,
+              -98.25664116152828
+            ],
+            [
+              25.98934143175502,
+              -98.25674185334879
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_058",
+      "name": "yarda 50",
+      "comment": "con pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.99451089842223,
+              -98.26062623577376
+            ],
+            [
+              25.99451617475392,
+              -98.26043892478697
+            ],
+            [
+              25.99368982252527,
+              -98.25993113451956
+            ],
+            [
+              25.99078149374689,
+              -98.26039512775148
+            ],
+            [
+              25.99083568329587,
+              -98.26126362217238
+            ],
+            [
+              25.99451089842223,
+              -98.26062623577376
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_059",
+      "name": "yarda 51",
+      "comment": "sin pavimento\ncon barda\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03428196790209,
+              -98.26183571576149
+            ],
+            [
+              26.03258912850553,
+              -98.26223127709366
+            ],
+            [
+              26.03238831858532,
+              -98.26157849546665
+            ],
+            [
+              26.03424213188312,
+              -98.26124656519333
+            ],
+            [
+              26.03428196790209,
+              -98.26183571576149
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_060",
+      "name": "yarda 52",
+      "comment": "con pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03325323399598,
+              -98.26091726375776
+            ],
+            [
+              26.03247690900925,
+              -98.26108037969176
+            ],
+            [
+              26.03233964968492,
+              -98.26049976962958
+            ],
+            [
+              26.03288266426427,
+              -98.26029651569698
+            ],
+            [
+              26.0328264399875,
+              -98.26011471361085
+            ],
+            [
+              26.03306656428692,
+              -98.26007400239291
+            ],
+            [
+              26.03325323399598,
+              -98.26091726375776
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_061",
+      "name": "yarda 53",
+      "comment": "con paivmento\ncon barda\ncon control\ncon instalacion",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03252407281619,
+              -98.2597634392237
+            ],
+            [
+              26.03193963192416,
+              -98.25990189366252
+            ],
+            [
+              26.03199558552597,
+              -98.26037560398886
+            ],
+            [
+              26.03205521754782,
+              -98.260858771513
+            ],
+            [
+              26.0323723245734,
+              -98.26076906284725
+            ],
+            [
+              26.0323310271919,
+              -98.26047402266828
+            ],
+            [
+              26.03283901635138,
+              -98.26027524021714
+            ],
+            [
+              26.03281112427014,
+              -98.26008249399354
+            ],
+            [
+              26.03299445326745,
+              -98.26006365880183
+            ],
+            [
+              26.03292345901583,
+              -98.25969220110305
+            ],
+            [
+              26.03252407281619,
+              -98.2597634392237
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_062",
+      "name": "yarda 54",
+      "comment": "con suelo mejorado\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03433023333158,
+              -98.26536096024515
+            ],
+            [
+              26.03283178102121,
+              -98.26573356302771
+            ],
+            [
+              26.03259420944553,
+              -98.26590506628553
+            ],
+            [
+              26.03224590690741,
+              -98.26514955825104
+            ],
+            [
+              26.03395962913507,
+              -98.26464002340524
+            ],
+            [
+              26.03381439165742,
+              -98.26428844205158
+            ],
+            [
+              26.03420866085605,
+              -98.26416300463713
+            ],
+            [
+              26.03433023333158,
+              -98.26536096024515
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_063",
+      "name": "yarda 55",
+      "comment": "con pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03434964933297,
+              -98.26392641140899
+            ],
+            [
+              26.03263245097801,
+              -98.26448148661552
+            ],
+            [
+              26.03226927692361,
+              -98.26332352011678
+            ],
+            [
+              26.03435923441542,
+              -98.26313630855749
+            ],
+            [
+              26.03434964933297,
+              -98.26392641140899
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_064",
+      "name": "yarda 56",
+      "comment": "con pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03332069730017,
+              -98.26441737082106
+            ],
+            [
+              26.03209428485556,
+              -98.26478443724028
+            ],
+            [
+              26.03222438899691,
+              -98.26511821208226
+            ],
+            [
+              26.03339931940052,
+              -98.2647847666514
+            ],
+            [
+              26.03332069730017,
+              -98.26441737082106
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_065",
+      "name": "yarda 57",
+      "comment": "sin pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03552897235689,
+              -98.2658501005534
+            ],
+            [
+              26.03470993686625,
+              -98.26557353334363
+            ],
+            [
+              26.03472670634754,
+              -98.26406356054594
+            ],
+            [
+              26.03487409219603,
+              -98.26403786035995
+            ],
+            [
+              26.0348886548327,
+              -98.26262698678133
+            ],
+            [
+              26.03546369966248,
+              -98.26253560678781
+            ],
+            [
+              26.03552897235689,
+              -98.2658501005534
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_066",
+      "name": "yarda 58",
+      "comment": "sin pavimento\nsin barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03534152396812,
+              -98.26769476164021
+            ],
+            [
+              26.03453418802355,
+              -98.26821601754442
+            ],
+            [
+              26.03417214592142,
+              -98.2673814477115
+            ],
+            [
+              26.03501320454693,
+              -98.26692691139587
+            ],
+            [
+              26.03534152396812,
+              -98.26769476164021
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_067",
+      "name": "yarda 59",
+      "comment": "sin pavimento\ncom barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03435240184086,
+              -98.2679406712672
+            ],
+            [
+              26.03417883292262,
+              -98.2675348862665
+            ],
+            [
+              26.03348892455086,
+              -98.26789617413664
+            ],
+            [
+              26.03365462777509,
+              -98.2683286424053
+            ],
+            [
+              26.03435240184086,
+              -98.2679406712672
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_068",
+      "name": "yarda 60",
+      "comment": "sin pavimento\ncon barda\ncon control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03503721218995,
+              -98.26911545511322
+            ],
+            [
+              26.03476770487511,
+              -98.26850257337293
+            ],
+            [
+              26.03526276931623,
+              -98.26823022001494
+            ],
+            [
+              26.03553932362972,
+              -98.26882467587758
+            ],
+            [
+              26.03503721218995,
+              -98.26911545511322
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_069",
+      "name": "yarda 61",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03526033158342,
+              -98.26820811047098
+            ],
+            [
+              26.03476373792832,
+              -98.26846776761803
+            ],
+            [
+              26.03463272645222,
+              -98.26818184812242
+            ],
+            [
+              26.03510633130051,
+              -98.26787910595782
+            ],
+            [
+              26.03526033158342,
+              -98.26820811047098
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_070",
+      "name": "yarda 62",
+      "comment": "sin pavimento\nsin barda\nsin control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.03477852979933,
+              -98.2688033404387
+            ],
+            [
+              26.03463644993125,
+              -98.26887899294034
+            ],
+            [
+              26.0345682348778,
+              -98.2690636697611
+            ],
+            [
+              26.03448859838701,
+              -98.26903929488383
+            ],
+            [
+              26.03418009262633,
+              -98.26830509859883
+            ],
+            [
+              26.03452606829694,
+              -98.2682195203535
+            ],
+            [
+              26.03477852979933,
+              -98.2688033404387
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_071",
+      "name": "yarda 63",
+      "comment": "sin paivmento\ncon bardas\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0139584377699,
+              -98.16006698022515
+            ],
+            [
+              26.01308734816129,
+              -98.16006819378708
+            ],
+            [
+              26.01310794049659,
+              -98.15881857993676
+            ],
+            [
+              26.01394960193851,
+              -98.1587834523364
+            ],
+            [
+              26.0139584377699,
+              -98.16006698022515
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_072",
+      "name": "yarda 64",
+      "comment": "con paivmento\ncon bardas\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01465230373,
+              -98.15853897253498
+            ],
+            [
+              26.01308640605887,
+              -98.1585432625653
+            ],
+            [
+              26.01310495118739,
+              -98.15614171391438
+            ],
+            [
+              26.01376153472716,
+              -98.15577600773531
+            ],
+            [
+              26.01395948224021,
+              -98.15614107757652
+            ],
+            [
+              26.01436978279392,
+              -98.15591905411138
+            ],
+            [
+              26.01498748467932,
+              -98.15699998773545
+            ],
+            [
+              26.01496272136374,
+              -98.15753396609448
+            ],
+            [
+              26.01466094258706,
+              -98.15753311183647
+            ],
+            [
+              26.01465230373,
+              -98.15853897253498
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_073",
+      "name": "yarda 65",
+      "comment": "con pavimento\ncon barda\nsin control",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01655767528229,
+              -98.15966072158498
+            ],
+            [
+              26.01598638565544,
+              -98.15985191004788
+            ],
+            [
+              26.01541936498455,
+              -98.15872779383774
+            ],
+            [
+              26.01605868975296,
+              -98.15873727635953
+            ],
+            [
+              26.01655767528229,
+              -98.15966072158498
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_074",
+      "name": "yarda 66",
+      "comment": "sin pavimento\nsin barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.02017030756436,
+              -98.16179336191163
+            ],
+            [
+              26.01929847923246,
+              -98.16180379204573
+            ],
+            [
+              26.0188106381826,
+              -98.16097337847057
+            ],
+            [
+              26.02005052831312,
+              -98.16097105944905
+            ],
+            [
+              26.02017030756436,
+              -98.16179336191163
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_075",
+      "name": "yarda 67",
+      "comment": "sin pavimento\nsin barda\nsin control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.01824524057071,
+              -98.15988444693905
+            ],
+            [
+              26.01776963939824,
+              -98.15893184800798
+            ],
+            [
+              26.01982651738813,
+              -98.15892947461784
+            ],
+            [
+              26.02040279749076,
+              -98.15902596851954
+            ],
+            [
+              26.02426061315843,
+              -98.15888021148932
+            ],
+            [
+              26.02447713404696,
+              -98.15979061510883
+            ],
+            [
+              26.01824524057071,
+              -98.15988444693905
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_076",
+      "name": "yarda 68",
+      "comment": "sin pavimento\nsin barda\nsin control\ncon isntalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00427880067642,
+              -98.15071244112337
+            ],
+            [
+              26.00248561265305,
+              -98.150389585707
+            ],
+            [
+              26.00239574287382,
+              -98.15112224135636
+            ],
+            [
+              26.00418270392958,
+              -98.15151573851244
+            ],
+            [
+              26.00427880067642,
+              -98.15071244112337
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_077",
+      "name": "yarda 69",
+      "comment": "con suelo mejorado\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.99951827205149,
+              -98.14210326745545
+            ],
+            [
+              26.00061074194469,
+              -98.14166892889516
+            ],
+            [
+              26.00098634170836,
+              -98.14327385349532
+            ],
+            [
+              25.999905721343,
+              -98.14371223281296
+            ],
+            [
+              25.99951827205149,
+              -98.14210326745545
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_078",
+      "name": "TRANSFER 8",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.99282247887129,
+              -98.12894512961168
+            ],
+            [
+              25.9921454636883,
+              -98.1282748105546
+            ],
+            [
+              25.99303355658184,
+              -98.12743158035994
+            ],
+            [
+              25.99363319787405,
+              -98.12746064760019
+            ],
+            [
+              25.99421457458223,
+              -98.1277146150261
+            ],
+            [
+              25.9944465890285,
+              -98.12831201161578
+            ],
+            [
+              25.99435078855418,
+              -98.12847462301612
+            ],
+            [
+              25.99416894227921,
+              -98.12867608353493
+            ],
+            [
+              25.99282247887129,
+              -98.12894512961168
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_079",
+      "name": "yarda 70",
+      "comment": "sin pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0163719865357,
+              -98.09128698181232
+            ],
+            [
+              26.01588667089791,
+              -98.09134075346296
+            ],
+            [
+              26.01578790123233,
+              -98.09037573043386
+            ],
+            [
+              26.01627156050675,
+              -98.09036451169236
+            ],
+            [
+              26.0163719865357,
+              -98.09128698181232
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_080",
+      "name": "yarda 71",
+      "comment": "con paivmento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98698860633763,
+              -98.05860002895112
+            ],
+            [
+              25.98696763786759,
+              -98.06034551144448
+            ],
+            [
+              25.98447212408935,
+              -98.06031632797743
+            ],
+            [
+              25.98454166768802,
+              -98.05856333376569
+            ],
+            [
+              25.98698860633763,
+              -98.05860002895112
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_081",
+      "name": "yarda 72",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98986273910362,
+              -98.12606977517034
+            ],
+            [
+              25.98940161002155,
+              -98.12561105260518
+            ],
+            [
+              25.99001148728175,
+              -98.1243457928845
+            ],
+            [
+              25.99051971558572,
+              -98.12420832912618
+            ],
+            [
+              25.99081577243761,
+              -98.12488816863753
+            ],
+            [
+              25.98986273910362,
+              -98.12606977517034
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_082",
+      "name": "yarda 73",
+      "comment": "sin pavimento\ncon barda\ncon control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.99371292307442,
+              -98.12365449415174
+            ],
+            [
+              25.99350612239479,
+              -98.12322872204678
+            ],
+            [
+              25.99248231503591,
+              -98.12388461225265
+            ],
+            [
+              25.99259608466201,
+              -98.1241775792728
+            ],
+            [
+              25.99304295829391,
+              -98.1240437316597
+            ],
+            [
+              25.99371292307442,
+              -98.12365449415174
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_083",
+      "name": "yarda 74",
+      "comment": "con pavimento\ncon barda\ncon control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.00682030464517,
+              -98.20933654267475
+            ],
+            [
+              26.00683858695628,
+              -98.20865180352513
+            ],
+            [
+              26.00754436877707,
+              -98.20864260692319
+            ],
+            [
+              26.00729708254747,
+              -98.20932549446407
+            ],
+            [
+              26.00682030464517,
+              -98.20933654267475
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_084",
+      "name": "yarda 75",
+      "comment": "sin pavimento\ncon barda\nsin control\ncon instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              25.98988249358327,
+              -98.12610891828703
+            ],
+            [
+              25.99087541526459,
+              -98.12493257521848
+            ],
+            [
+              25.99098912597838,
+              -98.12489679563775
+            ],
+            [
+              25.99125265190523,
+              -98.12613300270603
+            ],
+            [
+              25.99017466795541,
+              -98.12641060464024
+            ],
+            [
+              25.98988249358327,
+              -98.12610891828703
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    },
+    {
+      "id": "lots_085",
+      "name": "yarda 78",
+      "comment": "sin pavimento\ncon barda\ncon control\nsin instalaciones",
+      "layer": "lots",
+      "type": null,
+      "region_id": null,
+      "polygons": [
+        {
+          "coordinates": [
+            [
+              26.0057716857482,
+              -98.20932200671893
+            ],
+            [
+              26.00572096442833,
+              -98.2092559217028
+            ],
+            [
+              26.00572423021688,
+              -98.20863881005398
+            ],
+            [
+              26.00679442838189,
+              -98.20863150743972
+            ],
+            [
+              26.00679448250977,
+              -98.20932416477301
+            ],
+            [
+              26.0057716857482,
+              -98.20932200671893
+            ]
+          ],
+          "geometry": "Polygon"
+        }
+      ],
+      "region_params": null,
+      "conversion_rule_ids": null,
+      "priority": 0
+    }
+  ]
+}

@@ -1,3 +1,3561 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:63d485f16553fc18bcada8f62cf55caae335ff1df9b5448f56dfdeb37ba30d9f
-size 85794
+{
+  "0": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 687.3760686730641,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 522.8622161728896,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041872,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 958.5356481411146,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "1": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 627.3761249896435,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 462.8624659809825,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041872,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 898.5356481411186,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "2": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 567.3761813062227,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 402.86271578907537,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041872,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 838.5356481411226,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "3": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 507.37623762280214,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 342.8629655971682,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041871,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 778.5356481411266,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "4": {
+    "brownsville": 0.0,
+    "del_rio": 1.5693135679839543e-09,
+    "eagle_pass": 1.4604442917232063e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 447.376322097671,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 282.86334030930743,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041871,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 718.5356481411324,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "5": {
+    "brownsville": 0.0,
+    "del_rio": 2.615522021187644e-09,
+    "eagle_pass": 2.43407500377657e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 387.3764628891192,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 222.86396482953953,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041871,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 658.5356481411421,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "6": {
+    "brownsville": 0.0,
+    "del_rio": 4.184835589171598e-09,
+    "eagle_pass": 3.894522849989812e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 818.6204774354921,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 327.3766881554363,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 162.86496406191083,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041871,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 598.5356481411578,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "7": {
+    "brownsville": 0.0,
+    "del_rio": 5.231044042375288e-09,
+    "eagle_pass": 4.8681559317032e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 758.6204796325309,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 267.37696973833266,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 102.86621310237496,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 737.3317868146098,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 538.5356481411774,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "8": {
+    "brownsville": 0.0,
+    "del_rio": 5.231044042375288e-09,
+    "eagle_pass": 4.8681559317032e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 698.6204818295697,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 207.37725132122904,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 42.86746214283909,
+    "columbus": 0.0,
+    "santa_teresa": 1.0616745036884367e-05,
+    "tecate": 677.3317868250325,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 478.53564814119704,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833147381257731e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "9": {
+    "brownsville": 0.0,
+    "del_rio": 4.707940703951863e-09,
+    "eagle_pass": 4.381339271830598e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 638.6204838069045,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 147.37750474583575,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.7551151643147023e-09,
+    "columbus": 0.0,
+    "santa_teresa": 9.55506769173553e-06,
+    "tecate": 617.3317868344129,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 418.5356481412147,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833076326984155e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "10": {
+    "brownsville": 0.0,
+    "del_rio": 4.184835589171598e-09,
+    "eagle_pass": 3.894522849989812e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 578.6204855645356,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 87.37773001215287,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.3867573755987905e-09,
+    "columbus": 0.0,
+    "santa_teresa": 8.493390978969728e-06,
+    "tecate": 557.3317868427511,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 358.53564814123047,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 5.398970159831151e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "11": {
+    "brownsville": 0.0,
+    "del_rio": 3.6617304743913337e-09,
+    "eagle_pass": 3.4077066644044862e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 518.6204871024627,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 27.377927120180317,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.0617355883368873e-09,
+    "columbus": 0.0,
+    "santa_teresa": 7.431714898586961e-06,
+    "tecate": 497.331786850047,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 298.53564814124417,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 4.133582365284383e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "12": {
+    "brownsville": 0.0,
+    "del_rio": 3.6617304743913337e-09,
+    "eagle_pass": 3.4077066644044862e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 236.35456493736558,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 7.821772816996031e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.0617355883368873e-09,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 437.33178685734293,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 238.53564814125792,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 4.133582365284383e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "13": {
+    "brownsville": 0.0,
+    "del_rio": 3.6617304743913337e-09,
+    "eagle_pass": 3.4077066644044862e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 176.35456581618106,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 7.821772816996031e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.0617355883368873e-09,
+    "columbus": 0.0,
+    "santa_teresa": 7.431714898586961e-06,
+    "tecate": 377.33178686463884,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 178.53564814127168,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 4.133582365284383e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "14": {
+    "brownsville": 0.0,
+    "del_rio": 5.231044042375288e-09,
+    "eagle_pass": 4.8681559317032e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 116.35456707163178,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 1.1173976899314653e-05,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 2.1668089544846225e-09,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 317.33178687506154,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 118.53564814129129,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 8.435883103175001e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "15": {
+    "brownsville": 0.0,
+    "del_rio": 4.707940703951863e-09,
+    "eagle_pass": 4.381339271830598e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 56.35456820153743,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 1.0056574488714887e-05,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.7551151643147023e-09,
+    "columbus": 0.0,
+    "santa_teresa": 9.55506769173553e-06,
+    "tecate": 257.33178688444195,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 58.53564814130894,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.833076326984155e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "16": {
+    "brownsville": 0.0,
+    "del_rio": 4.184835589171598e-09,
+    "eagle_pass": 3.894522849989812e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 8.939173127942013e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.3867573755987905e-09,
+    "columbus": 0.0,
+    "santa_teresa": 8.493390978969728e-06,
+    "tecate": 197.33178689278012,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 5.398970159831151e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "17": {
+    "brownsville": 0.0,
+    "del_rio": 2.615522021187644e-09,
+    "eagle_pass": 2.43407500377657e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 5.586975339255673e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 5.417017945319458e-10,
+    "columbus": 0.0,
+    "santa_teresa": 5.308364627865103e-06,
+    "tecate": 137.33178689799146,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "18": {
+    "brownsville": 0.0,
+    "del_rio": 1.5693135679839543e-09,
+    "eagle_pass": 1.4604442917232063e-06,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 3.35218205727017e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 1.950120065430383e-10,
+    "columbus": 0.0,
+    "santa_teresa": 3.185016883122671e-06,
+    "tecate": 77.33178690111828,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "19": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 2.234786990129578e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 8.667200290801702e-11,
+    "columbus": 0.0,
+    "santa_teresa": 2.1233439575496504e-06,
+    "tecate": 17.33178690320281,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "20": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 2.234786990129578e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 8.667200290801702e-11,
+    "columbus": 0.0,
+    "santa_teresa": 2.1233439575496504e-06,
+    "tecate": 0.0,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "21": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 2.234786990129578e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 8.667200290801702e-11,
+    "columbus": 0.0,
+    "santa_teresa": 2.1233439575496504e-06,
+    "tecate": 0.0,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "22": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 2.234786990129578e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 8.667200290801702e-11,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041872,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "23": {
+    "brownsville": 0.0,
+    "del_rio": 1.0462084532036897e-09,
+    "eagle_pass": 9.736292909678923e-07,
+    "laredo": 0.0,
+    "hidalgo_pharr": 0.0,
+    "rio_grande_city": 0.0,
+    "progreso": 0.0,
+    "roma": 2.234786990129578e-06,
+    "ysleta": 0.0,
+    "el_paso": 0.0,
+    "presidio": 8.667200290801702e-11,
+    "columbus": 0.0,
+    "santa_teresa": 0.0,
+    "tecate": 797.3317868041872,
+    "otay_mesa": 0.0,
+    "calexico_east": 0.0,
+    "douglas": 0.0,
+    "lukeville": 0.0,
+    "naco": 0.0,
+    "nogales": 0.0,
+    "san_luis": 6.832578947069123e-10,
+    "laredo_colombia": 0.0,
+    "brownsville_los_indios": 0.0,
+    "brownsville_veterans": 0.0
+  },
+  "_meta": {
+    "base_crossing_minutes": 15.0,
+    "format": "queue_delay_only",
+    "description": "Queue delay in minutes (excludes closure dwell time)"
+  },
+  "_decomposed": {
+    "0": {
+      "brownsville": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 1193.6204774354921,
+        "dwell": 360.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 702.3760686730641,
+        "dwell": 0.0,
+        "queue_delay": 687.3760686730641
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 537.8622161728896,
+        "dwell": 0.0,
+        "queue_delay": 522.8622161728896
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 1172.3317868041872,
+        "dwell": 360.0,
+        "queue_delay": 797.3317868041872
+      },
+      "otay_mesa": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 973.5356481411146,
+        "dwell": 0.0,
+        "queue_delay": 958.5356481411146
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 555.0000000006833,
+        "dwell": 540.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "1": {
+      "brownsville": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 375.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 1133.6204774354921,
+        "dwell": 300.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 642.3761249896435,
+        "dwell": 0.0,
+        "queue_delay": 627.3761249896435
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 477.8624659809825,
+        "dwell": 0.0,
+        "queue_delay": 462.8624659809825
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 1112.3317868041872,
+        "dwell": 300.0,
+        "queue_delay": 797.3317868041872
+      },
+      "otay_mesa": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 913.5356481411186,
+        "dwell": 0.0,
+        "queue_delay": 898.5356481411186
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 495.0000000006833,
+        "dwell": 480.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "2": {
+      "brownsville": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 315.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 1073.6204774354921,
+        "dwell": 240.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 582.3761813062227,
+        "dwell": 0.0,
+        "queue_delay": 567.3761813062227
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 417.86271578907537,
+        "dwell": 0.0,
+        "queue_delay": 402.86271578907537
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 1052.3317868041872,
+        "dwell": 240.0,
+        "queue_delay": 797.3317868041872
+      },
+      "otay_mesa": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 853.5356481411226,
+        "dwell": 0.0,
+        "queue_delay": 838.5356481411226
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 435.0000000006833,
+        "dwell": 420.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 360.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "3": {
+      "brownsville": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 255.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 1013.6204774354921,
+        "dwell": 180.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 522.3762376228021,
+        "dwell": 0.0,
+        "queue_delay": 507.37623762280214
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 357.8629655971682,
+        "dwell": 0.0,
+        "queue_delay": 342.8629655971682
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 992.3317868041871,
+        "dwell": 180.0,
+        "queue_delay": 797.3317868041871
+      },
+      "otay_mesa": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 793.5356481411266,
+        "dwell": 0.0,
+        "queue_delay": 778.5356481411266
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 375.0000000006833,
+        "dwell": 360.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 300.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "4": {
+      "brownsville": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001569314,
+        "dwell": 0.0,
+        "queue_delay": 1.5693135679839543e-09
+      },
+      "eagle_pass": {
+        "total": 15.000001460444292,
+        "dwell": 0.0,
+        "queue_delay": 1.4604442917232063e-06
+      },
+      "laredo": {
+        "total": 195.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 953.6204774354921,
+        "dwell": 120.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 462.376322097671,
+        "dwell": 0.0,
+        "queue_delay": 447.376322097671
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 297.86334030930743,
+        "dwell": 0.0,
+        "queue_delay": 282.86334030930743
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 932.3317868041871,
+        "dwell": 120.0,
+        "queue_delay": 797.3317868041871
+      },
+      "otay_mesa": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 733.5356481411324,
+        "dwell": 0.0,
+        "queue_delay": 718.5356481411324
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 315.0000000006833,
+        "dwell": 300.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 240.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "5": {
+      "brownsville": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000002615522,
+        "dwell": 0.0,
+        "queue_delay": 2.615522021187644e-09
+      },
+      "eagle_pass": {
+        "total": 15.000002434075004,
+        "dwell": 0.0,
+        "queue_delay": 2.43407500377657e-06
+      },
+      "laredo": {
+        "total": 135.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 893.6204774354921,
+        "dwell": 60.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 402.3764628891192,
+        "dwell": 0.0,
+        "queue_delay": 387.3764628891192
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 237.86396482953953,
+        "dwell": 0.0,
+        "queue_delay": 222.86396482953953
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 872.3317868041871,
+        "dwell": 60.0,
+        "queue_delay": 797.3317868041871
+      },
+      "otay_mesa": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 673.5356481411421,
+        "dwell": 0.0,
+        "queue_delay": 658.5356481411421
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 255.00000000068331,
+        "dwell": 240.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 180.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "6": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000004184836,
+        "dwell": 0.0,
+        "queue_delay": 4.184835589171598e-09
+      },
+      "eagle_pass": {
+        "total": 15.00000389452285,
+        "dwell": 0.0,
+        "queue_delay": 3.894522849989812e-06
+      },
+      "laredo": {
+        "total": 75.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 833.6204774354921,
+        "dwell": 0.0,
+        "queue_delay": 818.6204774354921
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 342.3766881554363,
+        "dwell": 0.0,
+        "queue_delay": 327.3766881554363
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 177.86496406191083,
+        "dwell": 0.0,
+        "queue_delay": 162.86496406191083
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 812.3317868041871,
+        "dwell": 0.0,
+        "queue_delay": 797.3317868041871
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 613.5356481411578,
+        "dwell": 0.0,
+        "queue_delay": 598.5356481411578
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 195.00000000068331,
+        "dwell": 180.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 120.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "7": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000005231044,
+        "dwell": 0.0,
+        "queue_delay": 5.231044042375288e-09
+      },
+      "eagle_pass": {
+        "total": 15.000004868155932,
+        "dwell": 0.0,
+        "queue_delay": 4.8681559317032e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 773.6204796325309,
+        "dwell": 0.0,
+        "queue_delay": 758.6204796325309
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 282.37696973833266,
+        "dwell": 0.0,
+        "queue_delay": 267.37696973833266
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 117.86621310237496,
+        "dwell": 0.0,
+        "queue_delay": 102.86621310237496
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 752.3317868146098,
+        "dwell": 0.0,
+        "queue_delay": 737.3317868146098
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 553.5356481411774,
+        "dwell": 0.0,
+        "queue_delay": 538.5356481411774
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 135.00000000068331,
+        "dwell": 120.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 60.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "8": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000005231044,
+        "dwell": 0.0,
+        "queue_delay": 5.231044042375288e-09
+      },
+      "eagle_pass": {
+        "total": 15.000004868155932,
+        "dwell": 0.0,
+        "queue_delay": 4.8681559317032e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 713.6204818295697,
+        "dwell": 0.0,
+        "queue_delay": 698.6204818295697
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 222.37725132122904,
+        "dwell": 0.0,
+        "queue_delay": 207.37725132122904
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 57.86746214283909,
+        "dwell": 0.0,
+        "queue_delay": 42.86746214283909
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000010616745037,
+        "dwell": 0.0,
+        "queue_delay": 1.0616745036884367e-05
+      },
+      "tecate": {
+        "total": 692.3317868250325,
+        "dwell": 0.0,
+        "queue_delay": 677.3317868250325
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 493.53564814119704,
+        "dwell": 0.0,
+        "queue_delay": 478.53564814119704
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 75.00000000068331,
+        "dwell": 60.0,
+        "queue_delay": 6.833147381257731e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "9": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.00000000470794,
+        "dwell": 0.0,
+        "queue_delay": 4.707940703951863e-09
+      },
+      "eagle_pass": {
+        "total": 15.000004381339272,
+        "dwell": 0.0,
+        "queue_delay": 4.381339271830598e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 653.6204838069045,
+        "dwell": 0.0,
+        "queue_delay": 638.6204838069045
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 162.37750474583575,
+        "dwell": 0.0,
+        "queue_delay": 147.37750474583575
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001755115,
+        "dwell": 0.0,
+        "queue_delay": 1.7551151643147023e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000009555067692,
+        "dwell": 0.0,
+        "queue_delay": 9.55506769173553e-06
+      },
+      "tecate": {
+        "total": 632.3317868344129,
+        "dwell": 0.0,
+        "queue_delay": 617.3317868344129
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 433.5356481412147,
+        "dwell": 0.0,
+        "queue_delay": 418.5356481412147
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000683308,
+        "dwell": 0.0,
+        "queue_delay": 6.833076326984155e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "10": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000004184836,
+        "dwell": 0.0,
+        "queue_delay": 4.184835589171598e-09
+      },
+      "eagle_pass": {
+        "total": 15.00000389452285,
+        "dwell": 0.0,
+        "queue_delay": 3.894522849989812e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 593.6204855645356,
+        "dwell": 0.0,
+        "queue_delay": 578.6204855645356
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 102.37773001215287,
+        "dwell": 0.0,
+        "queue_delay": 87.37773001215287
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001386757,
+        "dwell": 0.0,
+        "queue_delay": 1.3867573755987905e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000008493390979,
+        "dwell": 0.0,
+        "queue_delay": 8.493390978969728e-06
+      },
+      "tecate": {
+        "total": 572.3317868427511,
+        "dwell": 0.0,
+        "queue_delay": 557.3317868427511
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 373.53564814123047,
+        "dwell": 0.0,
+        "queue_delay": 358.53564814123047
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000539897,
+        "dwell": 0.0,
+        "queue_delay": 5.398970159831151e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "11": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.00000000366173,
+        "dwell": 0.0,
+        "queue_delay": 3.6617304743913337e-09
+      },
+      "eagle_pass": {
+        "total": 15.000003407706664,
+        "dwell": 0.0,
+        "queue_delay": 3.4077066644044862e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 533.6204871024627,
+        "dwell": 0.0,
+        "queue_delay": 518.6204871024627
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 42.37792712018032,
+        "dwell": 0.0,
+        "queue_delay": 27.377927120180317
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001061736,
+        "dwell": 0.0,
+        "queue_delay": 1.0617355883368873e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000007431714899,
+        "dwell": 0.0,
+        "queue_delay": 7.431714898586961e-06
+      },
+      "tecate": {
+        "total": 512.331786850047,
+        "dwell": 0.0,
+        "queue_delay": 497.331786850047
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 313.53564814124417,
+        "dwell": 0.0,
+        "queue_delay": 298.53564814124417
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000413358,
+        "dwell": 0.0,
+        "queue_delay": 4.133582365284383e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "12": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.00000000366173,
+        "dwell": 0.0,
+        "queue_delay": 3.6617304743913337e-09
+      },
+      "eagle_pass": {
+        "total": 15.000003407706664,
+        "dwell": 0.0,
+        "queue_delay": 3.4077066644044862e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 251.35456493736558,
+        "dwell": 0.0,
+        "queue_delay": 236.35456493736558
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.000007821772817,
+        "dwell": 0.0,
+        "queue_delay": 7.821772816996031e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001061736,
+        "dwell": 0.0,
+        "queue_delay": 1.0617355883368873e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 452.33178685734293,
+        "dwell": 0.0,
+        "queue_delay": 437.33178685734293
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 253.53564814125792,
+        "dwell": 0.0,
+        "queue_delay": 238.53564814125792
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000413358,
+        "dwell": 0.0,
+        "queue_delay": 4.133582365284383e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "13": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.00000000366173,
+        "dwell": 0.0,
+        "queue_delay": 3.6617304743913337e-09
+      },
+      "eagle_pass": {
+        "total": 15.000003407706664,
+        "dwell": 0.0,
+        "queue_delay": 3.4077066644044862e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 191.35456581618106,
+        "dwell": 0.0,
+        "queue_delay": 176.35456581618106
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.000007821772817,
+        "dwell": 0.0,
+        "queue_delay": 7.821772816996031e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001061736,
+        "dwell": 0.0,
+        "queue_delay": 1.0617355883368873e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000007431714899,
+        "dwell": 0.0,
+        "queue_delay": 7.431714898586961e-06
+      },
+      "tecate": {
+        "total": 392.33178686463884,
+        "dwell": 0.0,
+        "queue_delay": 377.33178686463884
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 193.53564814127168,
+        "dwell": 0.0,
+        "queue_delay": 178.53564814127168
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000413358,
+        "dwell": 0.0,
+        "queue_delay": 4.133582365284383e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "14": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000005231044,
+        "dwell": 0.0,
+        "queue_delay": 5.231044042375288e-09
+      },
+      "eagle_pass": {
+        "total": 15.000004868155932,
+        "dwell": 0.0,
+        "queue_delay": 4.8681559317032e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 131.35456707163178,
+        "dwell": 0.0,
+        "queue_delay": 116.35456707163178
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.0000111739769,
+        "dwell": 0.0,
+        "queue_delay": 1.1173976899314653e-05
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000002166809,
+        "dwell": 0.0,
+        "queue_delay": 2.1668089544846225e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 332.33178687506154,
+        "dwell": 0.0,
+        "queue_delay": 317.33178687506154
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 133.5356481412913,
+        "dwell": 0.0,
+        "queue_delay": 118.53564814129129
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000843588,
+        "dwell": 0.0,
+        "queue_delay": 8.435883103175001e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "15": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.00000000470794,
+        "dwell": 0.0,
+        "queue_delay": 4.707940703951863e-09
+      },
+      "eagle_pass": {
+        "total": 15.000004381339272,
+        "dwell": 0.0,
+        "queue_delay": 4.381339271830598e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 71.35456820153743,
+        "dwell": 0.0,
+        "queue_delay": 56.35456820153743
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.000010056574489,
+        "dwell": 0.0,
+        "queue_delay": 1.0056574488714887e-05
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001755115,
+        "dwell": 0.0,
+        "queue_delay": 1.7551151643147023e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000009555067692,
+        "dwell": 0.0,
+        "queue_delay": 9.55506769173553e-06
+      },
+      "tecate": {
+        "total": 272.33178688444195,
+        "dwell": 0.0,
+        "queue_delay": 257.33178688444195
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 73.53564814130894,
+        "dwell": 0.0,
+        "queue_delay": 58.53564814130894
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000683308,
+        "dwell": 0.0,
+        "queue_delay": 6.833076326984155e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "16": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000004184836,
+        "dwell": 0.0,
+        "queue_delay": 4.184835589171598e-09
+      },
+      "eagle_pass": {
+        "total": 15.00000389452285,
+        "dwell": 0.0,
+        "queue_delay": 3.894522849989812e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.000008939173128,
+        "dwell": 0.0,
+        "queue_delay": 8.939173127942013e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000001386757,
+        "dwell": 0.0,
+        "queue_delay": 1.3867573755987905e-09
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000008493390979,
+        "dwell": 0.0,
+        "queue_delay": 8.493390978969728e-06
+      },
+      "tecate": {
+        "total": 212.33178689278012,
+        "dwell": 0.0,
+        "queue_delay": 197.33178689278012
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 15.000000000539897,
+        "dwell": 0.0,
+        "queue_delay": 5.398970159831151e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "17": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000002615522,
+        "dwell": 0.0,
+        "queue_delay": 2.615522021187644e-09
+      },
+      "eagle_pass": {
+        "total": 15.000002434075004,
+        "dwell": 0.0,
+        "queue_delay": 2.43407500377657e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000558697534,
+        "dwell": 0.0,
+        "queue_delay": 5.586975339255673e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000541702,
+        "dwell": 0.0,
+        "queue_delay": 5.417017945319458e-10
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000005308364628,
+        "dwell": 0.0,
+        "queue_delay": 5.308364627865103e-06
+      },
+      "tecate": {
+        "total": 152.33178689799146,
+        "dwell": 0.0,
+        "queue_delay": 137.33178689799146
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 975.0000000006833,
+        "dwell": 960.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "18": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001569314,
+        "dwell": 0.0,
+        "queue_delay": 1.5693135679839543e-09
+      },
+      "eagle_pass": {
+        "total": 15.000001460444292,
+        "dwell": 0.0,
+        "queue_delay": 1.4604442917232063e-06
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.000003352182057,
+        "dwell": 0.0,
+        "queue_delay": 3.35218205727017e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000195012,
+        "dwell": 0.0,
+        "queue_delay": 1.950120065430383e-10
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000003185016883,
+        "dwell": 0.0,
+        "queue_delay": 3.185016883122671e-06
+      },
+      "tecate": {
+        "total": 92.33178690111828,
+        "dwell": 0.0,
+        "queue_delay": 77.33178690111828
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 915.0000000006833,
+        "dwell": 900.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "19": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000223478699,
+        "dwell": 0.0,
+        "queue_delay": 2.234786990129578e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000086672,
+        "dwell": 0.0,
+        "queue_delay": 8.667200290801702e-11
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000002123343958,
+        "dwell": 0.0,
+        "queue_delay": 2.1233439575496504e-06
+      },
+      "tecate": {
+        "total": 32.33178690320281,
+        "dwell": 0.0,
+        "queue_delay": 17.33178690320281
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 855.0000000006833,
+        "dwell": 840.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "20": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000223478699,
+        "dwell": 0.0,
+        "queue_delay": 2.234786990129578e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000086672,
+        "dwell": 0.0,
+        "queue_delay": 8.667200290801702e-11
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000002123343958,
+        "dwell": 0.0,
+        "queue_delay": 2.1233439575496504e-06
+      },
+      "tecate": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 600.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 795.0000000006833,
+        "dwell": 780.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "21": {
+      "brownsville": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000223478699,
+        "dwell": 0.0,
+        "queue_delay": 2.234786990129578e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000086672,
+        "dwell": 0.0,
+        "queue_delay": 8.667200290801702e-11
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 15.000002123343958,
+        "dwell": 0.0,
+        "queue_delay": 2.1233439575496504e-06
+      },
+      "tecate": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "otay_mesa": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 540.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 735.0000000006833,
+        "dwell": 720.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "22": {
+      "brownsville": {
+        "total": 495.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000223478699,
+        "dwell": 0.0,
+        "queue_delay": 2.234786990129578e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000086672,
+        "dwell": 0.0,
+        "queue_delay": 8.667200290801702e-11
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 495.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 1292.3317868041872,
+        "dwell": 480.0,
+        "queue_delay": 797.3317868041872
+      },
+      "otay_mesa": {
+        "total": 495.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 495.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 495.0,
+        "dwell": 480.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 675.0000000006833,
+        "dwell": 660.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    },
+    "23": {
+      "brownsville": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "del_rio": {
+        "total": 15.000000001046208,
+        "dwell": 0.0,
+        "queue_delay": 1.0462084532036897e-09
+      },
+      "eagle_pass": {
+        "total": 15.000000973629291,
+        "dwell": 0.0,
+        "queue_delay": 9.736292909678923e-07
+      },
+      "laredo": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "hidalgo_pharr": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "rio_grande_city": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "progreso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "roma": {
+        "total": 15.00000223478699,
+        "dwell": 0.0,
+        "queue_delay": 2.234786990129578e-06
+      },
+      "ysleta": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "el_paso": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "presidio": {
+        "total": 15.000000000086672,
+        "dwell": 0.0,
+        "queue_delay": 8.667200290801702e-11
+      },
+      "columbus": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "santa_teresa": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "tecate": {
+        "total": 1232.3317868041872,
+        "dwell": 420.0,
+        "queue_delay": 797.3317868041872
+      },
+      "otay_mesa": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "calexico_east": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "douglas": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "lukeville": {
+        "total": 15.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "naco": {
+        "total": 15.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "nogales": {
+        "total": 435.0,
+        "dwell": 420.0,
+        "queue_delay": 0.0
+      },
+      "san_luis": {
+        "total": 615.0000000006833,
+        "dwell": 600.0,
+        "queue_delay": 6.832578947069123e-10
+      },
+      "laredo_colombia": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_los_indios": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      },
+      "brownsville_veterans": {
+        "total": 15.0,
+        "dwell": 0.0,
+        "queue_delay": 0.0
+      }
+    }
+  }
+}
