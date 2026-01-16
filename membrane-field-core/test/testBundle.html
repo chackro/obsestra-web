@@ -407,13 +407,13 @@
         }
 
         .metric-label {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 400;
             color: #ddd;
         }
 
         .metric-value {
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 700;
             color: #ddd;
         }
@@ -457,7 +457,7 @@
 
         .tier-label {
             color: #666;
-            font-size: 17px;
+            font-size: 23px;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 12px;
@@ -474,7 +474,7 @@
             margin-bottom: 9px;
             border-bottom: 1px solid #333;
             color: #666;
-            font-size: 18px;
+            font-size: 24px;
         }
 
         .table-header span {
@@ -503,7 +503,7 @@
             display: flex;
             padding: 8px 0;
             color: #ccc;
-            font-size: 21px;
+            font-size: 27px;
         }
 
         .table-row span {
@@ -535,7 +535,7 @@
         }
 
         .table-row .delta {
-            font-size: 17px;
+            font-size: 23px;
             color: #0aa;
             margin-left: 6px;
         }
@@ -3550,9 +3550,6 @@
                         _storedBaselinePoeDistribution,
                         _storedBaselinePoeDistribution
                     );
-                    // Immediately trigger corridor highlight to mask stale poeIds from old distribution
-                    // Old trucks keep routing, new trucks get correct poeIds, highlight hides the transition
-                    macroParticles.setCorridorHighlight('laredo', 'hidalgo_pharr', true);
                     console.log('[Director] POE mode: baseline (both slots = baseline)');
                 } else if (mode === 'interserrana') {
                     // baseline→interserrana, use α≥0.5 for interserrana POEs

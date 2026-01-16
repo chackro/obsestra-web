@@ -1164,6 +1164,10 @@ export const Scripts = {
             // Switch to baseline routing (α=1) and baseline POE coloring
             { type: 'setScenarioAlpha', alpha: 1.0 },
             { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
+            // Immediately highlight corridors to mask stale poeIds from old distribution
+            // Old trucks keep routing, new trucks get correct poeIds, highlight hides the transition
+            { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
+            { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             // Beat 1: Feasibility rays (dashed) — instant structural collapse
             { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
             { type: 'wait', duration: 4000 },
@@ -1176,12 +1180,7 @@ export const Scripts = {
             { type: 'setPoeOverlay', enabled: false },
             { type: 'wait', duration: 1000 },
 
-            // ─────────────────────────────────────────────────────────────
-            // PHASE 3: Corridor highlight - magenta on laredo/pharr
-            // ─────────────────────────────────────────────────────────────
-            // Both corridors magenta, same alpha; others dimmed (not hidden)
-            { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
-            { type: 'dimNonHighlighted', dimAlpha: 0.8 },
+            // Corridor highlight already active from setPoeMode transition
             { type: 'wait', duration: 5000 },
 
             // Show POE labels

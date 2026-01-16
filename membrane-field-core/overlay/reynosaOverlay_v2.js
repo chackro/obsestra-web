@@ -4943,9 +4943,6 @@ async function initializeFromGeometry(geometry) {
     // Stamp manual fine-grained connectors
     stampManualConnectors();
 
-    // Unstamp Inovus-only connectors (they exist in bundle but should only be active when Inovus enabled)
-    unstampInovusConnectors();
-
     // Stamp manual blockers (destroy roads/lots)
     stampManualBlockers();
 
@@ -7472,8 +7469,18 @@ function stampManualConnectors() {
         if (stampConnectorCoord(coord)) stamped++;
     }
 
+    // Always stamp Inovus connectors with routing cost penalty
+    // (routing cost handles access - PHARR routes penalized, lot routes unaffected)
+    for (const coord of INOVUS_CONNECTOR_COORDS) {
+        const idx = stampConnectorCoord(coord);
+        if (idx !== false) {
+            stamped++;
+            routingCostPharr[idx] = 2.0;  // 2x routing cost for PHARR
+        }
+    }
+
     if (stamped > 0) {
-        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped`);
+        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus w/ 2x PHARR cost)`);
     }
 }
 
@@ -9614,9 +9621,6 @@ export async function togglePhasesAsLots() {
 
         log(`[PHASES] Stamped ${_phaseLotCells.length} total cells as lots`);
         log(`[PHASES] Sleep lots: ${_phaseSleepLotIndices.length} (indices: ${_phaseSleepLotIndices.join(', ')})`);
-
-        // Stamp Inovus-only road connectors
-        stampInovusConnectors();
     } else {
         // Unstamp phase lots
         for (const idx of _phaseLotCells) {
@@ -9636,9 +9640,6 @@ export async function togglePhasesAsLots() {
 
         _phaseLotIndices = [];
         _phaseLotCells = [];
-
-        // Unstamp Inovus-only road connectors
-        unstampInovusConnectors();
 
         log(`[PHASES] Unstamped phase lots, reverted to road`);
     }
