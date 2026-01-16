@@ -2880,6 +2880,10 @@
                     return { points, minX, maxX, minY, maxY };
                 }).filter(Boolean);
 
+                // Ensure particles are running - Director may have already called macroPause
+                // before macroParticles existed (slow network load on deployed site)
+                macroParticles.paused = false;
+
                 // Set bundleLoaded LAST after all processing complete
                 // This ensures splash doesn't dismiss until everything is ready
                 bundleLoaded = true;
