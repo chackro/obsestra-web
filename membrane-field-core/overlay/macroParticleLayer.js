@@ -509,9 +509,29 @@ export class MacroParticleLayer {
             seg.weight = weight;
         }
 
-        // Precompute geometry
+        // Precompute geometry (flow range updated in buildConnectivity)
         this._computeSegmentGeometry(seg);
-        this._updateFlowRange();
+    }
+
+    /**
+     * Batch-add segments (faster than individual addSegment calls).
+     * @param {Array<{id: string, polyline: Array, weight: number}>} segments
+     */
+    addSegmentsBatch(segments) {
+        for (const { id, polyline, weight } of segments) {
+            if (polyline.length < 2) continue;
+            const seg = {
+                id,
+                polyline,
+                weight,
+                lengths: [],
+                cumLengths: [0],
+                totalLength: 0,
+                bbox: { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+            };
+            this.segments.set(id, seg);
+            this._computeSegmentGeometry(seg);
+        }
     }
 
     /**
@@ -1509,6 +1529,7 @@ export class MacroParticleLayer {
         }
         console.log(`[MacroParticles] Connectivity: ${this.segments.size} segs, ${totalConnections} conns, ${this._sourceSegments.length} sources`);
         this._connectivityBuilt = true;
+        this._updateFlowRange();
     }
 
     /**
