@@ -184,6 +184,7 @@ export class Director {
         this.onBlurBackground = options.onBlurBackground || (() => { });
         this.onFadeScene = options.onFadeScene || (() => { });
         this.onScenarioCard = options.onScenarioCard || (() => { });
+        this.onSetFlowRenderMode = options.onSetFlowRenderMode || (() => { });
 
         // POE Overlay (bleed visualization)
         this.onSetPoeOverlay = options.onSetPoeOverlay || (() => { });
@@ -769,6 +770,11 @@ export class Director {
 
             case 'scenarioCard':
                 this.onScenarioCard(instr.title, instr.toggles || []);
+                this._nextInstruction(now);
+                break;
+
+            case 'setFlowRenderMode':
+                this.onSetFlowRenderMode(instr.mode);
                 this._nextInstruction(now);
                 break;
 
@@ -1515,7 +1521,9 @@ export const Scripts = {
             { type: 'scenarioIntervention', name: 'BASELINE', intervention: null },
             { type: 'startReplay', scenario: 'Baseline', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
+            { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
             { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'setFlowRenderMode', mode: 'PARTICLES' },
             { type: 'commitToLedger', scenario: 'Baseline' },
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },  // Post-replay hold
@@ -1544,7 +1552,9 @@ export const Scripts = {
 
             { type: 'startReplay', scenario: 'Twinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
+            { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
             { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'setFlowRenderMode', mode: 'PARTICLES' },
             { type: 'commitToLedger', scenario: 'Twinspan' },
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
@@ -1567,7 +1577,9 @@ export const Scripts = {
             { type: 'wait', duration: 3000 },
             { type: 'startReplay', scenario: 'InovusTwinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
+            { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
             { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'setFlowRenderMode', mode: 'PARTICLES' },
             { type: 'commitToLedger', scenario: 'InovusTwinspan' },
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
@@ -1624,7 +1636,9 @@ export const Scripts = {
             // Replay 7 days
             { type: 'startReplay', scenario: 'InovusTwinspanInterserrana', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
+            { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
             { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'setFlowRenderMode', mode: 'PARTICLES' },
             { type: 'commitToLedger', scenario: 'InovusTwinspanInterserrana' },
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },

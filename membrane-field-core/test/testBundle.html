@@ -3821,8 +3821,13 @@
                     if (lotFillRatios) {
                         updateReplayLotParticles(lotFillRatios);
                     }
+
+                    // Pass sample data to overlay for road heatmap
+                    const sample = getScenarioSampleByIndex(replayState.scenarioName, sampleIndex);
+                    if (sample) {
+                        ReynosaEastOverlay.setReplaySampleData(sample);
+                    }
                 }
-                // sampleIndex available for future sample-driven rendering
             },
 
             onClockMontageEnd: () => {
@@ -3979,6 +3984,10 @@
                 card.classList.add('visible');
                 console.log(`[Director] Scenario card: ${title} [${toggles.join(', ')}]`);
             },
+            onSetFlowRenderMode: (mode) => {
+                ReynosaEastOverlay.setFlowRenderMode(mode);
+                console.log(`[Director] Flow render mode: ${mode}`);
+            },
         });
 
         // =====================================================================
@@ -4027,6 +4036,20 @@
 
         function getBaselineSummary() {
             return getScenarioSummary('Baseline');
+        }
+
+        /**
+         * Get sample by index for a given scenario.
+         * Used for road heatmap rendering during replay.
+         */
+        function getScenarioSampleByIndex(scenarioName, sampleIndex) {
+            if (!scenarioMetricsData || !scenarioMetricsData.scenarios) return null;
+            const mappedName = SCENARIO_NAME_MAP[scenarioName] || scenarioName;
+            const scenario = scenarioMetricsData.scenarios.find(s => s.scenarioName === mappedName);
+            if (!scenario || !scenario.samples) return null;
+            // Clamp to valid range
+            const idx = Math.max(0, Math.min(sampleIndex, scenario.samples.length - 1));
+            return scenario.samples[idx] || null;
         }
 
         /**

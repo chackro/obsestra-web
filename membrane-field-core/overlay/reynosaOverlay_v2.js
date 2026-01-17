@@ -5389,9 +5389,15 @@ export function draw(ctx, camera) {
     // Draw cell-based congestion (always on, behind particles)
     drawCongestionCells(ctx, camera);
 
-    // Draw particles (WebGL) - skip when particles hidden for lot highlight
+    // Draw road heatmap during replay (ROAD_HEATMAP mode)
+    // This replaces particles during clockMontage replay
+    if (_flowRenderMode === 'ROAD_HEATMAP') {
+        drawRoadHeatmap(ctx, camera);
+    }
+
+    // Draw particles (WebGL) - skip when particles hidden for lot highlight OR in ROAD_HEATMAP mode
     const tParticles0 = performance.now();
-    if (!_hideParticles && _webglRenderer && _webglRenderer.isAvailable()) {
+    if (!_hideParticles && _flowRenderMode !== 'ROAD_HEATMAP' && _webglRenderer && _webglRenderer.isAvailable()) {
         const tSync0 = performance.now();
 
         // Sync all particles every frame
@@ -10026,6 +10032,90 @@ function drawCommuterHeatmap(ctx, camera) {
                 ctx.stroke();
             }
         }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPLAY ROAD HEATMAP — Sample-driven visualization during clockMontage
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _flowRenderMode = 'PARTICLES';  // 'PARTICLES' | 'ROAD_HEATMAP'
+let _replaySampleData = null;       // Current sample for heatmap rendering
+
+export function setFlowRenderMode(mode) {
+    _flowRenderMode = mode;
+    console.log(`[FLOW] Render mode: ${_flowRenderMode}`);
+    return _flowRenderMode;
+}
+
+export function getFlowRenderMode() {
+    return _flowRenderMode;
+}
+
+export function setReplaySampleData(sampleData) {
+    _replaySampleData = sampleData;
+}
+
+/**
+ * Draw road heatmap based on sample data during replay.
+ * Colors road cells by pressure derived from sinkQueueCount / truckHoursLostRate.
+ * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
+ */
+function drawRoadHeatmap(ctx, camera) {
+    if (_flowRenderMode !== 'ROAD_HEATMAP') return;
+    if (!_replaySampleData) return;
+
+    const cellScreenSize = roi.cellSize * camera.zoom;
+    const vp = camera.viewportWorld;
+    const pad = roi.cellSize * 2;
+
+    // Normalize pressure: use sinkQueueCount (0-100+ range) and truckHoursLostRate
+    const queuePressure = Math.min((_replaySampleData.sinkQueueCount || 0) / 50, 1.0);
+    const ratePressure = Math.min((_replaySampleData.truckHoursLostRate || 0) / 20, 1.0);
+    const basePressure = Math.max(queuePressure, ratePressure);
+
+    // Draw road cells with pressure-based color
+    for (const idx of roadCellIndices) {
+        const x = idx % N;
+        const y = Math.floor(idx / N);
+
+        const wx = fieldToWorldX(x);
+        const wy = fieldToWorldY(y);
+
+        // Viewport culling
+        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+
+        // Add spatial variation based on cell index (deterministic "noise")
+        const cellNoise = ((idx * 7919) % 1000) / 1000;
+        const pressure = Math.min(1, basePressure * (0.7 + cellNoise * 0.6));
+
+        // Color by system pressure: blue → cyan → yellow → red
+        let r, g, b;
+        if (pressure < 0.33) {
+            // Blue to Cyan
+            const t = pressure / 0.33;
+            r = 0;
+            g = Math.round(255 * t);
+            b = 255;
+        } else if (pressure < 0.66) {
+            // Cyan to Yellow
+            const t = (pressure - 0.33) / 0.33;
+            r = Math.round(255 * t);
+            g = 255;
+            b = Math.round(255 * (1 - t));
+        } else {
+            // Yellow to Red
+            const t = (pressure - 0.66) / 0.34;
+            r = 255;
+            g = Math.round(255 * (1 - t));
+            b = 0;
+        }
+
+        const alpha = 0.25 + pressure * 0.5;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+        const screen = camera.worldToScreen(wx, wy);
+        ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
     }
 }
 
