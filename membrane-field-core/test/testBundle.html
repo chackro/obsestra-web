@@ -3561,6 +3561,12 @@
                     console.log('[Director] POE mode: interserrana (α=1 → interserrana POEs)');
                 }
             },
+            onClearMacroParticles: () => {
+                if (macroParticles) {
+                    macroParticles.clear();
+                    console.log('[Director] Macro particles cleared for respawn');
+                }
+            },
             onStartQueuePhase: () => {
                 if (queueTimeSeries) {
                     queueTimeSeries.visible = true;

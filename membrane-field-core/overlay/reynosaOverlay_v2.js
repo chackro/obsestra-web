@@ -7475,12 +7475,12 @@ function stampManualConnectors() {
         const idx = stampConnectorCoord(coord);
         if (idx !== false) {
             stamped++;
-            routingCostPharr[idx] = 2.0;  // 2x routing cost for PHARR
+            routingCostPharr[idx] = 20.0;  // 20x routing cost for PHARR
         }
     }
 
     if (stamped > 0) {
-        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus w/ 2x PHARR cost)`);
+        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus w/ 20x PHARR cost)`);
     }
 }
 
