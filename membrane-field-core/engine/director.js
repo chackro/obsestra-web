@@ -90,22 +90,6 @@ const Easing = {
  *
  * { type: 'cycleDebugLayer' }
  *   - Cycle debug layer (TAB key when debug active)
- *
- * { type: 'blurBackground', enabled: true }
- *   - Toggle CSS blur on canvas wrapper
- *
- * { type: 'fadeScene', alpha: 0.4 }
- *   - Set scene-wide opacity (0 = black, 1 = full)
- *
- * { type: 'scenarioCard', title: 'Baseline', toggles: ['Twinspan', 'Inovus'] }
- *   - Show scenario intro card with title and toggle list
- *
- * { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' }
- *   - Switch flow visualization mode ('PARTICLES' | 'ROAD_HEATMAP')
- *
- * { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad', sampleInterval: 3600 }
- *   - Compressed time animation with non-linear easing
- *   - Emits sample index for data binding via onClockMontageDay(day, total, hour, sampleIndex)
  */
 
 export class Director {
@@ -195,13 +179,6 @@ export class Director {
         this.onSetCommuterHeatmap = options.onSetCommuterHeatmap || (() => { });
         this.onShowHourlyTable = options.onShowHourlyTable || (() => { });
         this.onHideHourlyTable = options.onHideHourlyTable || (() => { });
-        this.onHideMonthClock = options.onHideMonthClock || (() => { });
-
-        // Scenario presentation callbacks
-        this.onBlurBackground = options.onBlurBackground || (() => { });
-        this.onFadeScene = options.onFadeScene || (() => { });
-        this.onScenarioCard = options.onScenarioCard || (() => { });
-        this.onSetFlowRenderMode = options.onSetFlowRenderMode || (() => { });
 
         // POE Overlay (bleed visualization)
         this.onSetPoeOverlay = options.onSetPoeOverlay || (() => { });
@@ -769,34 +746,8 @@ export class Director {
                 this._nextInstruction(now);
                 break;
 
-            case 'hideMonthClock':
-                this.onHideMonthClock();
-                this._nextInstruction(now);
-                break;
-
             case 'setPoeOverlay':
                 this.onSetPoeOverlay(instr.enabled, instr.options || {});
-                this._nextInstruction(now);
-                break;
-
-            // ─── Scenario presentation instructions ───
-            case 'blurBackground':
-                this.onBlurBackground(instr.enabled);
-                this._nextInstruction(now);
-                break;
-
-            case 'fadeScene':
-                this.onFadeScene(instr.alpha);
-                this._nextInstruction(now);
-                break;
-
-            case 'scenarioCard':
-                this.onScenarioCard(instr.title, instr.toggles || []);
-                this._nextInstruction(now);
-                break;
-
-            case 'setFlowRenderMode':
-                this.onSetFlowRenderMode(instr.mode);
                 this._nextInstruction(now);
                 break;
 
@@ -902,48 +853,34 @@ export class Director {
     _animateClockMontage(elapsed, instr, now) {
         const days = instr.days || 7;
         const wallMs = (instr.wallSeconds || 10) * 1000;
-        const sampleInterval = instr.sampleInterval || 3600;  // Default 1 hour between samples
 
         const t = Math.min(1, elapsed / wallMs);
         this.instructionProgress = t;
-
-        // Apply easing for non-linear time (slow start, fast finish)
-        const easingFn = Easing[instr.easing] || Easing.linear;
-        const eased = easingFn(t);
 
         // Fire start callback once
         if (!this._montageFired) {
             this._montageFired = true;
             this._montageLastDay = 0;
             this._montageLastHour = -1;
-            this._montageLastSampleIndex = -1;
             this.onClockMontageStart(days);
         }
 
         // Calculate current day (1-indexed for display) and hour (0-23)
-        // Now using eased time for non-linear progression
-        const totalHours = eased * days * 24;
+        const totalHours = t * days * 24;
         const currentDay = Math.min(days, Math.floor(totalHours / 24) + 1);
         const currentHour = Math.floor(totalHours % 24);
 
-        // Calculate sample index (samples at sampleInterval seconds)
-        const totalSeconds = totalHours * 3600;
-        const sampleIndex = Math.floor(totalSeconds / sampleInterval);
-
         // Fire callback when hour OR day changes (drives both clock and day counter)
-        // Also pass sample index for data binding
         if (currentHour !== this._montageLastHour || currentDay !== this._montageLastDay) {
             this._montageLastDay = currentDay;
             this._montageLastHour = currentHour;
-            this._montageLastSampleIndex = sampleIndex;
-            this.onClockMontageDay(currentDay, days, currentHour, sampleIndex);
+            this.onClockMontageDay(currentDay, days, currentHour);
         }
 
         if (t >= 1) {
             this._montageFired = false;
             this._montageLastDay = 0;
             this._montageLastHour = -1;
-            this._montageLastSampleIndex = -1;
             this.onClockMontageEnd();
             this._nextInstruction(now);
         }
@@ -1301,7 +1238,6 @@ export const Scripts = {
         // Start with the local sim intro frame and enter LOCAL_FIELD state
         instructions.push({ type: 'snapToFrame', target: 'localSimIntro' });
         instructions.push({ type: 'enterLocalField' });
-        instructions.push({ type: 'hideMonthClock' });
 
         for (const item of modelSpec) {
             // Check if this item STARTS a color mode (set BEFORE overlay so it gets the color)
@@ -1520,7 +1456,6 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // PHASE 6: SCENARIO COMPARISON (temporal replay from results)
             // FIXED ORDER — additive infrastructure layers
-            // Scenario cards show title + knobs.toggles (literal, no interpretation)
             // ─────────────────────────────────────────────────────────────
 
             // Reset ledger for fresh comparison
@@ -1528,44 +1463,22 @@ export const Scripts = {
 
             // Snap to tighter frame for scenario runs
             { type: 'snapToFrame', target: 'scenarioRun' },
-            { type: 'hideMonthClock' },
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 0: BASELINE — current state
             // ═══════════════════════════════════════════════════════════
-
-            // Scenario card (cognitive hard cut)
-            { type: 'blurBackground', enabled: true },
-            { type: 'fadeScene', alpha: 0.4 },
-            { type: 'scenarioCard', title: 'Baseline', toggles: [] },
-            { type: 'wait', duration: 2000 },
-            { type: 'blurBackground', enabled: false },
-            { type: 'fadeScene', alpha: 1.0 },
-
-            // Pre-replay hold
-            { type: 'wait', duration: 2000 },
-
             { type: 'scenarioIntervention', name: 'BASELINE', intervention: null },
             { type: 'startReplay', scenario: 'Baseline', days: 7 },
-            { type: 'setReplayMode', enabled: true, timeScale: 168 },
-            { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'setReplayMode', enabled: true, timeScale: 168 },  // 7 days in ~10 sec
+            { type: 'clockMontage', days: 7, wallSeconds: 10 },
             { type: 'commitToLedger', scenario: 'Baseline' },
             { type: 'setReplayMode', enabled: false },
-            { type: 'wait', duration: 4000 },
+            { type: 'wait', duration: 3000 },
             { type: 'clearMetrics' },
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 1: TWINSPAN — CBP capacity doubled
             // ═══════════════════════════════════════════════════════════
-
-            // Scenario card
-            { type: 'blurBackground', enabled: true },
-            { type: 'fadeScene', alpha: 0.4 },
-            { type: 'scenarioCard', title: 'Twinspan', toggles: ['Twinspan'] },
-            { type: 'wait', duration: 2000 },
-            { type: 'blurBackground', enabled: false },
-            { type: 'fadeScene', alpha: 1.0 },
-
             { type: 'scenarioIntervention', name: 'TWINSPAN', intervention: '+ CBP ×2' },
 
             // Fly to bridge detail, activate Twinspan, then return
@@ -1577,47 +1490,29 @@ export const Scripts = {
 
             { type: 'startReplay', scenario: 'Twinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
-            { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'clockMontage', days: 7, wallSeconds: 10 },
             { type: 'commitToLedger', scenario: 'Twinspan' },
             { type: 'setReplayMode', enabled: false },
-            { type: 'wait', duration: 4000 },
+            { type: 'wait', duration: 3000 },
             { type: 'clearMetrics' },
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 2: InovusTwinspan — Twinspan + Inovus lots
             // ═══════════════════════════════════════════════════════════
-
-            // Scenario card
-            { type: 'blurBackground', enabled: true },
-            { type: 'fadeScene', alpha: 0.4 },
-            { type: 'scenarioCard', title: 'InovusTwinspan', toggles: ['Twinspan', 'Inovus'] },
-            { type: 'wait', duration: 2000 },
-            { type: 'blurBackground', enabled: false },
-            { type: 'fadeScene', alpha: 1.0 },
-
             { type: 'scenarioIntervention', name: 'InovusTwinspan', intervention: '+ Patios Inovus' },
             { type: 'visualChange', effect: 'inovusFull' },
             { type: 'wait', duration: 3000 },
             { type: 'startReplay', scenario: 'InovusTwinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
-            { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'clockMontage', days: 7, wallSeconds: 10 },
             { type: 'commitToLedger', scenario: 'InovusTwinspan' },
             { type: 'setReplayMode', enabled: false },
-            { type: 'wait', duration: 4000 },
+            { type: 'wait', duration: 3000 },
             { type: 'clearMetrics' },
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 3: InovusTwinspanInterserrana — full stack + routing
             // ═══════════════════════════════════════════════════════════
-
-            // Scenario card
-            { type: 'blurBackground', enabled: true },
-            { type: 'fadeScene', alpha: 0.4 },
-            { type: 'scenarioCard', title: 'InovusTwinspanInterserrana', toggles: ['Twinspan', 'Inovus', 'Interserrana'] },
-            { type: 'wait', duration: 2000 },
-            { type: 'blurBackground', enabled: false },
-            { type: 'fadeScene', alpha: 1.0 },
-
             { type: 'scenarioIntervention', name: 'InovusTwinspanInterserrana', intervention: '+ Interserrana' },
 
             // Show routing change visually (zoom out to show Pharr + Laredo corridors)
@@ -1657,10 +1552,10 @@ export const Scripts = {
             // Replay 7 days
             { type: 'startReplay', scenario: 'InovusTwinspanInterserrana', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
-            { type: 'clockMontage', days: 7, wallSeconds: 16, easing: 'easeInQuad' },
+            { type: 'clockMontage', days: 7, wallSeconds: 10 },
             { type: 'commitToLedger', scenario: 'InovusTwinspanInterserrana' },
             { type: 'setReplayMode', enabled: false },
-            { type: 'wait', duration: 4000 },
+            { type: 'wait', duration: 3000 },
             { type: 'clearMetrics' },
 
             // ═══════════════════════════════════════════════════════════

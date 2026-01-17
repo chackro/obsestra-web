@@ -2239,13 +2239,22 @@ let _lastRateSampleTime = 0;
 let _lastRateSampleValue = 0;
 
 // Truck-hours lost BREAKDOWN (instrumentation only, no behavior change)
-// Split by cause: congestion vs waiting outside full lots vs bridge queue
+// Split by cause: congestion vs waiting outside full lots vs bridge queue vs bridge service
 let _truckHoursLostCongestion = 0;      // Normal road congestion (density-based)
 let _truckHoursLostLotWait = 0;         // Bounced from full lots, waiting on road
-let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR
+let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR (pre-service only)
+let _truckHoursLostBridgeService = 0;   // Being serviced in CBP lane (in-service only)
 let _truckHoursLostCongestionTick = 0;  // Per-tick accumulator
 let _truckHoursLostLotWaitTick = 0;     // Per-tick accumulator
-let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator
+let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator (pre-service)
+let _truckHoursLostBridgeServiceTick = 0; // Per-tick accumulator (in-service)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SERVICE TIME INSTRUMENTATION — Per-completion tracking for audit
+// ═══════════════════════════════════════════════════════════════════════════════
+let _serviceTimeActual = [];           // Collected actualServiceTime per completion (seconds)
+let _serviceTimeExpected = [];         // SERVICE_TIME_S at assignment time (seconds)
+let _serviceTimeAssignSim = [];        // simTime at assignment (for debugging)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONGESTION VISUALIZATION — Density-driven render spread (anti-aliasing)
@@ -2393,6 +2402,7 @@ export async function step(dt) {
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
+    _truckHoursLostBridgeServiceTick = 0;
 
     // 0. UPDATE COMMUTER FRICTION: Apply time-of-day modulation to spatial weights
     const tCommuter0 = performance.now();
@@ -2526,6 +2536,7 @@ export async function step(dt) {
     _truckHoursLostCongestion += _truckHoursLostCongestionTick / 3600;
     _truckHoursLostLotWait += _truckHoursLostLotWaitTick / 3600;
     _truckHoursLostBridgeQueue += _truckHoursLostBridgeQueueTick / 3600;
+    _truckHoursLostBridgeService += _truckHoursLostBridgeServiceTick / 3600;
 
     // INVARIANT: cumulative must be monotonic
     if (_truckHoursLost < prevTruckHoursLost) {
@@ -2603,6 +2614,14 @@ function stepCBPLanes(dt) {
             metrics.exited += particleMass();
             _cbpCompletionCount++;
 
+            // AUDIT: Record actual vs expected service time
+            if (p._cbpAssignTime !== undefined) {
+                const actualServiceTime = simTime - p._cbpAssignTime;
+                _serviceTimeActual.push(actualServiceTime);
+                _serviceTimeExpected.push(p._cbpExpectedServiceTime || 0);
+                _serviceTimeAssignSim.push(p._cbpAssignTime);
+            }
+
             // Transition to DEPARTING state for exit animation
             // Particle stays in sink cell, drift loop will move it out
             // Note: particle is already in movingParticles (was CLEARED, entered SINK but never removed)
@@ -2621,6 +2640,9 @@ function stepCBPLanes(dt) {
                 lane.busyUntil = laneFreeTime + SERVICE_TIME_S;
                 next._cbpLane = lane;
                 next._cbpEndTime = lane.busyUntil;
+                // AUDIT: Record assignment time and expected service time
+                next._cbpAssignTime = laneFreeTime;
+                next._cbpExpectedServiceTime = SERVICE_TIME_S;
             } else {
                 break;  // No more particles to process in queue
             }
@@ -2634,6 +2656,9 @@ function stepCBPLanes(dt) {
             lane.busyUntil = tickStart + SERVICE_TIME_S;
             p._cbpLane = lane;
             p._cbpEndTime = lane.busyUntil;
+            // AUDIT: Record assignment time and expected service time
+            p._cbpAssignTime = tickStart;
+            p._cbpExpectedServiceTime = SERVICE_TIME_S;
         }
     }
 }
@@ -2892,11 +2917,17 @@ function stepDriftAndTransferInner(dt) {
             p.stuckLogged = false;
         }
 
-        // Skip particles waiting in sink queue (still in movingParticles but not drifting)
+        // Skip particles in CBP area (still in movingParticles but not drifting)
+        // Separate queue time (waiting) from service time (in lane)
         if (p.state === STATE.CLEARED && regionMap[cellIdx] === REGION.SINK) {
-            // Waiting in CBP queue - track as bridge queue delay
             _truckHoursLostThisTick += dt;           // c=0 → loss=1
-            _truckHoursLostBridgeQueueTick += dt;    // attribute to bridge queue
+            if (p._cbpLane) {
+                // In service — assigned to lane, being processed
+                _truckHoursLostBridgeServiceTick += dt;
+            } else {
+                // In queue — waiting for lane assignment
+                _truckHoursLostBridgeQueueTick += dt;
+            }
             continue;
         }
 
@@ -4164,9 +4195,16 @@ export function reset() {
     _truckHoursLostCongestion = 0;
     _truckHoursLostLotWait = 0;
     _truckHoursLostBridgeQueue = 0;
+    _truckHoursLostBridgeService = 0;
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
+    _truckHoursLostBridgeServiceTick = 0;
+
+    // Reset service time instrumentation arrays
+    _serviceTimeActual = [];
+    _serviceTimeExpected = [];
+    _serviceTimeAssignSim = [];
 
     // Reset stall-ton-hours (critical for fresh runs)
     _stallTonHours = 0;
@@ -4866,6 +4904,9 @@ async function initializeFromGeometry(geometry) {
 
     // Stamp manual fine-grained connectors
     stampManualConnectors();
+
+    // Unstamp Inovus-only connectors (they exist in bundle but should only be active when Inovus enabled)
+    unstampInovusConnectors();
 
     // Stamp manual blockers (destroy roads/lots)
     stampManualBlockers();
@@ -5803,6 +5844,7 @@ const SPEED_LIMIT_POLYLINES = [
         name: 'AVE_PTE_PHARR',
         polylines: [
             [
+                [-344.6282421308715, -13042.040588503369],
                 [-549.9350614429121, -12139.653375770506],
                 [-554.5252970950285, -10710.832667154451],
                 [-538.5252970950285, -10483.832667154451],
@@ -7366,19 +7408,12 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -524.95, y: -12929 },
     { x: -524.87, y: -12942 },
     { x: -524.80, y: -12955 },
-    // Inovus north access (disconnected from south - lot surface blocks transit)
-    { x: -325.70743854189186, y: -12757.793878219349 },
-    { x: -346.70743854189186, y: -12758.793878219349 },
-    { x: -361.70743854189186, y: -12758.793878219349 },
-    { x: -377.70743854189186, y: -12758.793878219349 },
-    { x: -390.70743854189186, y: -12759.793878219349 },
-    { x: -410.70743854189186, y: -12758.793878219349 },
-    { x: -426.70743854189186, y: -12760.793878219349 },
-    { x: -444.70743854189186, y: -12759.793878219349 },
-    { x: -458.70743854189186, y: -12760.793878219349 },
-    { x: -475.70743854189186, y: -12758.793878219349 },
-    { x: -495.70743854189186, y: -12758.793878219349 },
-    { x: -511.70743854189186, y: -12760.793878219349 },
+    { x: -524.72, y: -12968 },
+    { x: -524.65, y: -12981 },
+    { x: -524.58, y: -12994 },
+    { x: -524.50, y: -13007 },
+    { x: -524.43, y: -13020 },
+    { x: -524.34, y: -13032 },
 ];
 
 // Inovus-only road stamps (south access to FASE lots)
@@ -7399,13 +7434,8 @@ function stampManualConnectors() {
         if (stampConnectorCoord(coord)) stamped++;
     }
 
-    // Always stamp Inovus connectors (routing cost handles access, not cell presence)
-    for (const coord of INOVUS_CONNECTOR_COORDS) {
-        if (stampConnectorCoord(coord)) stamped++;
-    }
-
     if (stamped > 0) {
-        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus)`);
+        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped`);
     }
 }
 
@@ -7420,7 +7450,13 @@ function stampInovusConnectors() {
 }
 
 function unstampInovusConnectors() {
-    for (const idx of _inovusConnectorCells) {
+    let count = 0;
+    for (const coord of INOVUS_CONNECTOR_COORDS) {
+        const fx = Math.floor(worldToFieldX(coord.x));
+        const fy = Math.floor(worldToFieldY(coord.y));
+        if (fx < 0 || fx >= N || fy < 0 || fy >= N) continue;
+        const idx = fy * N + fx;
+
         // Revert to impassable (no road)
         regionMap[idx] = REGION.VOID;
         Kxx[idx] = 0;
@@ -7428,8 +7464,9 @@ function unstampInovusConnectors() {
         // Remove from roadCellIndices
         const roadIdx = roadCellIndices.indexOf(idx);
         if (roadIdx !== -1) roadCellIndices.splice(roadIdx, 1);
+        count++;
     }
-    log(`[INOVUS] Unstamped ${_inovusConnectorCells.length} Inovus connector cells`);
+    log(`[INOVUS] Unstamped ${count} Inovus connector cells`);
     _inovusConnectorCells = [];
 }
 
@@ -7741,10 +7778,6 @@ const MANUAL_BLOCKER_COORDS = [
     { x: -473, y: -5311 },
     { x: -507.31476305219303, y: -2558.043939326958 },
     { x: -507.31476305219303, y: -2574.043939326958 },
-    // Block Inovus access road leak
-    { x: -511.670545704333, y: -2535.813782308864 },
-    { x: -511.670545704333, y: -2545.7578905770606 },
-    { x: -511.670545704333, y: -2540.785836442962 },
 ];
 
 function stampManualBlockers() {
@@ -8482,7 +8515,8 @@ export function getMetricsPhase1() {
         // Truck-hours lost breakdown (instrumentation)
         truckHoursLostCongestion: _truckHoursLostCongestion,  // normal road congestion
         truckHoursLostLotWait: _truckHoursLostLotWait,        // waiting outside full lots
-        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue
+        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue (pre-service)
+        truckHoursLostBridgeService: _truckHoursLostBridgeService, // being serviced in CBP lane
         stallTonHours: _stallTonHours,             // cumulative ton-hours
         simTime: simTime,                          // current sim time (debug)
         // Sink observability (for drain invariant)
@@ -8505,6 +8539,45 @@ export function getMetricsPhase1() {
         // Per-lot fill ratios (for replay animation)
         lotFillRatios: Array.from(lotMass).map((m, i) =>
             lotCapacity[i] > 0 ? m / lotCapacity[i] : 0),
+        // AUDIT: Service time stats (seconds)
+        serviceTimeStats: computeServiceTimeStats(),
+        // Current SERVICE_TIME_S (for verification)
+        currentServiceTimeS: SERVICE_TIME_S,
+        effectiveLanes: getEffectiveLanes(),
+    };
+}
+
+/**
+ * Compute mean/p50/p90 for service time arrays.
+ * Returns stats in seconds.
+ */
+function computeServiceTimeStats() {
+    const n = _serviceTimeActual.length;
+    if (n === 0) {
+        return { count: 0, actual: { mean: 0, p50: 0, p90: 0 }, expected: { mean: 0, p50: 0, p90: 0 } };
+    }
+
+    const sortedActual = [..._serviceTimeActual].sort((a, b) => a - b);
+    const sortedExpected = [..._serviceTimeExpected].sort((a, b) => a - b);
+
+    const meanActual = _serviceTimeActual.reduce((a, b) => a + b, 0) / n;
+    const meanExpected = _serviceTimeExpected.reduce((a, b) => a + b, 0) / n;
+
+    const p50Idx = Math.floor(n * 0.5);
+    const p90Idx = Math.floor(n * 0.9);
+
+    return {
+        count: n,
+        actual: {
+            mean: meanActual,
+            p50: sortedActual[p50Idx],
+            p90: sortedActual[p90Idx],
+        },
+        expected: {
+            mean: meanExpected,
+            p50: sortedExpected[p50Idx],
+            p90: sortedExpected[p90Idx],
+        },
     };
 }
 
@@ -9472,6 +9545,9 @@ export async function togglePhasesAsLots() {
 
         log(`[PHASES] Stamped ${_phaseLotCells.length} total cells as lots`);
         log(`[PHASES] Sleep lots: ${_phaseSleepLotIndices.length} (indices: ${_phaseSleepLotIndices.join(', ')})`);
+
+        // Stamp Inovus-only road connectors
+        stampInovusConnectors();
     } else {
         // Unstamp phase lots
         for (const idx of _phaseLotCells) {
@@ -9491,6 +9567,9 @@ export async function togglePhasesAsLots() {
 
         _phaseLotIndices = [];
         _phaseLotCells = [];
+
+        // Unstamp Inovus-only road connectors
+        unstampInovusConnectors();
 
         log(`[PHASES] Unstamped phase lots, reverted to road`);
     }
@@ -9887,150 +9966,66 @@ function drawCommuterHeatmap(ctx, camera) {
     const vp = camera.viewportWorld;
     const pad = roi.cellSize * 2;
 
-    for (let y = 0; y < N; y++) {
-        for (let x = 0; x < N; x++) {
-            const idx = y * N + x;
-            const load = commuterLoad[idx];
-            if (load <= 0) continue;
+    // Only draw cells if they're visible
+    if (cellScreenSize >= 0.5) {
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const idx = y * N + x;
+                const load = commuterLoad[idx];
+                if (load <= 0) continue;
 
-            const wx = fieldToWorldX(x);
-            const wy = fieldToWorldY(y);
+                const wx = fieldToWorldX(x);
+                const wy = fieldToWorldY(y);
 
-            // Viewport culling
-            if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-            if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+                // Viewport culling
+                if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+                if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-            // Color by congestion intensity: green → yellow → red
-            // load typically ranges 0.2 to ~0.8, normalize aggressively
-            const t = Math.min(load / 0.5, 1.0);  // 0.5 load = full red
-            let r, g, b;
-            if (t < 0.5) {
-                // Green to Yellow (0 → 0.5)
-                const t2 = t * 2;
-                r = Math.round(255 * t2);
-                g = 255;
-                b = 0;
-            } else {
-                // Yellow to Red (0.5 → 1)
-                const t2 = (t - 0.5) * 2;
-                r = 255;
-                g = Math.round(255 * (1 - t2));
-                b = 0;
+                // Color by congestion intensity: green → yellow → red
+                // load typically ranges 0.2 to ~0.8, normalize aggressively
+                const t = Math.min(load / 0.5, 1.0);  // 0.5 load = full red
+                let r, g, b;
+                if (t < 0.5) {
+                    // Green to Yellow (0 → 0.5)
+                    const t2 = t * 2;
+                    r = Math.round(255 * t2);
+                    g = 255;
+                    b = 0;
+                } else {
+                    // Yellow to Red (0.5 → 1)
+                    const t2 = (t - 0.5) * 2;
+                    r = 255;
+                    g = Math.round(255 * (1 - t2));
+                    b = 0;
+                }
+
+                const alpha = 0.3 + load * 0.4;
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+                const screen = camera.worldToScreen(wx, wy);
+                ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
             }
-
-            const alpha = 0.3 + load * 0.4;
-            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
-            const screen = camera.worldToScreen(wx, wy);
-            ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
-        }
-    }
-
-    // Draw intersection markers (hollow circles with thick border)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = Math.max(1, cellScreenSize * 0.08);
-    for (let y = 0; y < N; y++) {
-        for (let x = 0; x < N; x++) {
-            const idx = y * N + x;
-            if (!isIntersection[idx]) continue;
-
-            const wx = fieldToWorldX(x + 0.5);
-            const wy = fieldToWorldY(y + 0.5);
-
-            if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-            if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-            const screen = camera.worldToScreen(wx, wy);
-            ctx.beginPath();
-            ctx.arc(screen.x, screen.y, Math.max(2, cellScreenSize * 0.2), 0, Math.PI * 2);
-            ctx.stroke();
-        }
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// REPLAY ROAD HEATMAP — Sample-driven visualization during clockMontage
-// ═══════════════════════════════════════════════════════════════════════════════
-
-let _flowRenderMode = 'PARTICLES';  // 'PARTICLES' | 'ROAD_HEATMAP'
-let _replaySampleData = null;       // Current sample for heatmap rendering
-
-export function setFlowRenderMode(mode) {
-    _flowRenderMode = mode;
-    console.log(`[FLOW] Render mode: ${_flowRenderMode}`);
-    return _flowRenderMode;
-}
-
-export function getFlowRenderMode() {
-    return _flowRenderMode;
-}
-
-export function setReplaySampleData(sampleData) {
-    _replaySampleData = sampleData;
-}
-
-/**
- * Draw road heatmap based on sample data during replay.
- * Colors road cells by pressure derived from sinkQueueCount / truckHoursLostRate.
- * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
- */
-function drawRoadHeatmap(ctx, camera) {
-    if (_flowRenderMode !== 'ROAD_HEATMAP') return;
-    if (!_replaySampleData) return;
-
-    const cellScreenSize = roi.cellSize * camera.zoom;
-    const vp = camera.viewportWorld;
-    const pad = roi.cellSize * 2;
-
-    // Normalize pressure: use sinkQueueCount (0-100+ range) and truckHoursLostRate
-    const queuePressure = Math.min((_replaySampleData.sinkQueueCount || 0) / 50, 1.0);
-    const ratePressure = Math.min((_replaySampleData.truckHoursLostRate || 0) / 10, 1.0);
-    const pressure = Math.max(queuePressure, ratePressure);
-
-    // Draw road cells with pressure-based color
-    for (const idx of roadCellIndices) {
-        const x = idx % N;
-        const y = Math.floor(idx / N);
-
-        const wx = fieldToWorldX(x);
-        const wy = fieldToWorldY(y);
-
-        // Viewport culling
-        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-        // Color by system pressure: blue → cyan → green → yellow → red
-        const t = pressure;
-        let r, g, b;
-        if (t < 0.25) {
-            // Blue to Cyan
-            const t2 = t / 0.25;
-            r = 0;
-            g = Math.round(255 * t2);
-            b = 255;
-        } else if (t < 0.5) {
-            // Cyan to Green
-            const t2 = (t - 0.25) / 0.25;
-            r = 0;
-            g = 255;
-            b = Math.round(255 * (1 - t2));
-        } else if (t < 0.75) {
-            // Green to Yellow
-            const t2 = (t - 0.5) / 0.25;
-            r = Math.round(255 * t2);
-            g = 255;
-            b = 0;
-        } else {
-            // Yellow to Red
-            const t2 = (t - 0.75) / 0.25;
-            r = 255;
-            g = Math.round(255 * (1 - t2));
-            b = 0;
         }
 
-        const alpha = 0.3 + pressure * 0.5;
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
-        const screen = camera.worldToScreen(wx, wy);
-        ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
+        // Draw intersection markers (hollow circles with thick border)
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = Math.max(1, cellScreenSize * 0.08);
+        for (let y = 0; y < N; y++) {
+            for (let x = 0; x < N; x++) {
+                const idx = y * N + x;
+                if (!isIntersection[idx]) continue;
+
+                const wx = fieldToWorldX(x + 0.5);
+                const wy = fieldToWorldY(y + 0.5);
+
+                if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+                if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+
+                const screen = camera.worldToScreen(wx, wy);
+                ctx.beginPath();
+                ctx.arc(screen.x, screen.y, Math.max(2, cellScreenSize * 0.2), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
     }
 }
 
