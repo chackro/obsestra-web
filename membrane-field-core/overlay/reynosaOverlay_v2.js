@@ -7428,6 +7428,18 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -1110.69, y: -13023.56 },
     { x: -1123.69, y: -13024.56 },
     { x: -1142.69, y: -13024.56 },
+    { x: -1145.08, y: -13025.95 },
+    { x: -1129.08, y: -13022.95 },
+    { x: -1111.08, y: -13025.95 },
+    { x: -1161.08, y: -13039.95 },
+    { x: -1142.08, y: -13040.95 },
+    { x: -1132.08, y: -13040.95 },
+    { x: -1127.08, y: -13040.95 },
+    { x: -1109.08, y: -13042.95 },
+    { x: -1093.08, y: -13042.95 },
+    { x: -345.08, y: -13041.95 },
+    { x: -328.08, y: -13025.95 },
+    { x: -445.08, y: -12916.95 },
     // Horizontal path at y≈-12788 (13m spacing, shifted 80m south)
     { x: -494, y: -12787.22 },
     { x: -481, y: -12787.22 },
@@ -9765,6 +9777,9 @@ function drawCongestionHeatmap(ctx, camera) {
  * Renders BEFORE particles so particles appear on top.
  */
 function drawCongestionCells(ctx, camera) {
+    // Skip during replay heatmap mode
+    if (_flowRenderMode === 'ROAD_HEATMAP') return;
+
     const cellScreenSize = roi.cellSize * camera.zoom;
 
     // Skip if cells too small to see
@@ -10121,42 +10136,46 @@ function thermalGradient(t) {
     }
 }
 
-// Cached min/max for road heatmap (recomputed every 30 frames)
+// Offscreen canvas for blended road heatmap
+let _heatmapCanvas = null;
+let _heatmapCtx = null;
+let _heatmapImageData = null;
 let _heatmapMin = 0;
 let _heatmapMax = TRUCK_KG;
-let _heatmapCacheFrame = 0;
-const HEATMAP_CACHE_INTERVAL = 30;
+let _heatmapFrame = 0;
+const HEATMAP_MINMAX_INTERVAL = 10;  // Update min/max every 10 frames
+const HEATMAP_BLEND = 0.15;          // Blend factor (0=no change, 1=instant)
 
-// Rolling presence accumulator for road heatmap
-// Instantaneous cellMass is too sparse at high replay speeds (168x)
-// Accumulate presence with exponential decay for smooth visualization
-let _heatmapPresence = null;  // Lazy init to N2 size
-const HEATMAP_DECAY = 0.95;   // Per-frame decay (higher = longer trails)
+// Rolling presence accumulator
+let _heatmapPresence = null;
+const HEATMAP_DECAY = 0.95;
 
 /**
- * Draw road heatmap based on rolling accumulated presence.
- * Colors each road cell by accumulated presence with decay.
- * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
+ * Draw road heatmap using offscreen canvas with frame blending.
+ * Much faster than per-cell fillRect - single drawImage per frame.
  */
 function drawRoadHeatmap(ctx, camera) {
     if (_flowRenderMode !== 'ROAD_HEATMAP') return;
 
-    // Lazy init presence accumulator
-    if (!_heatmapPresence || _heatmapPresence.length !== N2) {
+    // Lazy init
+    if (!_heatmapCanvas) {
+        _heatmapCanvas = document.createElement('canvas');
+        _heatmapCanvas.width = N;
+        _heatmapCanvas.height = N;
+        _heatmapCtx = _heatmapCanvas.getContext('2d');
+        _heatmapImageData = _heatmapCtx.createImageData(N, N);
         _heatmapPresence = new Float64Array(N2);
     }
 
-    // Update rolling presence: decay + add current mass
-    let nonZeroCount = 0;
+    // Update rolling presence
     for (const idx of roadCellIndices) {
         _heatmapPresence[idx] = _heatmapPresence[idx] * HEATMAP_DECAY + cellMass[idx];
-        if (_heatmapPresence[idx] > 0) nonZeroCount++;
     }
 
-    // Recompute min/max every N frames
-    _heatmapCacheFrame++;
-    if (_heatmapCacheFrame >= HEATMAP_CACHE_INTERVAL) {
-        _heatmapCacheFrame = 0;
+    // Update min/max frequently
+    _heatmapFrame++;
+    if (_heatmapFrame >= HEATMAP_MINMAX_INTERVAL) {
+        _heatmapFrame = 0;
         let min = Infinity, max = 0;
         for (const idx of roadCellIndices) {
             const v = _heatmapPresence[idx];
@@ -10166,38 +10185,49 @@ function drawRoadHeatmap(ctx, camera) {
             }
         }
         if (max > 0) {
-            _heatmapMin = min === Infinity ? 0 : min;
-            _heatmapMax = max;
+            // Smooth min/max transitions
+            _heatmapMin = _heatmapMin * 0.8 + (min === Infinity ? 0 : min) * 0.2;
+            _heatmapMax = _heatmapMax * 0.8 + max * 0.2;
         }
-        console.log(`[HEATMAP] nonZero=${nonZeroCount} min=${_heatmapMin.toFixed(0)} max=${_heatmapMax.toFixed(0)}`);
     }
 
     const range = _heatmapMax - _heatmapMin;
-    const cellScreenSize = roi.cellSize * camera.zoom;
-    const vp = camera.viewportWorld;
-    const pad = roi.cellSize * 2;
+    const data = _heatmapImageData.data;
 
+    // Blend new values into existing pixels
     for (const idx of roadCellIndices) {
         const presence = _heatmapPresence[idx];
-        if (presence <= 0) continue;
+        const px = idx * 4;
 
-        const x = idx % N;
-        const y = Math.floor(idx / N);
-        const wx = fieldToWorldX(x);
-        const wy = fieldToWorldY(y);
-
-        // Viewport culling
-        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+        if (presence <= 0) {
+            // Fade out
+            data[px] = data[px] * (1 - HEATMAP_BLEND) | 0;
+            data[px + 1] = data[px + 1] * (1 - HEATMAP_BLEND) | 0;
+            data[px + 2] = data[px + 2] * (1 - HEATMAP_BLEND) | 0;
+            data[px + 3] = data[px + 3] * (1 - HEATMAP_BLEND) | 0;
+            continue;
+        }
 
         const t = range > 0 ? Math.min(1, (presence - _heatmapMin) / range) : 0;
         const color = thermalGradient(t);
-        const alpha = 0.5 + t * 0.5;
+        const alpha = (128 + t * 127) | 0;
 
-        ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha.toFixed(2)})`;
-        const screen = camera.worldToScreen(wx, wy);
-        ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
+        // Blend towards target color
+        data[px] = (data[px] * (1 - HEATMAP_BLEND) + color.r * HEATMAP_BLEND) | 0;
+        data[px + 1] = (data[px + 1] * (1 - HEATMAP_BLEND) + color.g * HEATMAP_BLEND) | 0;
+        data[px + 2] = (data[px + 2] * (1 - HEATMAP_BLEND) + color.b * HEATMAP_BLEND) | 0;
+        data[px + 3] = (data[px + 3] * (1 - HEATMAP_BLEND) + alpha * HEATMAP_BLEND) | 0;
     }
+
+    _heatmapCtx.putImageData(_heatmapImageData, 0, 0);
+
+    // Blit to main canvas with proper transform
+    const bounds = roi;
+    const topLeft = camera.worldToScreen(bounds.originX, bounds.originY);
+    const screenSize = bounds.width * camera.zoom;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(_heatmapCanvas, topLeft.x, topLeft.y, screenSize, screenSize);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
