@@ -5448,6 +5448,10 @@ export function draw(ctx, camera) {
     if (_particleColorMode === 2) {
         drawSourceLabels(ctx, camera);
     }
+
+    // Draw PHARR infrastructure polygon when enabled
+    drawPharrInfraPolygon(ctx, camera);
+
     _drawSubTiming.hud += (performance.now() - tHud0);
 
     _drawSubTiming.frameCount++;
@@ -8491,7 +8495,7 @@ export function getModelSpec() {
         { key: 'congestion', value: `Congestión: Greenshields p=${CONGESTION_P}`, syncPoint: 'COMMUTER_DEBUG_START' },
         { key: 'calibration', value: 'Calibración: Ingeniería de Tránsito 2023, Contadores Neumáticos', syncPoint: 'COMMUTER_DEBUG_END' },
         // ─── Infraestructura Aduanal Pte Pharr ───
-        { key: 'infra_header', value: 'Infraestructura Aduanal Pte Pharr:' },
+        { key: 'infra_header', value: 'Infraestructura Aduanal Pte Pharr:', syncPoint: 'PHARR_INFRA_START' },
         { key: 'infra_carriles', value: `${Math.floor(3 * _twinSpanCapMult)} carriles Sur a Norte`, indent: 1, tree: 'tree' },
         { key: 'infra_cbp', value: `${getEffectiveLanes()} andenes de inspección CBP`, indent: 1, tree: 'tree-last' },
         { key: 'lots', value: `Lotes: ${lotCapacity.length}, ${(lotCapacity.reduce((a, b) => a + b, 0) / 1e6).toFixed(1)}M kg cap`, syncPoint: 'LOTS' },
@@ -10020,6 +10024,55 @@ export function isShowingCommuterHeatmap() {
     return _showCommuterHeatmap;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// PHARR INFRASTRUCTURE POLYGON — CBP facility boundary visualization
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _showPharrInfraPolygon = false;
+
+// Polygon vertices in world coordinates (from user specification)
+const PHARR_INFRA_POLYGON = [
+    { x: 154.70, y: -2503.04 },
+    { x: -868.66, y: -2344.36 },
+    { x: -54.27, y: 2904.30 },
+    { x: 969.10, y: 2745.62 }
+];
+
+export function showPharrInfraPolygon() {
+    _showPharrInfraPolygon = true;
+    console.log('[PHARR] Infrastructure polygon: ON');
+}
+
+export function hidePharrInfraPolygon() {
+    _showPharrInfraPolygon = false;
+    console.log('[PHARR] Infrastructure polygon: OFF');
+}
+
+/**
+ * Draw PHARR CBP infrastructure polygon.
+ * Called from draw() when enabled.
+ */
+function drawPharrInfraPolygon(ctx, camera) {
+    if (!_showPharrInfraPolygon) return;
+
+    const pts = PHARR_INFRA_POLYGON.map(p => camera.worldToScreen(p.x, p.y));
+
+    // Fill with semi-transparent cyan
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (let i = 1; i < pts.length; i++) {
+        ctx.lineTo(pts[i].x, pts[i].y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.15)';
+    ctx.fill();
+
+    // Stroke with solid cyan
+    ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
 /**
  * Draw simplified commuter heatmap — single color gradient by congestion intensity.
  * Green (low) → Yellow → Red (high friction)
@@ -10167,9 +10220,20 @@ function drawRoadHeatmap(ctx, camera) {
         _heatmapPresence = new Float64Array(N2);
     }
 
-    // Update rolling presence
+    // Compute current presence from particle positions (works in replay mode)
+    // Use a temp array to avoid accumulating stale values
+    const currentPresence = new Float64Array(N2);
+    const mass = TRUCK_KG;  // All particles have same mass
+    for (let i = 0; i < _activeParticleCount; i++) {
+        const p = _activeParticles[i];
+        if (p.cellIdx >= 0 && p.cellIdx < N2) {
+            currentPresence[p.cellIdx] += mass;
+        }
+    }
+
+    // Update rolling presence with decay
     for (const idx of roadCellIndices) {
-        _heatmapPresence[idx] = _heatmapPresence[idx] * HEATMAP_DECAY + cellMass[idx];
+        _heatmapPresence[idx] = _heatmapPresence[idx] * HEATMAP_DECAY + currentPresence[idx];
     }
 
     // Update min/max frequently
@@ -10177,9 +10241,11 @@ function drawRoadHeatmap(ctx, camera) {
     if (_heatmapFrame >= HEATMAP_MINMAX_INTERVAL) {
         _heatmapFrame = 0;
         let min = Infinity, max = 0;
+        let nonZeroCount = 0;
         for (const idx of roadCellIndices) {
             const v = _heatmapPresence[idx];
             if (v > 0) {
+                nonZeroCount++;
                 if (v < min) min = v;
                 if (v > max) max = v;
             }
@@ -10189,6 +10255,7 @@ function drawRoadHeatmap(ctx, camera) {
             _heatmapMin = _heatmapMin * 0.8 + (min === Infinity ? 0 : min) * 0.2;
             _heatmapMax = _heatmapMax * 0.8 + max * 0.2;
         }
+        console.log(`[HEATMAP] particles=${_activeParticleCount} nonZeroRoadCells=${nonZeroCount} min=${_heatmapMin.toFixed(0)} max=${_heatmapMax.toFixed(0)}`);
     }
 
     const range = _heatmapMax - _heatmapMin;
@@ -10222,9 +10289,11 @@ function drawRoadHeatmap(ctx, camera) {
     _heatmapCtx.putImageData(_heatmapImageData, 0, 0);
 
     // Blit to main canvas with proper transform
-    const bounds = roi;
-    const topLeft = camera.worldToScreen(bounds.originX, bounds.originY);
-    const screenSize = bounds.width * camera.zoom;
+    // ROI origin is at (centerX - sizeM/2, centerY - sizeM/2)
+    const originX = roi.centerX - roi.sizeM / 2;
+    const originY = roi.centerY - roi.sizeM / 2;
+    const topLeft = camera.worldToScreen(originX, originY);
+    const screenSize = roi.sizeM * camera.zoom;
 
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(_heatmapCanvas, topLeft.x, topLeft.y, screenSize, screenSize);

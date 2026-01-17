@@ -1036,7 +1036,7 @@
         }
 
         #splash-screen .manifesto p {
-            font-size: clamp(10px, 1.3vw, 14px);
+            font-size: clamp(16px, 1.3vw, 20px);
             font-weight: 700;
             color: #888;
             line-height: 1.6;
@@ -1060,7 +1060,7 @@
         <div class="acronym">C/I/E/N</div>
         <div class="subtitle">Computación para la Integración Estratégica de Norteamerica</div>
         <div class="manifesto">
-            <p>El desafío mayor de la arquitectura logística no reside en la cartografía de flujos —una descripción superficial del presente—, sino en la descomposición de los incentivos que los empujan y las restricciones que los contienen. Aislados, hacen posible decidir dónde intervenir y construir impacto sistémico.</p>
+            <p>El trabajo del diseño logístico no reside en la cartografía de flujos —una descripción superficial del presente—, sino en la descomposición de los incentivos que los empujan y las restricciones que los contienen. Aislados, ambos hacen posible decidir dónde construir impacto sistémico.</p>
         </div>
     </div>
     <div id="container">
@@ -1350,7 +1350,7 @@
     <script type="module">
         import { loadBundle, loadScenarioPairBundles, getHourlyInflow, getHourlyCapacity, getSegmentsInROI, getMetadata, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
         import { POENodeLayer } from '../overlay/poeNodeLayer.js';
-        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode, setReplaySampleData } from '../overlay/reynosaOverlay_v2.js';
+        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode, setReplaySampleData, showPharrInfraPolygon, hidePharrInfraPolygon } from '../overlay/reynosaOverlay_v2.js';
         import { ParticleRenderer } from '../overlay/particleRenderer.js';
         import { loadWeightMaps, extractWeights, getInterpolatedWeight, hasWeightMaps, getSegmentPoeDistribution } from '../overlay/segmentWeights.js';
         import { MacroParticleLayer } from '../overlay/macroParticleLayer.js';
@@ -3965,6 +3965,12 @@
                 hideHourlyTable();
                 console.log('[Director] Hourly table hidden');
             },
+            onShowPharrInfraPolygon: () => {
+                showPharrInfraPolygon();
+            },
+            onHidePharrInfraPolygon: () => {
+                hidePharrInfraPolygon();
+            },
 
             // ─── Scenario presentation callbacks ───
             onBlurBackground: (enabled) => {
@@ -4155,7 +4161,7 @@
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
-                    <span class="metric-value">${summary.cbpLanesInUse_mean.toFixed(1)} / 7</span>
+                    <span class="metric-value">${summary.cbpLanesInUse_mean.toFixed(1)} / ${scenarioName.toLowerCase().includes('twinspan') ? 14 : 7}</span>
                 </div>
                 <div class="metric-line">
                     <span class="metric-label">Cola CBP promedio</span>
@@ -4426,7 +4432,7 @@
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
-                    <span class="metric-value">${cbpLanesInUse.toFixed(1)} / 7</span>
+                    <span class="metric-value">${cbpLanesInUse.toFixed(1)} / ${scenarioName.toLowerCase().includes('twinspan') ? 14 : 7}</span>
                 </div>
                 <div class="metric-line">
                     <span class="metric-label">Cola CBP promedio</span>
@@ -4769,13 +4775,12 @@
             };
             if (top5Sinks.length > 0) {
                 ctx.textBaseline = 'middle';
-                const offsetDist = 12;        // Start leader this far from point
+                const offsetDist = 0;         // No offset
                 const leaderLength = 50;      // Longer leader line
                 const leaderAngle = Math.PI / 5;
+                const fontSize = 18;
 
                 for (const label of top5Sinks) {
-                    // Font size decreases by rank: #1=20px, #2=19px, ... #5=16px
-                    const fontSize = 21 - label.rank;
                     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
                     const sx = Math.round(hw + (label.worldX - cx) * zoom);
                     const sy = Math.round(hh - (label.worldY - cy) * zoom);
@@ -4790,7 +4795,7 @@
 
                     // Leader line only (no tick)
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 0.3;
+                    ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.moveTo(startX, startY);
                     ctx.lineTo(endX, startY);
@@ -4825,13 +4830,12 @@
             // Draw POE text labels with leader lines
             if (poeLabels.length > 0) {
                 ctx.textBaseline = 'middle';
-                const offsetDist = 30;        // Start leader this far from point
+                const offsetDist = 0;         // No offset
                 const leaderLength = 120;     // Leader line length
                 const leaderAngle = Math.PI / 6;
+                const fontSize = 18;
 
                 for (const label of poeLabels) {
-                    // Font size decreases by rank: #1=21px, #2=20px
-                    const fontSize = 22 - label.rank;
                     ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
                     const sx = Math.round(hw + (label.worldX - cx) * zoom);
                     const sy = Math.round(hh - (label.worldY - cy) * zoom);
@@ -4845,7 +4849,7 @@
 
                     // Leader line only (no tick)
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 0.3;
+                    ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.moveTo(startX, startY);
                     ctx.lineTo(endX, startY);

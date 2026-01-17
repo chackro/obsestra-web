@@ -183,6 +183,8 @@ export class Director {
         this.onSetCommuterHeatmap = options.onSetCommuterHeatmap || (() => { });
         this.onShowHourlyTable = options.onShowHourlyTable || (() => { });
         this.onHideHourlyTable = options.onHideHourlyTable || (() => { });
+        this.onShowPharrInfraPolygon = options.onShowPharrInfraPolygon || (() => { });
+        this.onHidePharrInfraPolygon = options.onHidePharrInfraPolygon || (() => { });
 
         // Scenario presentation callbacks
         this.onBlurBackground = options.onBlurBackground || (() => { });
@@ -762,6 +764,16 @@ export class Director {
                 this._nextInstruction(now);
                 break;
 
+            case 'showPharrInfraPolygon':
+                this.onShowPharrInfraPolygon();
+                this._nextInstruction(now);
+                break;
+
+            case 'hidePharrInfraPolygon':
+                this.onHidePharrInfraPolygon();
+                this._nextInstruction(now);
+                break;
+
             case 'setPoeOverlay':
                 this.onSetPoeOverlay(instr.enabled, instr.options || {});
                 this._nextInstruction(now);
@@ -1210,14 +1222,16 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // SEMANTIC: "After adaptation, these stress points remain."
             // Bleed is a stress fracture diagram showing where pressure concentrates.
-            // Shown AFTER adaptation (α=1 baseline routing).
+            // Rays enabled BEFORE alpha switch so they're visible through transition.
             // ─────────────────────────────────────────────────────────────
-            // Switch to baseline routing (α=1) and baseline POE coloring
+            // Beat 1: Feasibility rays (dashed) — enabled before alpha switch
+            { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
+            { type: 'wait', duration: 2000 },
+
+            // Switch to baseline routing (α=1) with rays visible
             { type: 'setScenarioAlpha', alpha: 1.0 },
             { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
-            // Beat 1: Feasibility rays (dashed) — instant structural collapse
-            { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
-            { type: 'wait', duration: 4000 },
+            { type: 'wait', duration: 2000 },
 
             // Beat 2: Congestion rays (solid) — capacity saturation
             { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'congestion' } },
@@ -1236,13 +1250,12 @@ export const Scripts = {
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
 
-            // Show POE labels
-            { type: 'showPoeLabels' },
+            // Show POE label (Pharr only, no Laredo)
+            { type: 'showPoeLabel', poe: 'hidalgo_pharr' },
             { type: 'wait', duration: 5000 },
 
-            // Laredo → white (pharr remains sole magenta, keep pharr label)
+            // Laredo → white (pharr remains sole magenta)
             { type: 'setCorridorColor', poe: 'laredo', color: 'white' },
-            { type: 'showPoeLabel', poe: 'hidalgo_pharr' },
             { type: 'wait', duration: 3000 },
 
             // Framing square + start sim
@@ -1299,8 +1312,8 @@ export const Scripts = {
             // Determine color class based on active mode and item key
             // Uses CSS classes so colors can sync with particle mode changes
             let colorClass = null;
-            if (stateColorActive) {
-                colorClass = 'color-state';  // Orange when state-mode active
+            if (stateColorActive && item.key === 'seg_transfer') {
+                colorClass = 'color-state';  // Orange only for NecesidadTransfer
             } else if (sourceColorActive) {
                 if (item.key === 'orig_mty') colorClass = 'color-source-mty';       // Red
                 else if (item.key === 'orig_vic') colorClass = 'color-source-vic';  // Blue
@@ -1369,7 +1382,12 @@ export const Scripts = {
             } else if (item.syncPoint === 'COMMUTER_DEBUG_END') {
                 instructions.push({ type: 'wait', duration: BEAT });
                 instructions.push({ type: 'setCommuterHeatmap', enabled: false }); // Commuter heatmap OFF
+            } else if (item.syncPoint === 'PHARR_INFRA_START') {
+                // Show PHARR CBP infrastructure polygon
+                instructions.push({ type: 'showPharrInfraPolygon' });
+                instructions.push({ type: 'wait', duration: BEAT });
             } else if (item.syncPoint === 'LOTS') {
+                instructions.push({ type: 'hidePharrInfraPolygon' });  // Hide before lots highlight
                 instructions.push({ type: 'highlightLots' });
                 instructions.push({ type: 'wait', duration: BEAT });
                 instructions.push({ type: 'clearLotHighlight' });
@@ -1466,13 +1484,12 @@ export const Scripts = {
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
 
-            // Show POE labels
-            { type: 'showPoeLabels' },
+            // Show POE label (Pharr only, no Laredo)
+            { type: 'showPoeLabel', poe: 'hidalgo_pharr' },
             { type: 'wait', duration: 5000 },
 
-            // Laredo → white (pharr remains sole magenta, keep pharr label)
+            // Laredo → white (pharr remains sole magenta)
             { type: 'setCorridorColor', poe: 'laredo', color: 'white' },
-            { type: 'showPoeLabel', poe: 'hidalgo_pharr' },
             { type: 'wait', duration: 3000 },
 
             // Framing square + start sim
@@ -1540,6 +1557,8 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },  // Post-replay hold
             { type: 'clearMetrics' },
+            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
+            { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 1: TWINSPAN — CBP capacity doubled
@@ -1562,6 +1581,7 @@ export const Scripts = {
             { type: 'wait', duration: 5000 },
             { type: 'snapToFrame', target: 'scenarioRun' },
 
+            { type: 'macroPause', pause: false },  // Resume particles for replay
             { type: 'startReplay', scenario: 'Twinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
             { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
@@ -1571,6 +1591,8 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
             { type: 'clearMetrics' },
+            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
+            { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 2: InovusTwinspan — Twinspan + Inovus lots
@@ -1587,6 +1609,7 @@ export const Scripts = {
             { type: 'scenarioIntervention', name: 'InovusTwinspan', intervention: '+ Patios Inovus' },
             { type: 'visualChange', effect: 'inovusFull' },
             { type: 'wait', duration: 3000 },
+            { type: 'macroPause', pause: false },  // Resume particles for replay
             { type: 'startReplay', scenario: 'InovusTwinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
             { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
@@ -1596,6 +1619,8 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
             { type: 'clearMetrics' },
+            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
+            { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
             // LAYER 3: InovusTwinspanInterserrana — full stack + routing
@@ -1612,6 +1637,7 @@ export const Scripts = {
             { type: 'scenarioIntervention', name: 'InovusTwinspanInterserrana', intervention: '+ Interserrana' },
 
             // Show routing change visually (zoom out to show Pharr + Laredo corridors)
+            { type: 'macroPause', pause: false },  // Resume particles for corridor visualization
             { type: 'forceMacroRender', enabled: true },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
