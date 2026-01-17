@@ -1080,10 +1080,6 @@
                 white-space: pre;
                 z-index: 1000;
             "></div>
-            <div id="scenario-card">
-                <div class="card-title"></div>
-                <div class="card-toggles"></div>
-            </div>
         </div>
         <div id="controls">
             <h2>CIEN / FIELD Viewer</h2>
@@ -1255,6 +1251,12 @@
 
     <!-- Telemetry overlay (alien observer metrics) -->
     <div id="telemetry-overlay"></div>
+
+    <!-- Scenario card (outside canvas-wrapper to avoid blur) -->
+    <div id="scenario-card">
+        <div class="card-title"></div>
+        <div class="card-toggles"></div>
+    </div>
 
     <!-- Scenario comparison overlay -->
     <div id="scenario-overlay">
@@ -3601,7 +3603,6 @@
                 // mode: 'baseline' = all particles get baseline POEs
                 // mode: 'interserrana' = particles get interserrana POEs (at α≥0.5)
                 if (!macroParticles) return;
-                macroParticles.advanceScenarioEpoch();
                 if (mode === 'baseline') {
                     // Both slots = baseline, so all new particles get baseline POEs
                     macroParticles.setScenarioPoeDistributions(
@@ -3617,6 +3618,11 @@
                     );
                     macroParticles.setScenarioAlpha(1.0);  // Ensure α=1 so new particles use interserrana
                     console.log('[Director] POE mode: interserrana (α=1 → interserrana POEs)');
+                }
+            },
+            onAdvanceEpoch: () => {
+                if (macroParticles) {
+                    macroParticles.advanceScenarioEpoch();
                 }
             },
             onStartQueuePhase: () => {

@@ -85,6 +85,9 @@ const Easing = {
  * { type: 'setParticleColorMode', mode: 2 }
  *   - Set particle color mode (0=OFF, 1=STALL, 2=SOURCE)
  *
+ * { type: 'advanceEpoch' }
+ *   - Advance scenario epoch counter (gates magenta highlighting to current-epoch particles only)
+ *
  * { type: 'togglePhysicsDebug' }
  *   - Toggle physics debug overlay (D key)
  *
@@ -148,6 +151,7 @@ export class Director {
         this.onSetLayerBAlpha = options.onSetLayerBAlpha || (() => { });
         this.onSwitchToLayerB = options.onSwitchToLayerB || (() => { });  // Layer A → Layer B weight regime switch
         this.onSetPoeMode = options.onSetPoeMode || (() => { });  // Switch POE distribution for particle coloring
+        this.onAdvanceEpoch = options.onAdvanceEpoch || (() => { });  // Advance scenario epoch for highlight gating
         this.onDimNonHighlighted = options.onDimNonHighlighted || (() => { });
         this.onSetCorridorColor = options.onSetCorridorColor || (() => { });
         this.onTogglePhysicsDebug = options.onTogglePhysicsDebug || (() => { });
@@ -588,6 +592,12 @@ export class Director {
                 // Switch POE distribution for particle coloring (independent of routing α)
                 // mode: 'baseline' = both slots baseline, 'interserrana' = baseline→interserrana
                 this.onSetPoeMode(instr.mode);
+                this._nextInstruction(now);
+                break;
+
+            case 'advanceEpoch':
+                // Advance scenario epoch (gates magenta highlighting to current-epoch particles only)
+                this.onAdvanceEpoch();
                 this._nextInstruction(now);
                 break;
 
@@ -1204,6 +1214,7 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // Switch to baseline routing (α=1) and baseline POE coloring
             { type: 'setScenarioAlpha', alpha: 1.0 },
+            { type: 'advanceEpoch' },
             { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
             // Beat 1: Feasibility rays (dashed) — instant structural collapse
             { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
@@ -1603,6 +1614,7 @@ export const Scripts = {
             { type: 'forceMacroRender', enabled: true },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
+            { type: 'advanceEpoch' },
             { type: 'setPoeMode', mode: 'interserrana' },                        // Particles respawn with interserrana POEs
             // Pharr highlighted (magenta) immediately on entering Layer 3
             { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },

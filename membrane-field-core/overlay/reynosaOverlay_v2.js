@@ -10069,28 +10069,63 @@ export function setReplaySampleData(sampleData) {
 }
 
 /**
- * Draw road heatmap based on sample data during replay.
- * Colors road cells by pressure derived from sinkQueueCount / truckHoursLostRate.
+ * Thermal gradient: blue → cyan → green → yellow → red
+ * Same as heatmapExport.js for consistency.
+ */
+function thermalGradient(t) {
+    if (t < 0.25) {
+        const s = t / 0.25;
+        return { r: 0, g: Math.round(255 * s), b: 255 };
+    } else if (t < 0.5) {
+        const s = (t - 0.25) / 0.25;
+        return { r: 0, g: 255, b: Math.round(255 * (1 - s)) };
+    } else if (t < 0.75) {
+        const s = (t - 0.5) / 0.25;
+        return { r: Math.round(255 * s), g: 255, b: 0 };
+    } else {
+        const s = (t - 0.75) / 0.25;
+        return { r: 255, g: Math.round(255 * (1 - s)), b: 0 };
+    }
+}
+
+// Cached p99 for road heatmap (recomputed every 30 frames)
+let _heatmapP99 = TRUCK_KG;
+let _heatmapP99Frame = 0;
+const HEATMAP_P99_INTERVAL = 30;
+
+/**
+ * Draw road heatmap based on live particle presence.
+ * Colors each road cell by current mass (rolling presence).
  * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
  */
 function drawRoadHeatmap(ctx, camera) {
     if (_flowRenderMode !== 'ROAD_HEATMAP') return;
-    if (!_replaySampleData) return;
 
+    // Recompute p99 every N frames (sorting 140k values is expensive)
+    _heatmapP99Frame++;
+    if (_heatmapP99Frame >= HEATMAP_P99_INTERVAL) {
+        _heatmapP99Frame = 0;
+        const values = [];
+        for (const idx of roadCellIndices) {
+            if (cellMass[idx] > 0) values.push(cellMass[idx]);
+        }
+        if (values.length > 0) {
+            values.sort((a, b) => a - b);
+            _heatmapP99 = values[Math.floor(values.length * 0.99)] || values[values.length - 1];
+        }
+    }
+
+    const maxVal = Math.max(_heatmapP99, TRUCK_KG);
     const cellScreenSize = roi.cellSize * camera.zoom;
     const vp = camera.viewportWorld;
     const pad = roi.cellSize * 2;
 
-    // Normalize pressure: use sinkQueueCount (0-100+ range) and truckHoursLostRate
-    const queuePressure = Math.min((_replaySampleData.sinkQueueCount || 0) / 50, 1.0);
-    const ratePressure = Math.min((_replaySampleData.truckHoursLostRate || 0) / 20, 1.0);
-    const basePressure = Math.max(queuePressure, ratePressure);
-
-    // Draw road cells with pressure-based color
     for (const idx of roadCellIndices) {
+        const mass = cellMass[idx];
+        if (mass <= 0) continue;
+
         const x = idx % N;
         const y = Math.floor(idx / N);
-
         const wx = fieldToWorldX(x);
         const wy = fieldToWorldY(y);
 
@@ -10098,34 +10133,11 @@ function drawRoadHeatmap(ctx, camera) {
         if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
         if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-        // Add spatial variation based on cell index (deterministic "noise")
-        const cellNoise = ((idx * 7919) % 1000) / 1000;
-        const pressure = Math.min(1, basePressure * (0.7 + cellNoise * 0.6));
+        const t = Math.min(1, mass / maxVal);
+        const color = thermalGradient(t);
+        const alpha = 0.5 + t * 0.5;
 
-        // Color by system pressure: blue → cyan → yellow → red
-        let r, g, b;
-        if (pressure < 0.33) {
-            // Blue to Cyan
-            const t = pressure / 0.33;
-            r = 0;
-            g = Math.round(255 * t);
-            b = 255;
-        } else if (pressure < 0.66) {
-            // Cyan to Yellow
-            const t = (pressure - 0.33) / 0.33;
-            r = Math.round(255 * t);
-            g = 255;
-            b = Math.round(255 * (1 - t));
-        } else {
-            // Yellow to Red
-            const t = (pressure - 0.66) / 0.34;
-            r = 255;
-            g = Math.round(255 * (1 - t));
-            b = 0;
-        }
-
-        const alpha = 0.25 + pressure * 0.5;
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+        ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha.toFixed(2)})`;
         const screen = camera.worldToScreen(wx, wy);
         ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
     }
