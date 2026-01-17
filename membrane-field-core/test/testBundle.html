@@ -34,6 +34,50 @@
         #canvas-wrapper {
             flex: 1;
             position: relative;
+            transition: filter 0.3s ease;
+        }
+
+        #canvas-wrapper.blur-active {
+            filter: blur(8px);
+        }
+
+        #scenario-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            pointer-events: none;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        #scenario-card.visible {
+            opacity: 1;
+        }
+
+        #scenario-card .card-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        #scenario-card .card-toggles {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #scenario-card .card-toggles span {
+            display: inline-block;
+            margin: 0 8px;
+            padding: 6px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         canvas {
@@ -1041,6 +1085,10 @@
                 white-space: pre;
                 z-index: 1000;
             "></div>
+            <div id="scenario-card">
+                <div class="card-title"></div>
+                <div class="card-toggles"></div>
+            </div>
         </div>
         <div id="controls">
             <h2>CIEN / FIELD Viewer</h2>
@@ -2232,6 +2280,7 @@
         let fadeInStartTime = null;
         const FADE_IN_DURATION = 5000;  // 5 seconds fade-in
         let fadeInAlpha = 0;
+        let sceneAlpha = 1.0;  // Scene-wide dimming for scenario cards (0 = black, 1 = full)
         let scenarioAdapter = null;
         let geometryProvider = null;
         let rawBundle = null;
@@ -3754,7 +3803,7 @@
                 console.log(`[Director] Clock montage started: ${days} days`);
             },
 
-            onClockMontageDay: (day, totalDays, hour) => {
+            onClockMontageDay: (day, totalDays, hour, sampleIndex) => {
                 const dayEl = document.getElementById('montage-day');
                 if (dayEl) {
                     dayEl.textContent = `DÍA ${day} / ${totalDays}`;
@@ -3773,6 +3822,7 @@
                         updateReplayLotParticles(lotFillRatios);
                     }
                 }
+                // sampleIndex available for future sample-driven rendering
             },
 
             onClockMontageEnd: () => {
@@ -3897,6 +3947,37 @@
             onHideHourlyTable: () => {
                 hideHourlyTable();
                 console.log('[Director] Hourly table hidden');
+            },
+
+            // ─── Scenario presentation callbacks ───
+            onBlurBackground: (enabled) => {
+                const wrapper = document.getElementById('canvas-wrapper');
+                const card = document.getElementById('scenario-card');
+                if (enabled) {
+                    wrapper.classList.add('blur-active');
+                } else {
+                    wrapper.classList.remove('blur-active');
+                    // Hide scenario card when blur is turned off
+                    card.classList.remove('visible');
+                }
+                console.log(`[Director] Background blur ${enabled ? 'ON' : 'OFF'}`);
+            },
+            onFadeScene: (alpha) => {
+                sceneAlpha = alpha;
+                console.log(`[Director] Scene alpha set to ${alpha}`);
+            },
+            onScenarioCard: (title, toggles) => {
+                const card = document.getElementById('scenario-card');
+                const titleEl = card.querySelector('.card-title');
+                const togglesEl = card.querySelector('.card-toggles');
+
+                titleEl.textContent = title;
+                togglesEl.innerHTML = toggles.length > 0
+                    ? toggles.map(t => `<span>${t}</span>`).join('')
+                    : '';
+
+                card.classList.add('visible');
+                console.log(`[Director] Scenario card: ${title} [${toggles.join(', ')}]`);
             },
         });
 
@@ -6702,7 +6783,7 @@
                 switch (currentZoomState) {
                     case ZoomState.MACRO_CIEN: {
                         const t0 = performance.now();
-                        renderMacroCien(ctx, camera, fadeInAlpha);
+                        renderMacroCien(ctx, camera, fadeInAlpha * sceneAlpha);
                         const t1 = performance.now();
                         logMacroPerf(t0, t1);
                         break;
@@ -6713,7 +6794,7 @@
                         break;
 
                     case ZoomState.LOCAL_FIELD:
-                        renderLocalField(ctx, camera);
+                        renderLocalField(ctx, camera, sceneAlpha);
                         break;
 
                     case ZoomState.TRANSITION_OUT:
