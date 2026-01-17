@@ -29,7 +29,7 @@ import {
     COMPUTE_WINDOW,
 } from '../spec/renderer_interfaces.js';
 
-import { hasBundle, getBundle, getSegmentsInROI, loadBundle } from './bundleConsumer.js';
+import { hasBundle, getBundle, getSegmentsInROI, loadBundle, latLonToWorld } from './bundleConsumer.js';
 import {
     hasScenarioPair,
     getBaseline,
@@ -8176,11 +8176,15 @@ function computeInjectionWeightsFromBundle(bundle, label = '') {
         throw new Error('[INJECTION] No segment_load_kg_by_poe_hs2 in bundle - CIEN data required');
     }
 
-    // Get segments with world coordinates
-    const worldSegments = getSegmentsInROI();
-    if (!worldSegments || worldSegments.length === 0) {
+    // Get segments with world coordinates from the PASSED bundle (not bundleConsumer.currentBundle)
+    const rawSegments = bundle.geometry?.segments_in_roi;
+    if (!rawSegments || rawSegments.length === 0) {
         throw new Error('[INJECTION] No segments in ROI - check bundle geometry');
     }
+    const worldSegments = rawSegments.map(seg => ({
+        segment_id: seg.segment_id,
+        points: seg.geometry_coordinates.map(([lat, lon]) => latLonToWorld(lat, lon)),
+    }));
 
     // Build injection points array
     const injectionPoints = CORRIDOR_ENTRY_COORDS.map(c => ({

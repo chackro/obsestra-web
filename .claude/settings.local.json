@@ -6,7 +6,8 @@
       "Bash(node:*)",
       "Bash(grep:*)",
       "Bash(node -e:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(powershell:*)"
     ]
   }
 }

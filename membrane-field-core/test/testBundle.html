@@ -2284,6 +2284,8 @@
         let scenarioAdapter = null;
         let geometryProvider = null;
         let rawBundle = null;
+        // Shared geometry (externalized to reduce memory - loaded once, shared by all bundles)
+        let _storedGeometry = null;
         // Store bundles for weight map switching (LAYER_A→baseline vs baseline→interserrana)
         let _storedBaselineBundle = null;
         let _storedLayerABundle = null;
@@ -2399,7 +2401,9 @@
                 }
 
                 const baselineBundle = await baselineResponse.json();
+                baselineBundle.geometry = _storedGeometry;  // Reuse shared geometry
                 const interserranaBundle = await interserranaResponse.json();
+                interserranaBundle.geometry = _storedGeometry;  // Reuse shared geometry
 
                 console.log(`[BUNDLE] Loaded: baseline${suffix} + interserrana${suffix}`);
 
@@ -2605,10 +2609,11 @@
                 bundleStatus.textContent = 'Loading bundles...';
 
                 // Load ALL bundles in PARALLEL - including LAYER_A for alien observer mode
-                // This avoids the previous bug where baseline was fetched twice
+                // Geometry is externalized to reduce memory (was duplicated 3x in bundles)
                 const cacheBust = '?t=' + Date.now();
                 const suffix = currentBundleSuffix;
-                const [baselineResponse, layerAResponse, interserranaResponse, cityResponse, originsResponse] = await Promise.all([
+                const [geometryResponse, baselineResponse, layerAResponse, interserranaResponse, cityResponse, originsResponse] = await Promise.all([
+                    fetch(`./geometry.json${cacheBust}`),
                     fetch(`./bundle_baseline${suffix}.json${cacheBust}`),
                     fetch(`./bundle_baseline_LAYER_A.json${cacheBust}`),
                     fetch(`./interserrana_bundle${suffix}.json${cacheBust}`),
@@ -2616,19 +2621,27 @@
                     fetch('../data/mexican_origins.json' + cacheBust),
                 ]);
 
+                if (!geometryResponse.ok) throw new Error(`Geometry: HTTP ${geometryResponse.status}`);
                 if (!baselineResponse.ok) throw new Error(`Baseline: HTTP ${baselineResponse.status}`);
                 if (!layerAResponse.ok) throw new Error(`LAYER_A: HTTP ${layerAResponse.status}`);
                 if (!interserranaResponse.ok) throw new Error(`Interserrana: HTTP ${interserranaResponse.status}`);
                 if (!cityResponse.ok) throw new Error(`City: HTTP ${cityResponse.status}`);
                 if (!originsResponse.ok) throw new Error(`Origins: HTTP ${originsResponse.status}`);
 
-                const baselineBundle = await baselineResponse.json();
+                // Load shared geometry first (47 MB, loaded once, reused by all bundles)
+                _storedGeometry = await geometryResponse.json();
+                console.log('[Init] Shared geometry loaded');
 
-                // LAYER_A bundle for alien observer mode (α=0 → α=1 transition)
+                // Load scenario bundles (now ~35 MB each instead of ~83 MB)
+                const baselineBundle = await baselineResponse.json();
+                baselineBundle.geometry = _storedGeometry;
+
                 const layerABundle = await layerAResponse.json();
+                layerABundle.geometry = _storedGeometry;
                 console.log('[Init] LAYER_A bundle loaded');
 
                 const interserranaBundle = await interserranaResponse.json();
+                interserranaBundle.geometry = _storedGeometry;
                 console.log('[Init] Interserrana bundle loaded');
 
                 const cityBundle = await cityResponse.json();
