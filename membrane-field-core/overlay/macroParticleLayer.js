@@ -421,13 +421,19 @@ export class MacroParticleLayer {
         this.corridorEqualBrightness = equalBrightness;
         this.corridorHighlightPoes = new Set([primaryPoe, secondaryPoe]);
         console.log(`[MacroParticles] Corridor highlight ON: primary=${primaryPoe}, secondary=${secondaryPoe}, equalBrightness=${equalBrightness}`);
-        // Log POE distribution stats (same as togglePharrHighlight)
+        console.log(`[MacroParticles] Current scenarioEpoch: ${this.scenarioEpoch}`);
+        // Log POE distribution stats and epoch info
         if (this.particles.length > 0) {
-            const samplePoes = this.particles.slice(0, 50).map(p => p.poeId);
+            const sample = this.particles.slice(0, 50);
+            const samplePoes = sample.map(p => p.poeId);
+            const sampleEpochs = sample.map(p => p.spawnEpoch);
             console.log(`[MacroParticles] Sample particle POEs:`, samplePoes);
-            const primaryCount = samplePoes.filter(poe => poe === primaryPoe).length;
-            const secondaryCount = samplePoes.filter(poe => poe === secondaryPoe).length;
-            console.log(`[MacroParticles] Primary (${primaryPoe}): ${primaryCount}/50, Secondary (${secondaryPoe}): ${secondaryCount}/50`);
+            console.log(`[MacroParticles] Sample particle epochs:`, sampleEpochs);
+            const primaryCount = sample.filter(p => p.poeId === primaryPoe && p.spawnEpoch === this.scenarioEpoch).length;
+            const secondaryCount = sample.filter(p => p.poeId === secondaryPoe && p.spawnEpoch === this.scenarioEpoch).length;
+            const epochMatchCount = sample.filter(p => p.spawnEpoch === this.scenarioEpoch).length;
+            console.log(`[MacroParticles] Epoch matches: ${epochMatchCount}/50`);
+            console.log(`[MacroParticles] Primary+epoch (${primaryPoe}): ${primaryCount}/50, Secondary+epoch (${secondaryPoe}): ${secondaryCount}/50`);
         }
     }
 

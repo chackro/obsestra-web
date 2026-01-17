@@ -7416,10 +7416,38 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -524.80, y: -12955 },
     { x: -524.72, y: -12968 },
     { x: -524.65, y: -12981 },
-    { x: -524.58, y: -12994 },
-    { x: -524.50, y: -13007 },
-    { x: -524.43, y: -13020 },
-    { x: -524.34, y: -13032 },
+    // Replaced vertical connector terminus with new coords
+    { x: -531.39, y: -12995.44 },
+    { x: -528.28, y: -13007.90 },
+    { x: -508.02, y: -13017.25 },
+    { x: -512.70, y: -13021.92 },
+    { x: -525.16, y: -13025.04 },
+    { x: -540.74, y: -13025.04 },
+    { x: -542.30, y: -13021.92 },
+    // Horizontal path at y≈-12708 (13m spacing)
+    { x: -494, y: -12707.22 },
+    { x: -481, y: -12707.22 },
+    { x: -468, y: -12707.22 },
+    { x: -455, y: -12707.22 },
+    { x: -442, y: -12707.22 },
+    { x: -429, y: -12707.22 },
+    { x: -416, y: -12707.22 },
+    { x: -403, y: -12707.22 },
+    { x: -390, y: -12707.41 },
+    { x: -377, y: -12707.60 },
+    { x: -364, y: -12707.78 },
+    { x: -351, y: -12707.96 },
+    { x: -338, y: -12708.15 },
+    { x: -325, y: -12708.33 },
+    { x: -312, y: -12708.51 },
+    { x: -299, y: -12708.70 },
+    { x: -286, y: -12709.01 },
+    { x: -273, y: -12709.45 },
+    { x: -260, y: -12709.88 },
+    { x: -247, y: -12710.32 },
+    { x: -234, y: -12710.75 },
+    { x: -221, y: -12711.19 },
+    { x: -208, y: -12711.62 },
 ];
 
 // Inovus-only road stamps (south access to FASE lots)
@@ -10113,6 +10141,8 @@ function drawRoadHeatmap(ctx, camera) {
             values.sort((a, b) => a - b);
             _heatmapP99 = values[Math.floor(values.length * 0.99)] || values[values.length - 1];
         }
+        // DEBUG: Log heatmap stats
+        console.log(`[HEATMAP] roadCells=${roadCellIndices.length} nonZero=${values.length} p99=${_heatmapP99.toFixed(0)}`);
     }
 
     const maxVal = Math.max(_heatmapP99, TRUCK_KG);
