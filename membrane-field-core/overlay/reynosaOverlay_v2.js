@@ -5426,7 +5426,7 @@ export function draw(ctx, camera) {
         _webglRenderer.updatePositions(_glPositions, _glParticleCount);
         _webglRenderer.updateColors(_glColors, _glParticleCount);
         _webglRenderer.draw(camera, pointSize);
-    } else if (!_hideParticles) {
+    } else if (!_hideParticles && _flowRenderMode !== 'ROAD_HEATMAP') {
         throw new Error('[OVERLAY] WebGL renderer not available - call setWebGLRenderer() before draw()');
     }
     _drawSubTiming.particles += (performance.now() - tParticles0);
