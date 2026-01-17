@@ -7406,10 +7406,6 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -525.53, y: -12825 },
     { x: -525.46, y: -12838 },
     { x: -525.39, y: -12851 },
-    { x: -525.31, y: -12864 },
-    { x: -525.24, y: -12877 },
-    { x: -525.17, y: -12890 },
-    { x: -525.09, y: -12903 },
     { x: -525.02, y: -12916 },
     { x: -524.95, y: -12929 },
     { x: -524.87, y: -12942 },
@@ -7424,30 +7420,35 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -525.16, y: -13025.04 },
     { x: -540.74, y: -13025.04 },
     { x: -542.30, y: -13021.92 },
-    // Horizontal path at y≈-12708 (13m spacing)
-    { x: -494, y: -12707.22 },
-    { x: -481, y: -12707.22 },
-    { x: -468, y: -12707.22 },
-    { x: -455, y: -12707.22 },
-    { x: -442, y: -12707.22 },
-    { x: -429, y: -12707.22 },
-    { x: -416, y: -12707.22 },
-    { x: -403, y: -12707.22 },
-    { x: -390, y: -12707.41 },
-    { x: -377, y: -12707.60 },
-    { x: -364, y: -12707.78 },
-    { x: -351, y: -12707.96 },
-    { x: -338, y: -12708.15 },
-    { x: -325, y: -12708.33 },
-    { x: -312, y: -12708.51 },
-    { x: -299, y: -12708.70 },
-    { x: -286, y: -12709.01 },
-    { x: -273, y: -12709.45 },
-    { x: -260, y: -12709.88 },
-    { x: -247, y: -12710.32 },
-    { x: -234, y: -12710.75 },
-    { x: -221, y: -12711.19 },
-    { x: -208, y: -12711.62 },
+    // West connector to horizontal path
+    { x: -1114.17, y: -13024.06 },
+    { x: -1130.35, y: -13025.68 },
+    { x: -1146.54, y: -13025.68 },
+    { x: -344.90, y: -13043.14 },
+    // Horizontal path at y≈-12788 (13m spacing, shifted 80m south)
+    { x: -494, y: -12787.22 },
+    { x: -481, y: -12787.22 },
+    { x: -468, y: -12787.22 },
+    { x: -455, y: -12787.22 },
+    { x: -442, y: -12787.22 },
+    { x: -429, y: -12787.22 },
+    { x: -416, y: -12787.22 },
+    { x: -403, y: -12787.22 },
+    { x: -390, y: -12787.41 },
+    { x: -377, y: -12787.60 },
+    { x: -364, y: -12787.78 },
+    { x: -351, y: -12787.96 },
+    { x: -338, y: -12788.15 },
+    { x: -325, y: -12788.33 },
+    { x: -312, y: -12788.51 },
+    { x: -299, y: -12788.70 },
+    { x: -286, y: -12789.01 },
+    { x: -273, y: -12789.45 },
+    { x: -260, y: -12789.88 },
+    { x: -247, y: -12790.32 },
+    { x: -234, y: -12790.75 },
+    { x: -221, y: -12791.19 },
+    { x: -208, y: -12791.62 },
 ];
 
 // Inovus-only road stamps (south access to FASE lots)
@@ -10121,28 +10122,45 @@ let _heatmapP99 = TRUCK_KG;
 let _heatmapP99Frame = 0;
 const HEATMAP_P99_INTERVAL = 30;
 
+// Rolling presence accumulator for road heatmap
+// Instantaneous cellMass is too sparse at high replay speeds (168x)
+// Accumulate presence with exponential decay for smooth visualization
+let _heatmapPresence = null;  // Lazy init to N2 size
+const HEATMAP_DECAY = 0.95;   // Per-frame decay (higher = longer trails)
+
 /**
- * Draw road heatmap based on live particle presence.
- * Colors each road cell by current mass (rolling presence).
+ * Draw road heatmap based on rolling accumulated presence.
+ * Colors each road cell by accumulated presence with decay.
  * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
  */
 function drawRoadHeatmap(ctx, camera) {
     if (_flowRenderMode !== 'ROAD_HEATMAP') return;
 
-    // Recompute p99 every N frames (sorting 140k values is expensive)
+    // Lazy init presence accumulator
+    if (!_heatmapPresence || _heatmapPresence.length !== N2) {
+        _heatmapPresence = new Float64Array(N2);
+    }
+
+    // Update rolling presence: decay + add current mass
+    let nonZeroCount = 0;
+    for (const idx of roadCellIndices) {
+        _heatmapPresence[idx] = _heatmapPresence[idx] * HEATMAP_DECAY + cellMass[idx];
+        if (_heatmapPresence[idx] > 0) nonZeroCount++;
+    }
+
+    // Recompute p99 every N frames (sorting values is expensive)
     _heatmapP99Frame++;
     if (_heatmapP99Frame >= HEATMAP_P99_INTERVAL) {
         _heatmapP99Frame = 0;
         const values = [];
         for (const idx of roadCellIndices) {
-            if (cellMass[idx] > 0) values.push(cellMass[idx]);
+            if (_heatmapPresence[idx] > 0) values.push(_heatmapPresence[idx]);
         }
         if (values.length > 0) {
             values.sort((a, b) => a - b);
             _heatmapP99 = values[Math.floor(values.length * 0.99)] || values[values.length - 1];
         }
-        // DEBUG: Log heatmap stats
-        console.log(`[HEATMAP] roadCells=${roadCellIndices.length} nonZero=${values.length} p99=${_heatmapP99.toFixed(0)}`);
+        console.log(`[HEATMAP] roadCells=${roadCellIndices.length} nonZero=${nonZeroCount} p99=${_heatmapP99.toFixed(0)}`);
     }
 
     const maxVal = Math.max(_heatmapP99, TRUCK_KG);
@@ -10151,8 +10169,8 @@ function drawRoadHeatmap(ctx, camera) {
     const pad = roi.cellSize * 2;
 
     for (const idx of roadCellIndices) {
-        const mass = cellMass[idx];
-        if (mass <= 0) continue;
+        const presence = _heatmapPresence[idx];
+        if (presence <= 0) continue;
 
         const x = idx % N;
         const y = Math.floor(idx / N);
@@ -10163,7 +10181,7 @@ function drawRoadHeatmap(ctx, camera) {
         if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
         if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-        const t = Math.min(1, mass / maxVal);
+        const t = Math.min(1, presence / maxVal);
         const color = thermalGradient(t);
         const alpha = 0.5 + t * 0.5;
 
