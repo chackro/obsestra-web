@@ -8176,6 +8176,14 @@ function computeInjectionWeightsFromBundle(bundle, label = '') {
         throw new Error('[INJECTION] No segment_load_kg_by_poe_hs2 in bundle - CIEN data required');
     }
 
+    // DEBUG: Check what's in bundle
+    console.log('[INJECTION DEBUG]', label, {
+        hasGeometry: !!bundle.geometry,
+        geometryKeys: bundle.geometry ? Object.keys(bundle.geometry) : null,
+        _geometryExternal: bundle._geometryExternal,
+        bundleKeys: Object.keys(bundle).slice(0, 10),
+    });
+
     // Get segments with world coordinates from the PASSED bundle (not bundleConsumer.currentBundle)
     const rawSegments = bundle.geometry?.segments_in_roi;
     if (!rawSegments || rawSegments.length === 0) {
