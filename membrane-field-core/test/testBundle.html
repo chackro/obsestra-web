@@ -1353,7 +1353,7 @@
     <script type="module">
         import { loadBundle, loadScenarioPairBundles, getHourlyInflow, getHourlyCapacity, getSegmentsInROI, getMetadata, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
         import { POENodeLayer } from '../overlay/poeNodeLayer.js';
-        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode } from '../overlay/reynosaOverlay_v2.js';
+        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode } from '../overlay/reynosaOverlay_v2.js';
         import { ParticleRenderer } from '../overlay/particleRenderer.js';
         import { loadWeightMaps, extractWeights, getInterpolatedWeight, hasWeightMaps, getSegmentPoeDistribution } from '../overlay/segmentWeights.js';
         import { MacroParticleLayer } from '../overlay/macroParticleLayer.js';
@@ -3998,7 +3998,7 @@
                 console.log(`[Director] Scenario card: ${title} [${toggles.join(', ')}]`);
             },
             onSetFlowRenderMode: (mode) => {
-                ReynosaEastOverlay.setFlowRenderMode(mode);
+                setFlowRenderMode(mode);
                 console.log(`[Director] Flow render mode: ${mode}`);
             },
         });
