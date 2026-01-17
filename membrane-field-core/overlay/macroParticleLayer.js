@@ -152,6 +152,7 @@ export class MacroParticleLayer {
         this.baselinePoeDistribution = new Map();
         this.interserranaPoeDistribution = new Map();
         this.scenarioAlpha = 0;  // 0 = baseline, 1 = interserrana
+        this.scenarioEpoch = 0;  // Increments on POE mode change
 
         // WebGL renderer (optional, for GPU-accelerated rendering)
         this._glRenderer = null;
@@ -333,6 +334,11 @@ export class MacroParticleLayer {
      */
     setScenarioAlpha(alpha) {
         this.scenarioAlpha = alpha;
+    }
+
+    advanceScenarioEpoch() {
+        this.scenarioEpoch++;
+        console.log(`[MacroParticles] Scenario epoch: ${this.scenarioEpoch}`);
     }
 
     /**
@@ -892,7 +898,7 @@ export class MacroParticleLayer {
             // Store in flat array (route to primary/secondary/regular bucket based on mode)
             // Three-way classification for corridor mode: primary (full magenta), secondary (0.7 magenta), other (dimmed white)
             let targetBucket = 'regular';
-            if (corridorMode) {
+            if (corridorMode && p.spawnEpoch === this.scenarioEpoch) {
                 if (p.poeId === this.corridorPrimaryPoe) {
                     targetBucket = 'primary';
                 } else if (p.poeId === this.corridorSecondaryPoe) {
@@ -1319,7 +1325,7 @@ export class MacroParticleLayer {
 
             // Determine color
             const colIdx = validCount * 3;
-            if (corridorMode) {
+            if (corridorMode && p.spawnEpoch === this.scenarioEpoch) {
                 const override = this.poeColorOverrides.get(p.poeId);
                 if (p.poeId === this.corridorPrimaryPoe) {
                     if (override === 'white') {
@@ -2044,6 +2050,7 @@ export class MacroParticleLayer {
             p.lateralSeed = Math.random() * 2 - 1;
             p.lateralPhase = Math.random() * Math.PI * 2;
             p.dead = false;
+            p.spawnEpoch = this.scenarioEpoch;
         } else {
             p = {
                 seg,
@@ -2055,6 +2062,7 @@ export class MacroParticleLayer {
                 lateralSeed: Math.random() * 2 - 1,
                 lateralPhase: Math.random() * Math.PI * 2,
                 dead: false,
+                spawnEpoch: this.scenarioEpoch,
             };
         }
         this.particles.push(p);

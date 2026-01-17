@@ -82,11 +82,6 @@
 
         canvas {
             display: block;
-            cursor: none;
-        }
-
-        canvas:active {
-            cursor: none;
         }
 
         #controls {
@@ -1353,7 +1348,7 @@
     <script type="module">
         import { loadBundle, loadScenarioPairBundles, getHourlyInflow, getHourlyCapacity, getSegmentsInROI, getMetadata, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
         import { POENodeLayer } from '../overlay/poeNodeLayer.js';
-        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode } from '../overlay/reynosaOverlay_v2.js';
+        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode, setReplaySampleData } from '../overlay/reynosaOverlay_v2.js';
         import { ParticleRenderer } from '../overlay/particleRenderer.js';
         import { loadWeightMaps, extractWeights, getInterpolatedWeight, hasWeightMaps, getSegmentPoeDistribution } from '../overlay/segmentWeights.js';
         import { MacroParticleLayer } from '../overlay/macroParticleLayer.js';
@@ -3606,6 +3601,7 @@
                 // mode: 'baseline' = all particles get baseline POEs
                 // mode: 'interserrana' = particles get interserrana POEs (at α≥0.5)
                 if (!macroParticles) return;
+                macroParticles.advanceScenarioEpoch();
                 if (mode === 'baseline') {
                     // Both slots = baseline, so all new particles get baseline POEs
                     macroParticles.setScenarioPoeDistributions(
@@ -3838,7 +3834,7 @@
                     // Pass sample data to overlay for road heatmap
                     const sample = getScenarioSampleByIndex(replayState.scenarioName, sampleIndex);
                     if (sample) {
-                        ReynosaEastOverlay.setReplaySampleData(sample);
+                        setReplaySampleData(sample);
                     }
                 }
             },
@@ -3871,12 +3867,9 @@
             onSetReplayMode: (enabled, timeScale = 1) => {
                 // Wire to overlay REPLAY_MODE flag
                 setReplayMode(enabled, timeScale);
-                // Enable/disable particle trails for motion visualization at high speed
-                setTrailsEnabled(enabled);
-                if (!enabled) clearParticleTrails();
                 // Update UI indicator
                 setReplayModeIndicator(enabled, timeScale);
-                console.log(`[Director] Replay mode: ${enabled ? 'ON' : 'OFF'}, timeScale=${timeScale}x, trails=${enabled}`);
+                console.log(`[Director] Replay mode: ${enabled ? 'ON' : 'OFF'}, timeScale=${timeScale}x`);
             },
 
             onShowMetrics: (scenarioName) => {
