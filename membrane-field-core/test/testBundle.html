@@ -4768,56 +4768,52 @@
                 'Rio Grande Valley': false  // #5 - right side
             };
             if (top5Sinks.length > 0) {
-                ctx.font = '21px "JetBrains Mono", monospace';
                 ctx.textBaseline = 'middle';
-                const tickLength = 8;
-                const tickAngle = Math.PI / 5;
-                const leaderLength = 33;
+                const offsetDist = 12;        // Start leader this far from point
+                const leaderLength = 50;      // Longer leader line
+                const leaderAngle = Math.PI / 5;
 
                 for (const label of top5Sinks) {
+                    // Font size decreases by rank: #1=20px, #2=19px, ... #5=16px
+                    const fontSize = 21 - label.rank;
+                    ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
                     const sx = Math.round(hw + (label.worldX - cx) * zoom);
                     const sy = Math.round(hh - (label.worldY - cy) * zoom);
                     if (sx < -100 || sx > camera.canvasWidth + 100 || sy < -100 || sy > camera.canvasHeight + 100) continue;
 
                     // Use override if exists, else auto-flip based on position
                     const flip = flipOverrides[label.name] ?? (sx > camera.canvasWidth / 2);
-                    const actualTickAngle = flip ? Math.PI - tickAngle : tickAngle;
-                    const tickEndX = sx + Math.cos(actualTickAngle) * tickLength;
-                    const tickEndY = sy - Math.sin(actualTickAngle) * tickLength;
-                    const leaderEndX = flip ? tickEndX - leaderLength : tickEndX + leaderLength;
+                    const actualAngle = flip ? Math.PI - leaderAngle : leaderAngle;
+                    const startX = sx + Math.cos(actualAngle) * offsetDist;
+                    const startY = sy - Math.sin(actualAngle) * offsetDist;
+                    const endX = flip ? startX - leaderLength : startX + leaderLength;
 
-                    // Tick line
+                    // Leader line only (no tick)
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 0.5;
+                    ctx.lineWidth = 0.3;
                     ctx.beginPath();
-                    ctx.moveTo(sx, sy);
-                    ctx.lineTo(tickEndX, tickEndY);
-                    ctx.stroke();
-
-                    // Leader line
-                    ctx.beginPath();
-                    ctx.moveTo(tickEndX, tickEndY);
-                    ctx.lineTo(leaderEndX, tickEndY);
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, startY);
                     ctx.stroke();
 
                     // Label text
                     const labelText = `${label.name} — #${label.rank}`;
                     const textMetrics = ctx.measureText(labelText);
-                    const textHeight = 21;
-                    const padding = 2;
-                    const textY = tickEndY;
+                    const textHeight = fontSize;
+                    const padding = 1;
+                    const textY = startY;
 
                     let textX, bgX;
                     if (flip) {
-                        textX = leaderEndX - 6 - textMetrics.width;
+                        textX = endX - 4 - textMetrics.width;
                         bgX = textX - padding;
                     } else {
-                        textX = leaderEndX + 6;
+                        textX = endX + 4;
                         bgX = textX - padding;
                     }
 
-                    // Background
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    // Background (semi-transparent)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.fillRect(bgX, textY - textHeight / 2 - padding, textMetrics.width + padding * 2, textHeight + padding * 2);
 
                     // Text
@@ -4828,55 +4824,51 @@
 
             // Draw POE text labels with leader lines
             if (poeLabels.length > 0) {
-                ctx.font = '22px "JetBrains Mono", monospace';
                 ctx.textBaseline = 'middle';
-                const tickLength = 30;
-                const tickAngle = Math.PI / 6;
-                const leaderLength = 120;
+                const offsetDist = 30;        // Start leader this far from point
+                const leaderLength = 120;     // Leader line length
+                const leaderAngle = Math.PI / 6;
 
                 for (const label of poeLabels) {
+                    // Font size decreases by rank: #1=21px, #2=20px
+                    const fontSize = 22 - label.rank;
+                    ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
                     const sx = Math.round(hw + (label.worldX - cx) * zoom);
                     const sy = Math.round(hh - (label.worldY - cy) * zoom);
                     if (sx < -100 || sx > camera.canvasWidth + 100 || sy < -50 || sy > camera.canvasHeight + 50) continue;
 
                     const flip = label.flipLeft === true;
-                    const actualTickAngle = flip ? Math.PI - tickAngle : tickAngle;
-                    const tickEndX = sx + Math.cos(actualTickAngle) * tickLength;
-                    const tickEndY = sy - Math.sin(actualTickAngle) * tickLength;
-                    const leaderEndX = flip ? tickEndX - leaderLength : tickEndX + leaderLength;
+                    const actualAngle = flip ? Math.PI - leaderAngle : leaderAngle;
+                    const startX = sx + Math.cos(actualAngle) * offsetDist;
+                    const startY = sy - Math.sin(actualAngle) * offsetDist;
+                    const endX = flip ? startX - leaderLength : startX + leaderLength;
 
-                    // Tick line
+                    // Leader line only (no tick)
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = 0.3;
                     ctx.beginPath();
-                    ctx.moveTo(sx, sy);
-                    ctx.lineTo(tickEndX, tickEndY);
-                    ctx.stroke();
-
-                    // Leader line
-                    ctx.beginPath();
-                    ctx.moveTo(tickEndX, tickEndY);
-                    ctx.lineTo(leaderEndX, tickEndY);
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, startY);
                     ctx.stroke();
 
                     // Label text
                     const labelText = `${label.name} — #${label.rank}`;
                     const textMetrics = ctx.measureText(labelText);
-                    const textHeight = 22;
-                    const padding = 4;
-                    const textY = tickEndY;
+                    const textHeight = fontSize;
+                    const padding = 1;
+                    const textY = startY;
 
                     let textX, bgX;
                     if (flip) {
-                        textX = leaderEndX - 6 - textMetrics.width;
+                        textX = endX - 4 - textMetrics.width;
                         bgX = textX - padding;
                     } else {
-                        textX = leaderEndX + 6;
+                        textX = endX + 4;
                         bgX = textX - padding;
                     }
 
-                    // Background (60% opacity white)
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    // Background (semi-transparent)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
                     ctx.fillRect(bgX, textY - textHeight / 2 - padding, textMetrics.width + padding * 2, textHeight + padding * 2);
 
                     // Text

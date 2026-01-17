@@ -7152,10 +7152,6 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -1185.2838743626743, y: -13028.005816000443 },
     { x: -1171.5838743626743, y: -13028.085816000443 },
     { x: -1157.8838743626743, y: -13028.165816000443 },
-    { x: -1144.1838743626743, y: -13028.245816000443 },
-    { x: -1130.4838743626743, y: -13028.325816000443 },
-    { x: -1116.7838743626743, y: -13028.405816000443 },
-    { x: -1103.0838743626743, y: -13028.485816000443 },
     { x: -1089.3838743626743, y: -13028.565816000443 },
     { x: -1075.6838743626743, y: -13028.645816000443 },
     { x: -1061.9838743626743, y: -13028.725816000443 },
@@ -7820,6 +7816,7 @@ const MANUAL_BLOCKER_COORDS = [
     { x: -473, y: -5311 },
     { x: -507.31476305219303, y: -2558.043939326958 },
     { x: -507.31476305219303, y: -2574.043939326958 },
+    { x: -509.98, y: -2543.46 },
 ];
 
 function stampManualBlockers() {
@@ -10124,10 +10121,11 @@ function thermalGradient(t) {
     }
 }
 
-// Cached p99 for road heatmap (recomputed every 30 frames)
-let _heatmapP99 = TRUCK_KG;
-let _heatmapP99Frame = 0;
-const HEATMAP_P99_INTERVAL = 30;
+// Cached min/max for road heatmap (recomputed every 30 frames)
+let _heatmapMin = 0;
+let _heatmapMax = TRUCK_KG;
+let _heatmapCacheFrame = 0;
+const HEATMAP_CACHE_INTERVAL = 30;
 
 // Rolling presence accumulator for road heatmap
 // Instantaneous cellMass is too sparse at high replay speeds (168x)
@@ -10155,22 +10153,26 @@ function drawRoadHeatmap(ctx, camera) {
         if (_heatmapPresence[idx] > 0) nonZeroCount++;
     }
 
-    // Recompute p99 every N frames (sorting values is expensive)
-    _heatmapP99Frame++;
-    if (_heatmapP99Frame >= HEATMAP_P99_INTERVAL) {
-        _heatmapP99Frame = 0;
-        const values = [];
+    // Recompute min/max every N frames
+    _heatmapCacheFrame++;
+    if (_heatmapCacheFrame >= HEATMAP_CACHE_INTERVAL) {
+        _heatmapCacheFrame = 0;
+        let min = Infinity, max = 0;
         for (const idx of roadCellIndices) {
-            if (_heatmapPresence[idx] > 0) values.push(_heatmapPresence[idx]);
+            const v = _heatmapPresence[idx];
+            if (v > 0) {
+                if (v < min) min = v;
+                if (v > max) max = v;
+            }
         }
-        if (values.length > 0) {
-            values.sort((a, b) => a - b);
-            _heatmapP99 = values[Math.floor(values.length * 0.99)] || values[values.length - 1];
+        if (max > 0) {
+            _heatmapMin = min === Infinity ? 0 : min;
+            _heatmapMax = max;
         }
-        console.log(`[HEATMAP] roadCells=${roadCellIndices.length} nonZero=${nonZeroCount} p99=${_heatmapP99.toFixed(0)}`);
+        console.log(`[HEATMAP] nonZero=${nonZeroCount} min=${_heatmapMin.toFixed(0)} max=${_heatmapMax.toFixed(0)}`);
     }
 
-    const maxVal = Math.max(_heatmapP99, TRUCK_KG);
+    const range = _heatmapMax - _heatmapMin;
     const cellScreenSize = roi.cellSize * camera.zoom;
     const vp = camera.viewportWorld;
     const pad = roi.cellSize * 2;
@@ -10188,7 +10190,7 @@ function drawRoadHeatmap(ctx, camera) {
         if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
         if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-        const t = Math.min(1, presence / maxVal);
+        const t = range > 0 ? Math.min(1, (presence - _heatmapMin) / range) : 0;
         const color = thermalGradient(t);
         const alpha = 0.5 + t * 0.5;
 

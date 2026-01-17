@@ -1078,7 +1078,7 @@ export const Scripts = {
             { type: 'wait', duration: 500 },
 
             // Phase 6: Corridor highlight - magenta on laredo/pharr, others stay normal
-            { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'] },
+            { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'] },
             { type: 'wait', duration: 5000 },
 
             // Phase 7: Hide other particles + show POE labels (simultaneous)
@@ -1232,7 +1232,7 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // Both corridors magenta, same alpha; others dimmed (not hidden)
             { type: 'advanceEpoch' },
-            { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
+            { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
 
@@ -1462,7 +1462,7 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // Both corridors magenta, same alpha; others dimmed (not hidden)
             { type: 'advanceEpoch' },
-            { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
+            { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
 
