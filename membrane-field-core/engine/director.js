@@ -1214,7 +1214,6 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // Switch to baseline routing (α=1) and baseline POE coloring
             { type: 'setScenarioAlpha', alpha: 1.0 },
-            { type: 'advanceEpoch' },
             { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
             // Beat 1: Feasibility rays (dashed) — instant structural collapse
             { type: 'setPoeOverlay', enabled: true, options: { nodes: false, bleedRays: true, ghostTrails: false, textAnchor: false, flipClassFilter: 'feasibility' } },
@@ -1232,6 +1231,7 @@ export const Scripts = {
             // PHASE 3: Corridor highlight - magenta on laredo/pharr
             // ─────────────────────────────────────────────────────────────
             // Both corridors magenta, same alpha; others dimmed (not hidden)
+            { type: 'advanceEpoch' },
             { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
@@ -1461,6 +1461,7 @@ export const Scripts = {
             // PHASE 3: Corridor highlight - magenta on laredo/pharr
             // ─────────────────────────────────────────────────────────────
             // Both corridors magenta, same alpha; others dimmed (not hidden)
+            { type: 'advanceEpoch' },
             { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             { type: 'wait', duration: 5000 },
