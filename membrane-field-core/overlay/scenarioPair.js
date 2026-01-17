@@ -39,6 +39,13 @@ export function loadScenarioPair(baselineBundle, interserranaBundle) {
     // Validate pair compatibility using canonical contract
     assertValidScenarioPair(baselineBundle, interserranaBundle);
 
+    // GUARDRAIL: Warn if baseline slot contains observer layer (LAYER_A) after init
+    // This is OK during Phase 1 (init), but unexpected during Phase 2 transitions
+    const baselineHash = baselineBundle.metadata?.scenario_hash || '';
+    if (baselineHash.includes('layer_a') || baselineHash.includes('LAYER_A')) {
+        console.warn('[ScenarioPair] GUARDRAIL: Observer layer in baseline slot. Expected only during init phase.');
+    }
+
     _baseline = baselineBundle;
     _interserrana = interserranaBundle;
     _isLoaded = true;
@@ -76,6 +83,23 @@ export function getBaseline() {
  */
 export function getInterserrana() {
     return _interserrana;
+}
+
+/**
+ * GUARDRAIL: Assert baseline slot contains actual baseline bundle.
+ * Call this after Phase 2 transition to verify semantic integrity.
+ * @param {ReynosaOverlayBundle} expectedBaseline - The literal baseline bundle for comparison
+ * @returns {boolean} true if baseline slot matches, false otherwise (logs warning)
+ */
+export function assertBaselineIsBaseline(expectedBaseline) {
+    if (!_baseline || !expectedBaseline) return false;
+    const currentHash = _baseline.metadata?.scenario_hash || '';
+    const expectedHash = expectedBaseline.metadata?.scenario_hash || '';
+    if (currentHash !== expectedHash) {
+        console.warn(`[ScenarioPair] GUARDRAIL VIOLATION: Baseline slot has "${currentHash}", expected "${expectedHash}"`);
+        return false;
+    }
+    return true;
 }
 
 // ───────────────────────────────────────────────────────────────────────────────

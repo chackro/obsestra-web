@@ -3,7 +3,10 @@
     "allow": [
       "Bash(node runComparison.js:*)",
       "Bash(dir \"C:\\\\Users\\\\pablo\\\\projects\\\\obsestra-web\\\\membrane-field-core\\\\tracker\\\\results\")",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(grep:*)",
+      "Bash(node -e:*)",
+      "Bash(python:*)"
     ]
   }
 }

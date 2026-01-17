@@ -34,6 +34,50 @@
         #canvas-wrapper {
             flex: 1;
             position: relative;
+            transition: filter 0.3s ease;
+        }
+
+        #canvas-wrapper.blur-active {
+            filter: blur(8px);
+        }
+
+        #scenario-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            pointer-events: none;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        #scenario-card.visible {
+            opacity: 1;
+        }
+
+        #scenario-card .card-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #scenario-card .card-toggles {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #scenario-card .card-toggles span {
+            display: inline-block;
+            margin: 0 8px;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         canvas {
@@ -76,11 +120,79 @@
         }
 
         #btn-skip {
-            display: none; /* Hidden for public deployment */
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: rgba(255, 100, 100, 0.7);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2000;
+        }
+
+        #btn-skip:hover {
+            background: rgba(255, 100, 100, 0.9);
         }
 
         #bottom-action-bar {
-            display: none; /* Hidden for public deployment */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 280px;
+            /* Leave room for sidebar */
+            display: flex;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.85);
+            border-top: 1px solid #333;
+            z-index: 1000;
+        }
+
+        #bottom-action-bar button {
+            background: rgba(60, 60, 60, 0.9);
+            color: #fff;
+            border: 1px solid #555;
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        #bottom-action-bar button:hover {
+            background: rgba(80, 80, 80, 0.95);
+            border-color: #777;
+        }
+
+        #bottom-action-bar button.active {
+            background: rgba(40, 100, 40, 0.9);
+            border-color: #4a4;
+        }
+
+        #bottom-action-bar button.primary {
+            background: rgba(40, 80, 40, 0.9);
+            border-color: #4a4;
+        }
+
+        #bottom-action-bar button.primary:hover {
+            background: rgba(60, 120, 60, 0.95);
+        }
+
+        #bottom-action-bar .separator {
+            width: 1px;
+            background: #444;
+            margin: 0 8px;
+        }
+
+        #bottom-action-bar button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         #intro-text {
@@ -90,7 +202,7 @@
             transform: translateX(-50%);
             color: #fff;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(10px, 1.4vw, 15px);
+            font-size: 30px;
             font-weight: 400;
             max-width: 1200px;
             text-align: left;
@@ -108,7 +220,7 @@
         }
 
         #intro-text .dimension-name {
-            font-size: clamp(12px, 1.5vw, 17px);
+            font-size: 34px;
             font-weight: 500;
         }
 
@@ -198,12 +310,11 @@
 
         #telemetry-overlay {
             position: fixed;
-            top: 2vh;
-            left: 1.5vw;
-            text-align: left;
+            top: 24px;
+            left: 24px;
             color: #fff;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(10px, 1.4vw, 16px);
+            font-size: 32px;
             line-height: 1.15;
             z-index: 999;
             pointer-events: none;
@@ -217,11 +328,11 @@
 
         /* Tree-style telemetry indentation */
         .telemetry-line.indent-1 {
-            padding-left: 1.5em;
+            padding-left: 32px;
         }
 
         .telemetry-line.indent-2 {
-            padding-left: 3em;
+            padding-left: 64px;
         }
 
         .telemetry-line.tree::before {
@@ -261,7 +372,7 @@
             /* Green - Industrial */
         }
 
-        /* Scenario comparison overlay - positioned below clock, above metrics */
+        /* Scenario comparison overlay - positioned above comparison table */
         #scenario-overlay {
             position: fixed;
             top: 120px;
@@ -273,7 +384,7 @@
 
         #scenario-label {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(8px, 1.1vw, 12px);
+            font-size: 24px;
             font-weight: 700;
             color: #fa0;
             text-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
@@ -282,7 +393,7 @@
 
         #scenario-intervention {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(6px, 0.7vw, 8px);
+            font-size: 16px;
             font-weight: 400;
             color: #aaa;
             text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
@@ -292,8 +403,8 @@
 
         #montage-overlay {
             position: fixed;
-            top: 5vh;
-            right: 1.5vw;
+            top: 70px;
+            right: 24px;
             text-align: right;
             z-index: 1000;
             pointer-events: none;
@@ -301,7 +412,7 @@
 
         #montage-day {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(10px, 1.2vw, 14px);
+            font-size: 28px;
             font-weight: 600;
             color: #fff;
             text-shadow: 0 0 10px rgba(0, 0, 0, 0.9);
@@ -310,7 +421,7 @@
 
         #montage-clock {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(14px, 2vw, 24px);
+            font-size: 48px;
             font-weight: 700;
             color: #fff;
             text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
@@ -320,10 +431,10 @@
         /* Macro layer month clock - shows month during alienObserver */
         #macro-month-clock {
             position: fixed;
-            top: 2vh;
-            right: 1.5vw;
+            top: 24px;
+            right: 24px;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: clamp(10px, 1.4vw, 16px);
+            font-size: 32px;
             font-weight: 600;
             color: #fff;
             text-shadow: 0 0 12px rgba(0, 0, 0, 0.9);
@@ -407,13 +518,13 @@
         }
 
         .metric-label {
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 400;
             color: #ddd;
         }
 
         .metric-value {
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             color: #ddd;
         }
@@ -457,7 +568,7 @@
 
         .tier-label {
             color: #666;
-            font-size: 23px;
+            font-size: 17px;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 12px;
@@ -474,7 +585,7 @@
             margin-bottom: 9px;
             border-bottom: 1px solid #333;
             color: #666;
-            font-size: 24px;
+            font-size: 18px;
         }
 
         .table-header span {
@@ -491,19 +602,22 @@
         }
 
         .table-header span:nth-child(3) {
+            width: 180px;
+        }
+
+        .table-header span:nth-child(4) {
             width: 260px;
         }
 
-        /* Tier 2 only has 3 cols now (Espera patios commented out) */
-        .table-header span:nth-child(4) {
-            width: 260px;
+        .table-header span:nth-child(5) {
+            width: 230px;
         }
 
         .table-row {
             display: flex;
             padding: 8px 0;
             color: #ccc;
-            font-size: 27px;
+            font-size: 21px;
         }
 
         .table-row span {
@@ -522,12 +636,15 @@
         }
 
         .table-row span:nth-child(3) {
+            width: 180px;
+        }
+
+        .table-row span:nth-child(4) {
             width: 260px;
         }
 
-        /* Tier 2 only has 3 cols now (Espera patios commented out) */
-        .table-row span:nth-child(4) {
-            width: 260px;
+        .table-row span:nth-child(5) {
+            width: 230px;
         }
 
         .table-row.baseline {
@@ -535,7 +652,7 @@
         }
 
         .table-row .delta {
-            font-size: 23px;
+            font-size: 17px;
             color: #0aa;
             margin-left: 6px;
         }
@@ -973,16 +1090,16 @@
         }
 
         #splash-screen .acronym {
-            font-size: clamp(60px, 10vw, 108px);
+            font-size: 216px;
             font-weight: 700;
             letter-spacing: 0.3em;
             color: #fff;
-            margin-bottom: 24px;
-            margin-top: -60px;
+            margin-bottom: 48px;
+            margin-top: -120px;
         }
 
         #splash-screen .subtitle {
-            font-size: clamp(16px, 2.2vw, 24px);
+            font-size: 48px;
             font-weight: 400;
             color: #888;
             letter-spacing: 0.1em;
@@ -990,18 +1107,18 @@
 
         #splash-screen .manifesto {
             position: absolute;
-            bottom: 110px;
-            max-width: 1200px;
-            padding: 0 24px;
+            bottom: 220px;
+            max-width: 2324px;
+            padding: 0 48px;
             text-align: left;
         }
 
         #splash-screen .manifesto p {
-            font-size: clamp(10px, 1.3vw, 14px);
+            font-size: 28px;
             font-weight: 700;
             color: #888;
             line-height: 1.6;
-            margin-bottom: 12px;
+            margin-bottom: 24px;
         }
 
         #splash-screen .manifesto p:last-child {
@@ -1041,6 +1158,10 @@
                 white-space: pre;
                 z-index: 1000;
             "></div>
+            <div id="scenario-card">
+                <div class="card-title"></div>
+                <div class="card-toggles"></div>
+            </div>
         </div>
         <div id="controls">
             <h2>CIEN / FIELD Viewer</h2>
@@ -2232,6 +2353,8 @@
         let fadeInStartTime = null;
         const FADE_IN_DURATION = 5000;  // 5 seconds fade-in
         let fadeInAlpha = 0;
+        let sceneAlpha = 1.0;  // Scene-wide dimming (0 = black, 1 = full)
+        let flowRenderMode = 'PARTICLES';  // 'PARTICLES' | 'ROAD_HEATMAP'
         let scenarioAdapter = null;
         let geometryProvider = null;
         let rawBundle = null;
@@ -3433,14 +3556,6 @@
                     framingSquare.visible = false;
                     console.warn(`[Director] Unknown frame "${target}", fell back to reynosa`);
                 }
-                // Force LOCAL_FIELD for local frames (bypasses zoom threshold)
-                const localFrames = ['reynosa', 'localSimIntro', 'scenarioRun', 'twinspan'];
-                if (localFrames.includes(target)) {
-                    currentZoomState = ZoomState.LOCAL_FIELD;
-                    transitionProgress = 1;
-                    if (macroParticles) macroParticles.paused = true;
-                    console.log(`[Director] Forced LOCAL_FIELD state for frame: ${target}`);
-                }
             },
             onStartSim: () => {
                 // Start the simulation (unpause)
@@ -3559,12 +3674,6 @@
                     );
                     macroParticles.setScenarioAlpha(1.0);  // Ensure α=1 so new particles use interserrana
                     console.log('[Director] POE mode: interserrana (α=1 → interserrana POEs)');
-                }
-            },
-            onClearMacroParticles: () => {
-                if (macroParticles) {
-                    macroParticles.clear();
-                    console.log('[Director] Macro particles cleared for respawn');
                 }
             },
             onStartQueuePhase: () => {
@@ -3904,6 +4013,47 @@
                 hideHourlyTable();
                 console.log('[Director] Hourly table hidden');
             },
+            onHideMonthClock: () => {
+                macroMonthClock.style.display = 'none';
+                macroMonthActive = false;
+                console.log('[Director] Month clock hidden');
+            },
+
+            // ─── Scenario presentation callbacks ───
+            onBlurBackground: (enabled) => {
+                const wrapper = document.getElementById('canvas-wrapper');
+                const card = document.getElementById('scenario-card');
+                if (enabled) {
+                    wrapper.classList.add('blur-active');
+                } else {
+                    wrapper.classList.remove('blur-active');
+                    // Hide scenario card when blur is turned off
+                    card.classList.remove('visible');
+                }
+                console.log(`[Director] Background blur ${enabled ? 'ON' : 'OFF'}`);
+            },
+            onFadeScene: (alpha) => {
+                sceneAlpha = alpha;
+                console.log(`[Director] Scene alpha set to ${alpha}`);
+            },
+            onScenarioCard: (title, toggles) => {
+                const card = document.getElementById('scenario-card');
+                const titleEl = card.querySelector('.card-title');
+                const togglesEl = card.querySelector('.card-toggles');
+
+                titleEl.textContent = title;
+                togglesEl.innerHTML = toggles.map(t => `<span>${t}</span>`).join('');
+
+                card.classList.add('visible');
+                console.log(`[Director] Scenario card: ${title} [${toggles.join(', ')}]`);
+
+                // Auto-hide after a short delay (controlled by Director wait)
+                // Card stays visible until next instruction clears it
+            },
+            onSetFlowRenderMode: (mode) => {
+                flowRenderMode = mode;
+                console.log(`[Director] Flow render mode: ${mode}`);
+            },
         });
 
         // =====================================================================
@@ -4016,22 +4166,32 @@
                 return;
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // EPHEMERAL SCENARIO BLOCK (A)
-            // Role: live system state. Absolute units only. No deltas, no per-truck.
-            // ═══════════════════════════════════════════════════════════════
+            // Calculate delta if not baseline
+            let deltaHtml = '';
+            if (baseline && scenarioName !== 'Baseline') {
+                const delta = summary.truckHoursLost_final - baseline.truckHoursLost_final;
+                const pct = (delta / baseline.truckHoursLost_final * 100);
+                const sign = pct >= 0 ? '+' : '';
+                deltaHtml = `
+                    <div class="metric-line delta">
+                        <span class="metric-label">Δ vs baseline</span>
+                        <span class="metric-value">${sign}${pct.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <div class="metric-line">
-                    <span class="metric-label">Carga total de demora</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLost_final)} camión-h</span>
+                    <span class="metric-label">Pérdida total</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLost_final)} camión-h/día</span>
                 </div>
                 <div class="metric-line breakdown">
                     <span class="metric-label">Congestión vial</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLostCongestion_final)} camión-h</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLostCongestion_final)}</span>
                 </div>
                 <div class="metric-line breakdown last">
                     <span class="metric-label">Espera en patios</span>
-                    <span class="metric-value">${Math.round(summary.truckHoursLostLotWait_final)} camión-h</span>
+                    <span class="metric-value">${Math.round(summary.truckHoursLostLotWait_final)}</span>
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
@@ -4041,6 +4201,7 @@
                     <span class="metric-label">Cola CBP promedio</span>
                     <span class="metric-value">${Math.round(summary.sinkQueueCount_mean)} camiones</span>
                 </div>
+                ${deltaHtml}
             `;
             container.style.display = 'block';
         }
@@ -4096,46 +4257,8 @@
                 return `<span class="delta ${cls}">${sign}${Math.round(d)}</span>`;
             }
 
-            // ═══════════════════════════════════════════════════════════════
-            // PERSISTENT COMPARISON TABLE (B)
-            // Role: comparative judgment. Normalized per-truck metrics. Deltas allowed.
-            // ═══════════════════════════════════════════════════════════════
-
-            // Helper: format per-truck delta
-            function formatPerTruckDelta(value, baselineValue) {
-                if (baselineValue === undefined || baselineValue === null) return '';
-                const d = value - baselineValue;
-                if (Math.abs(d) < 0.001) return '';
-                const sign = d >= 0 ? '+' : '';
-                const cls = d < 0 ? 'negative' : 'positive';
-                return `<span class="delta ${cls}">${sign}${d.toFixed(2)}</span>`;
-            }
-
-            // PRIMARY: Per-truck delay metrics (what we rank by)
-            const primaryRows = orderedScenarios.map(s => {
-                const isBaseline = s.scenarioName === 'Baseline';
-                const avgDelay = s.summary.avgDelayPerTruck ?? 0;
-                const avgCongestion = s.summary.avgCongestionPerTruck ?? 0;
-                const avgCbpQueue = s.summary.avgBridgeQueuePerTruck ?? 0;
-                const avgLotWait = s.summary.avgLotWaitPerTruck ?? 0;
-
-                // Deltas vs baseline (allowed here per spec)
-                const delayDelta = isBaseline ? '' : formatPerTruckDelta(avgDelay, baseline?.avgDelayPerTruck);
-                const congestionDelta = isBaseline ? '' : formatPerTruckDelta(avgCongestion, baseline?.avgCongestionPerTruck);
-                const cbpQueueDelta = isBaseline ? '' : formatPerTruckDelta(avgCbpQueue, baseline?.avgBridgeQueuePerTruck);
-                const lotWaitDelta = isBaseline ? '' : formatPerTruckDelta(avgLotWait, baseline?.avgLotWaitPerTruck);
-
-                return `<div class="table-row${isBaseline ? ' baseline' : ''}">
-                    <span>${s.displayName}</span>
-                    <span>${avgDelay.toFixed(2)}${delayDelta}</span>
-                    <span>${avgCongestion.toFixed(2)}${congestionDelta}</span>
-                    <span>${avgCbpQueue.toFixed(3)}${cbpQueueDelta}</span>
-                    <span>${avgLotWait.toFixed(3)}${lotWaitDelta}</span>
-                </div>`;
-            }).join('');
-
-            // STRUCTURAL CONTEXT: Non-ranked, for interpretation
-            const contextRows = orderedScenarios.map(s => {
+            // TIER 1: Structural conditions (CAUSE)
+            const tier1Rows = orderedScenarios.map(s => {
                 const isBaseline = s.scenarioName === 'Baseline';
                 const injection = s.summary.injectedKg_final ? Math.round(s.summary.injectedKg_final / 1000) : '—';
                 const cbpLanes = s.summary.cbpLanesInUse_mean !== undefined ? s.summary.cbpLanesInUse_mean.toFixed(1) : '—';
@@ -4148,25 +4271,44 @@
                 </div>`;
             }).join('');
 
-            container.innerHTML = `
-                <div class="tier-label">Demora por camión (h/camión)</div>
-                <div class="table-header">
-                    <span>Escenario</span>
-                    <span>Demora total</span>
-                    <span>Congestión</span>
-                    <span>Cola CBP</span>
-                    <span>Patios</span>
-                </div>
-                ${primaryRows}
+            // TIER 2: Temporal outcomes (EFFECT)
+            const tier2Rows = orderedScenarios.map(s => {
+                const isBaseline = s.scenarioName === 'Baseline';
+                const loss = Math.round(s.summary.truckHoursLost_final);
+                const congestion = Math.round(s.summary.truckHoursLostCongestion_final || 0);
+                const lotWait = Math.round(s.summary.truckHoursLostLotWait_final || 0);
 
-                <div class="tier-label">Contexto estructural</div>
+                // Deltas vs baseline (shown as subtext, not percentages)
+                const lossDelta = isBaseline ? '' : formatDelta(loss, baseline?.truckHoursLost_final);
+                const congestionDelta = isBaseline ? '' : formatDelta(congestion, baseline?.truckHoursLostCongestion_final);
+                const lotWaitDelta = isBaseline ? '' : formatDelta(lotWait, baseline?.truckHoursLostLotWait_final);
+
+                return `<div class="table-row${isBaseline ? ' baseline' : ''}">
+                    <span>${s.displayName}</span>
+                    <span>${loss}${lossDelta}</span>
+                    <span>${congestion}${congestionDelta}</span>
+                    <span>${lotWait}${lotWaitDelta}</span>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="tier-label">Condiciones estructurales</div>
                 <div class="table-header">
                     <span>Escenario</span>
                     <span>Inyección (t)</span>
                     <span>CBP prom</span>
                     <span>Cap patios (Mt)</span>
                 </div>
-                ${contextRows}
+                ${tier1Rows}
+
+                <div class="tier-label">Resultados temporales</div>
+                <div class="table-header">
+                    <span>Escenario</span>
+                    <span>Pérdida total</span>
+                    <span>Congestión</span>
+                    <span>Espera patios</span>
+                </div>
+                ${tier2Rows}
             `;
             container.style.display = 'block';
 
@@ -4294,25 +4436,35 @@
             const cbpLanesInUse = summary.cbpLanesInUse_mean;
             const sinkQueueCount = summary.sinkQueueCount_mean;
 
+            // Calculate delta vs baseline (only show at end)
+            let deltaHtml = '';
+            if (progress >= 1 && baseline && scenarioName !== 'Baseline') {
+                const delta = summary.truckHoursLost_final - baseline.truckHoursLost_final;
+                const pct = (delta / baseline.truckHoursLost_final * 100);
+                const sign = pct >= 0 ? '+' : '';
+                deltaHtml = `
+                    <div class="metric-line delta">
+                        <span class="metric-label">Δ vs baseline</span>
+                        <span class="metric-value">${sign}${pct.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+
             const container = document.getElementById('scenario-metrics');
             if (!container) return;
 
-            // ═══════════════════════════════════════════════════════════════
-            // EPHEMERAL SCENARIO BLOCK (A) - Replay version
-            // Role: live system state. Absolute units only. No deltas, no per-truck.
-            // ═══════════════════════════════════════════════════════════════
             container.innerHTML = `
                 <div class="metric-line">
-                    <span class="metric-label">Carga total de demora</span>
+                    <span class="metric-label">Pérdida total</span>
                     <span class="metric-value">${Math.round(truckHoursLost)} camión-h</span>
                 </div>
                 <div class="metric-line breakdown">
                     <span class="metric-label">Congestión vial</span>
-                    <span class="metric-value">${Math.round(truckHoursLostCongestion)} camión-h</span>
+                    <span class="metric-value">${Math.round(truckHoursLostCongestion)}</span>
                 </div>
                 <div class="metric-line breakdown last">
                     <span class="metric-label">Espera en patios</span>
-                    <span class="metric-value">${Math.round(truckHoursLostLotWait)} camión-h</span>
+                    <span class="metric-value">${Math.round(truckHoursLostLotWait)}</span>
                 </div>
                 <div class="metric-line" style="margin-top: 12px;">
                     <span class="metric-label">Carriles CBP activos</span>
@@ -4322,6 +4474,7 @@
                     <span class="metric-label">Cola CBP promedio</span>
                     <span class="metric-value">${Math.round(sinkQueueCount)} camiones</span>
                 </div>
+                ${deltaHtml}
             `;
             container.style.display = 'block';
         }
@@ -4396,26 +4549,24 @@
             );
             const displayName = narrativeEntry ? narrativeEntry.display : scenarioName;
 
-            // Store all metrics needed for persistent comparison table (per-truck, not absolute)
+            // Store all metrics needed for two-tier table
             ledgerRows.push({
                 scenarioName,
                 displayName,
                 isBaseline,
-                // Primary: Per-truck delay metrics (h/camión)
-                avgDelayPerTruck: summary.avgDelayPerTruck ?? 0,
-                avgCongestionPerTruck: summary.avgCongestionPerTruck ?? 0,
-                avgBridgeQueuePerTruck: summary.avgBridgeQueuePerTruck ?? 0,
-                avgLotWaitPerTruck: summary.avgLotWaitPerTruck ?? 0,
-                // Structural context (non-ranked)
+                // Tier 1: Structural conditions
                 injectionTons: summary.injectedKg_final ? Math.round(summary.injectedKg_final / 1000) : null,
                 cbpLanesMean: summary.cbpLanesInUse_mean,
                 lotCapacityMt: summary.totalLotCapacityKg ? summary.totalLotCapacityKg / 1e6 : null,
-                // Baseline reference for deltas (per-truck)
+                // Tier 2: Temporal outcomes
+                truckHoursLost: Math.round(summary.truckHoursLost_final),
+                truckHoursLostCongestion: Math.round(summary.truckHoursLostCongestion_final || 0),
+                truckHoursLostLotWait: Math.round(summary.truckHoursLostLotWait_final || 0),
+                // Baseline reference for deltas
                 baselineRef: isBaseline ? null : {
-                    avgDelayPerTruck: baseline?.avgDelayPerTruck,
-                    avgCongestionPerTruck: baseline?.avgCongestionPerTruck,
-                    avgBridgeQueuePerTruck: baseline?.avgBridgeQueuePerTruck,
-                    avgLotWaitPerTruck: baseline?.avgLotWaitPerTruck,
+                    truckHoursLost: baseline?.truckHoursLost_final,
+                    truckHoursLostCongestion: baseline?.truckHoursLostCongestion_final,
+                    truckHoursLostLotWait: baseline?.truckHoursLostLotWait_final,
                 },
             });
 
@@ -4428,11 +4579,7 @@
         }
 
         /**
-         * Render the cumulative ledger table.
-         * ═══════════════════════════════════════════════════════════════
-         * PERSISTENT COMPARISON TABLE (B) - Ledger version
-         * Role: comparative judgment. Normalized per-truck metrics. Deltas allowed.
-         * ═══════════════════════════════════════════════════════════════
+         * Render the cumulative ledger table (two-tier structure).
          */
         function renderLedger() {
             const container = document.getElementById('comparison-table');
@@ -4443,34 +4590,18 @@
                 return;
             }
 
-            // Helper: format per-truck delta as subtext
-            function formatPerTruckDelta(value, baselineValue) {
-                if (baselineValue === undefined || baselineValue === null) return '';
+            // Helper: format delta as subtext
+            function formatDelta(value, baselineValue) {
+                if (baselineValue === undefined || baselineValue === null || baselineValue === 0) return '';
                 const d = value - baselineValue;
-                if (Math.abs(d) < 0.001) return '';
+                if (Math.abs(d) < 0.5) return '';
                 const sign = d >= 0 ? '+' : '';
                 const cls = d < 0 ? 'negative' : 'positive';
-                return `<span class="delta ${cls}">${sign}${d.toFixed(2)}</span>`;
+                return `<span class="delta ${cls}">${sign}${Math.round(d)}</span>`;
             }
 
-            // PRIMARY: Per-truck delay metrics (h/camión)
-            const primaryRows = ledgerRows.map(row => {
-                const delayDelta = row.baselineRef ? formatPerTruckDelta(row.avgDelayPerTruck, row.baselineRef.avgDelayPerTruck) : '';
-                const congestionDelta = row.baselineRef ? formatPerTruckDelta(row.avgCongestionPerTruck, row.baselineRef.avgCongestionPerTruck) : '';
-                const cbpQueueDelta = row.baselineRef ? formatPerTruckDelta(row.avgBridgeQueuePerTruck, row.baselineRef.avgBridgeQueuePerTruck) : '';
-                const lotWaitDelta = row.baselineRef ? formatPerTruckDelta(row.avgLotWaitPerTruck, row.baselineRef.avgLotWaitPerTruck) : '';
-
-                return `<div class="table-row${row.isBaseline ? ' baseline' : ''}">
-                    <span>${row.displayName}</span>
-                    <span>${row.avgDelayPerTruck.toFixed(2)}${delayDelta}</span>
-                    <span>${row.avgCongestionPerTruck.toFixed(2)}${congestionDelta}</span>
-                    <span>${row.avgBridgeQueuePerTruck.toFixed(3)}${cbpQueueDelta}</span>
-                    <span>${row.avgLotWaitPerTruck.toFixed(3)}${lotWaitDelta}</span>
-                </div>`;
-            }).join('');
-
-            // STRUCTURAL CONTEXT: Non-ranked
-            const contextRows = ledgerRows.map(row => `
+            // TIER 1: Structural conditions
+            const tier1Rows = ledgerRows.map(row => `
                 <div class="table-row${row.isBaseline ? ' baseline' : ''}">
                     <span>${row.displayName}</span>
                     <span>${row.injectionTons !== null ? row.injectionTons : '—'}</span>
@@ -4479,25 +4610,38 @@
                 </div>
             `).join('');
 
-            container.innerHTML = `
-                <div class="tier-label">Demora por camión (h/camión)</div>
-                <div class="table-header">
-                    <span>Escenario</span>
-                    <span>Demora total</span>
-                    <span>Congestión</span>
-                    <span>Cola CBP</span>
-                    <span>Patios</span>
-                </div>
-                ${primaryRows}
+            // TIER 2: Temporal outcomes
+            const tier2Rows = ledgerRows.map(row => {
+                const lossDelta = row.baselineRef ? formatDelta(row.truckHoursLost, row.baselineRef.truckHoursLost) : '';
+                const congestionDelta = row.baselineRef ? formatDelta(row.truckHoursLostCongestion, row.baselineRef.truckHoursLostCongestion) : '';
+                const lotWaitDelta = row.baselineRef ? formatDelta(row.truckHoursLostLotWait, row.baselineRef.truckHoursLostLotWait) : '';
 
-                <div class="tier-label">Contexto estructural</div>
+                return `<div class="table-row${row.isBaseline ? ' baseline' : ''}">
+                    <span>${row.displayName}</span>
+                    <span>${row.truckHoursLost}${lossDelta}</span>
+                    <span>${row.truckHoursLostCongestion}${congestionDelta}</span>
+                    <span>${row.truckHoursLostLotWait}${lotWaitDelta}</span>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="tier-label">Condiciones estructurales</div>
                 <div class="table-header">
                     <span>Escenario</span>
                     <span>Inyección (t)</span>
                     <span>CBP prom</span>
                     <span>Cap patios (Mt)</span>
                 </div>
-                ${contextRows}
+                ${tier1Rows}
+
+                <div class="tier-label">Resultados temporales</div>
+                <div class="table-header">
+                    <span>Escenario</span>
+                    <span>Pérdida total</span>
+                    <span>Congestión</span>
+                    <span>Espera patios</span>
+                </div>
+                ${tier2Rows}
             `;
             container.style.display = 'block';
         }
@@ -6040,8 +6184,38 @@
         });
         const cellHoverInfo = document.getElementById('cell-hover-info');
         canvas.addEventListener('mousemove', (e) => {
-            // Disabled for public deployment - mouse tracking causes frame drops
-            return;
+            if (isDragging) {
+                camera.pan(e.clientX - lastMouse.x, e.clientY - lastMouse.y);
+                lastMouse = { x: e.clientX, y: e.clientY };
+            }
+
+            // Show cell debug info when debug mode is active
+            const debugData = getPhysicsDebugData();
+            if (showPhysicsDebug && debugData?.getCellDebugInfo) {
+                const world = camera.screenToWorld(e.offsetX, e.offsetY);
+                const info = debugData.getCellDebugInfo(world.x, world.y);
+                if (info) {
+                    const lines = [
+                        `Cell ${info.cellIdx} ${info.fieldXY}`,
+                        `Region: ${info.region}`,
+                        `φ_lots: ${info.phi_lots}`,
+                        `φ_pharr: ${info.phi_pharr}`,
+                        `nh_lots: ${info.nextHop_lots}`,
+                        `K: ${info.Kxx}`,
+                        `Mass: ${info.mass}`,
+                        `Particles: ${info.particleCount}`,
+                    ];
+                    if (info.lotIdx !== null) lines.push(`Lot: ${info.lotIdx}`);
+                    cellHoverInfo.textContent = lines.join('\n');
+                    cellHoverInfo.style.display = 'block';
+                    cellHoverInfo.style.left = (e.offsetX + 15) + 'px';
+                    cellHoverInfo.style.top = (e.offsetY + 15) + 'px';
+                } else {
+                    cellHoverInfo.style.display = 'none';
+                }
+            } else {
+                cellHoverInfo.style.display = 'none';
+            }
         });
         canvas.addEventListener('mouseup', () => isDragging = false);
         canvas.addEventListener('mouseleave', () => {
@@ -6718,7 +6892,7 @@
                 switch (currentZoomState) {
                     case ZoomState.MACRO_CIEN: {
                         const t0 = performance.now();
-                        renderMacroCien(ctx, camera, fadeInAlpha);
+                        renderMacroCien(ctx, camera, fadeInAlpha * sceneAlpha);
                         const t1 = performance.now();
                         logMacroPerf(t0, t1);
                         break;
@@ -6729,7 +6903,7 @@
                         break;
 
                     case ZoomState.LOCAL_FIELD:
-                        renderLocalField(ctx, camera);
+                        renderLocalField(ctx, camera, sceneAlpha);
                         break;
 
                     case ZoomState.TRANSITION_OUT:

@@ -1435,8 +1435,6 @@ const baseCommuterWeight = new Float32Array(N2);  // [0, 1] static spatial map (
 const commuterType = new Uint8Array(N2);          // 0=none, 1=arterial, 2=industrial_approach, 3=aduana
 const isIntersection = new Uint8Array(N2);        // 1 = intersection cell (3+ road neighbors)
 const speedLimitMS = new Float32Array(N2);        // Speed limit per cell (m/s), 0 = use default
-const routingCostPharr = new Float32Array(N2);    // Routing cost multiplier for PHARR (1.0 = normal)
-routingCostPharr.fill(1.0);
 
 // Commuter type constants
 const CTYPE_NONE = 0;
@@ -2140,9 +2138,7 @@ function computePotential(sinkIndices, phiOutput, label, sinkBias = null, biasWe
                 }
             }
 
-            // Apply per-cell routing cost for PHARR routing
-            const cellCost = (label === 'PHARR' || label === 'PHARR_TWIN') ? routingCostPharr[ni] : 1.0;
-            const newCost = cost + edgeCost * capacityPenalty * cellCost;
+            const newCost = cost + edgeCost * capacityPenalty;
             if (newCost < phiOutput[ni]) {
                 phiOutput[ni] = newCost;
                 heap.push([newCost, ni]);
@@ -2243,25 +2239,13 @@ let _lastRateSampleTime = 0;
 let _lastRateSampleValue = 0;
 
 // Truck-hours lost BREAKDOWN (instrumentation only, no behavior change)
-// Split by cause: congestion vs waiting outside full lots vs bridge queue vs bridge service
+// Split by cause: congestion vs waiting outside full lots vs bridge queue
 let _truckHoursLostCongestion = 0;      // Normal road congestion (density-based)
 let _truckHoursLostLotWait = 0;         // Bounced from full lots, waiting on road
-let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR (pre-service only)
-let _truckHoursLostBridgeService = 0;   // Being serviced in CBP lane (in-service only)
+let _truckHoursLostBridgeQueue = 0;     // Waiting in CBP queue at PHARR
 let _truckHoursLostCongestionTick = 0;  // Per-tick accumulator
 let _truckHoursLostLotWaitTick = 0;     // Per-tick accumulator
-let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator (pre-service)
-let _truckHoursLostBridgeServiceTick = 0; // Per-tick accumulator (in-service)
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SERVICE TIME INSTRUMENTATION — Per-completion tracking for audit
-// ═══════════════════════════════════════════════════════════════════════════════
-let _serviceTimeActual = [];           // Collected actualServiceTime per completion (seconds)
-let _serviceTimeExpected = [];         // SERVICE_TIME_S at assignment time (seconds)
-let _serviceTimeAssignSim = [];        // simTime at assignment (for debugging)
-
-// OUTLIER AUDIT: Full per-completion records for proving boundary artifact
-let _serviceCompletionRecords = [];    // Array of {actual, expected, assignTime, completeTime, groundTruthStart, groundTruthEnd, wasWarmupAssign}
+let _truckHoursLostBridgeQueueTick = 0; // Per-tick accumulator
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONGESTION VISUALIZATION — Density-driven render spread (anti-aliasing)
@@ -2409,7 +2393,6 @@ export async function step(dt) {
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
-    _truckHoursLostBridgeServiceTick = 0;
 
     // 0. UPDATE COMMUTER FRICTION: Apply time-of-day modulation to spatial weights
     const tCommuter0 = performance.now();
@@ -2543,7 +2526,6 @@ export async function step(dt) {
     _truckHoursLostCongestion += _truckHoursLostCongestionTick / 3600;
     _truckHoursLostLotWait += _truckHoursLostLotWaitTick / 3600;
     _truckHoursLostBridgeQueue += _truckHoursLostBridgeQueueTick / 3600;
-    _truckHoursLostBridgeService += _truckHoursLostBridgeServiceTick / 3600;
 
     // INVARIANT: cumulative must be monotonic
     if (_truckHoursLost < prevTruckHoursLost) {
@@ -2602,22 +2584,17 @@ function updateCBPServiceTime() {
  * Handles multiple completions per lane per tick when dt > SERVICE_TIME_S.
  * This is the ONLY place particles exit the system.
  *
- * Model B closure semantics:
- * - Existing in-service trucks continue to completion (completions always processed)
- * - No new lane assignments when bridge is closed (isBridgeOpen() gates assignment)
- *
  * @param {number} dt - Time step in seconds
  */
 function stepCBPLanes(dt) {
+    // Closed hours or blocked: do nothing
+    if (!isFinite(SERVICE_TIME_S)) return;
+
     const tickStart = simTime - dt;
     const tickEnd = simTime;
 
-    // Single source of truth: is CBP accepting new trucks?
-    const cbpOpen = isBridgeOpen();
-
     for (const lane of CBP_LANES) {
-        // === COMPLETIONS: Always process, even during closure (Model B) ===
-        // Trucks already in service complete at their scheduled busyUntil time.
+        // Process all completions that should happen within [tickStart, tickEnd]
         while (lane.particle && lane.busyUntil <= tickEnd) {
             const p = lane.particle;
 
@@ -2625,26 +2602,6 @@ function stepCBPLanes(dt) {
             // Particle is officially processed - count it as exited
             metrics.exited += particleMass();
             _cbpCompletionCount++;
-
-            // AUDIT: Record actual vs expected service time with full timestamps
-            if (p._cbpAssignTime !== undefined) {
-                const actualServiceTime = simTime - p._cbpAssignTime;
-                const groundTruthDuration = simTime - (p._cbpServiceStartTime || p._cbpAssignTime);
-                _serviceTimeActual.push(actualServiceTime);
-                _serviceTimeExpected.push(p._cbpExpectedServiceTime || 0);
-                _serviceTimeAssignSim.push(p._cbpAssignTime);
-                // Full record for outlier analysis
-                _serviceCompletionRecords.push({
-                    actual: actualServiceTime,
-                    expected: p._cbpExpectedServiceTime || 0,
-                    assignTime: p._cbpAssignTime,
-                    completeTime: simTime,
-                    groundTruthStart: p._cbpServiceStartTime || p._cbpAssignTime,
-                    groundTruthEnd: simTime,
-                    groundTruthDuration,
-                    laneFreeTimeAtAssign: p._cbpLaneFreeTimeAtAssign || null,
-                });
-            }
 
             // Transition to DEPARTING state for exit animation
             // Particle stays in sink cell, drift loop will move it out
@@ -2656,11 +2613,6 @@ function stepCBPLanes(dt) {
             const laneFreeTime = lane.busyUntil;
             lane.particle = null;
 
-            // === ASSIGNMENT AFTER COMPLETION: Only when CBP is open ===
-            if (!cbpOpen) {
-                break;  // Don't assign new trucks during closure
-            }
-
             // Immediately assign next particle if queue has particles
             if (sinkQueue.length > 0) {
                 const next = sinkQueue.shift();
@@ -2669,31 +2621,19 @@ function stepCBPLanes(dt) {
                 lane.busyUntil = laneFreeTime + SERVICE_TIME_S;
                 next._cbpLane = lane;
                 next._cbpEndTime = lane.busyUntil;
-                // AUDIT: Record assignment time and expected service time
-                next._cbpAssignTime = laneFreeTime;
-                next._cbpExpectedServiceTime = SERVICE_TIME_S;
-                // AUDIT: Ground-truth timestamps
-                next._cbpServiceStartTime = simTime;  // actual wall-clock assignment moment
-                next._cbpLaneFreeTimeAtAssign = laneFreeTime;
             } else {
                 break;  // No more particles to process in queue
             }
         }
 
-        // === ASSIGNMENT TO EMPTY LANES: Only when CBP is open ===
-        if (cbpOpen && lane.particle === null && sinkQueue.length > 0) {
+        // Also assign to lanes that were empty at start of tick
+        if (lane.particle === null && sinkQueue.length > 0) {
             const p = sinkQueue.shift();
             lane.particle = p;
             // Service starts at beginning of tick window
             lane.busyUntil = tickStart + SERVICE_TIME_S;
             p._cbpLane = lane;
             p._cbpEndTime = lane.busyUntil;
-            // AUDIT: Record assignment time and expected service time
-            p._cbpAssignTime = tickStart;
-            p._cbpExpectedServiceTime = SERVICE_TIME_S;
-            // AUDIT: Ground-truth timestamps
-            p._cbpServiceStartTime = simTime;  // actual wall-clock assignment moment
-            p._cbpLaneFreeTimeAtAssign = tickStart;  // lane was empty, so "free" at tickStart
         }
     }
 }
@@ -2952,17 +2892,11 @@ function stepDriftAndTransferInner(dt) {
             p.stuckLogged = false;
         }
 
-        // Skip particles in CBP area (still in movingParticles but not drifting)
-        // Separate queue time (waiting) from service time (in lane)
+        // Skip particles waiting in sink queue (still in movingParticles but not drifting)
         if (p.state === STATE.CLEARED && regionMap[cellIdx] === REGION.SINK) {
+            // Waiting in CBP queue - track as bridge queue delay
             _truckHoursLostThisTick += dt;           // c=0 → loss=1
-            if (p._cbpLane) {
-                // In service — assigned to lane, being processed
-                _truckHoursLostBridgeServiceTick += dt;
-            } else {
-                // In queue — waiting for lane assignment
-                _truckHoursLostBridgeQueueTick += dt;
-            }
+            _truckHoursLostBridgeQueueTick += dt;    // attribute to bridge queue
             continue;
         }
 
@@ -4230,17 +4164,9 @@ export function reset() {
     _truckHoursLostCongestion = 0;
     _truckHoursLostLotWait = 0;
     _truckHoursLostBridgeQueue = 0;
-    _truckHoursLostBridgeService = 0;
     _truckHoursLostCongestionTick = 0;
     _truckHoursLostLotWaitTick = 0;
     _truckHoursLostBridgeQueueTick = 0;
-    _truckHoursLostBridgeServiceTick = 0;
-
-    // Reset service time instrumentation arrays
-    _serviceTimeActual = [];
-    _serviceTimeExpected = [];
-    _serviceTimeAssignSim = [];
-    _serviceCompletionRecords = [];
 
     // Reset stall-ton-hours (critical for fresh runs)
     _stallTonHours = 0;
@@ -4680,7 +4606,6 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
     }
 
     const id = ++_workerRequestId;
-    const isPharrRouting = label === 'PHARR' || label === 'PHARR_TWIN';
     const config = {
         sinkIndices: Array.from(sinkIndices),
         N, N2,
@@ -4694,8 +4619,7 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
         lotMass: lotMass.buffer.slice(0),
         label,
         sinkBias: sinkBias ? sinkBias.buffer.slice(0) : null,
-        biasWeight,
-        cellCost: isPharrRouting ? routingCostPharr.buffer.slice(0) : null
+        biasWeight
     };
 
     const result = await new Promise((resolve, reject) => {
@@ -4703,7 +4627,7 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
         _routingWorker.postMessage(
             { id, token: _routingBuildToken, cmd: 'computeRouting', config },
             [config.Kxx, config.Kyy, config.regionMap, config.cellToLotIndex,
-             config.lotCapacity, config.lotMass, ...(config.sinkBias ? [config.sinkBias] : []), ...(config.cellCost ? [config.cellCost] : [])]
+             config.lotCapacity, config.lotMass, ...(config.sinkBias ? [config.sinkBias] : [])]
         );
     });
 
@@ -5879,7 +5803,6 @@ const SPEED_LIMIT_POLYLINES = [
         name: 'AVE_PTE_PHARR',
         polylines: [
             [
-                [-344.6282421308715, -13042.040588503369],
                 [-549.9350614429121, -12139.653375770506],
                 [-554.5252970950285, -10710.832667154451],
                 [-538.5252970950285, -10483.832667154451],
@@ -7476,18 +7399,13 @@ function stampManualConnectors() {
         if (stampConnectorCoord(coord)) stamped++;
     }
 
-    // Always stamp Inovus connectors with routing cost penalty
-    // (routing cost handles access - PHARR routes penalized, lot routes unaffected)
+    // Always stamp Inovus connectors (routing cost handles access, not cell presence)
     for (const coord of INOVUS_CONNECTOR_COORDS) {
-        const idx = stampConnectorCoord(coord);
-        if (idx !== false) {
-            stamped++;
-            routingCostPharr[idx] = 20.0;  // 20x routing cost for PHARR
-        }
+        if (stampConnectorCoord(coord)) stamped++;
     }
 
     if (stamped > 0) {
-        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus w/ 20x PHARR cost)`);
+        log(`[BRIDGE] Manual connectors: ${stamped} cells stamped (incl Inovus)`);
     }
 }
 
@@ -7496,33 +7414,22 @@ function stampInovusConnectors() {
     _inovusConnectorCells = [];
     for (const coord of INOVUS_CONNECTOR_COORDS) {
         const idx = stampConnectorCoord(coord);
-        if (idx !== false) {
-            _inovusConnectorCells.push(idx);
-            routingCostPharr[idx] = 2.0;  // 2x routing cost for PHARR
-        }
+        if (idx !== false) _inovusConnectorCells.push(idx);
     }
-    log(`[INOVUS] Stamped ${_inovusConnectorCells.length} Inovus connector cells (2x routing cost)`);
+    log(`[INOVUS] Stamped ${_inovusConnectorCells.length} Inovus connector cells`);
 }
 
 function unstampInovusConnectors() {
-    let count = 0;
-    for (const coord of INOVUS_CONNECTOR_COORDS) {
-        const fx = Math.floor(worldToFieldX(coord.x));
-        const fy = Math.floor(worldToFieldY(coord.y));
-        if (fx < 0 || fx >= N || fy < 0 || fy >= N) continue;
-        const idx = fy * N + fx;
-
+    for (const idx of _inovusConnectorCells) {
         // Revert to impassable (no road)
         regionMap[idx] = REGION.VOID;
         Kxx[idx] = 0;
         Kyy[idx] = 0;
-        routingCostPharr[idx] = 1.0;  // Reset routing cost
         // Remove from roadCellIndices
         const roadIdx = roadCellIndices.indexOf(idx);
         if (roadIdx !== -1) roadCellIndices.splice(roadIdx, 1);
-        count++;
     }
-    log(`[INOVUS] Unstamped ${count} Inovus connector cells`);
+    log(`[INOVUS] Unstamped ${_inovusConnectorCells.length} Inovus connector cells`);
     _inovusConnectorCells = [];
 }
 
@@ -8575,8 +8482,7 @@ export function getMetricsPhase1() {
         // Truck-hours lost breakdown (instrumentation)
         truckHoursLostCongestion: _truckHoursLostCongestion,  // normal road congestion
         truckHoursLostLotWait: _truckHoursLostLotWait,        // waiting outside full lots
-        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue (pre-service)
-        truckHoursLostBridgeService: _truckHoursLostBridgeService, // being serviced in CBP lane
+        truckHoursLostBridgeQueue: _truckHoursLostBridgeQueue, // waiting in CBP queue
         stallTonHours: _stallTonHours,             // cumulative ton-hours
         simTime: simTime,                          // current sim time (debug)
         // Sink observability (for drain invariant)
@@ -8599,72 +8505,6 @@ export function getMetricsPhase1() {
         // Per-lot fill ratios (for replay animation)
         lotFillRatios: Array.from(lotMass).map((m, i) =>
             lotCapacity[i] > 0 ? m / lotCapacity[i] : 0),
-        // AUDIT: Service time stats (seconds)
-        serviceTimeStats: computeServiceTimeStats(),
-        // Current SERVICE_TIME_S (for verification)
-        currentServiceTimeS: SERVICE_TIME_S,
-        effectiveLanes: getEffectiveLanes(),
-    };
-}
-
-/**
- * Compute mean/p50/p90 for service time arrays.
- * Returns stats in seconds, plus outlier analysis.
- */
-function computeServiceTimeStats() {
-    const n = _serviceTimeActual.length;
-    if (n === 0) {
-        return {
-            count: 0,
-            actual: { mean: 0, p50: 0, p90: 0, max: 0 },
-            expected: { mean: 0, p50: 0, p90: 0 },
-            outliers: { countAboveExpectedPlusDt: 0, countAboveExpectedPlus100s: 0 },
-            top20: [],
-        };
-    }
-
-    const sortedActual = [..._serviceTimeActual].sort((a, b) => a - b);
-    const sortedExpected = [..._serviceTimeExpected].sort((a, b) => a - b);
-
-    const meanActual = _serviceTimeActual.reduce((a, b) => a + b, 0) / n;
-    const meanExpected = _serviceTimeExpected.reduce((a, b) => a + b, 0) / n;
-
-    const p50Idx = Math.floor(n * 0.5);
-    const p90Idx = Math.floor(n * 0.9);
-    const maxActual = sortedActual[n - 1];
-
-    // Outlier counts (dt=10)
-    const dt = 10;
-    let countAboveExpectedPlusDt = 0;
-    let countAboveExpectedPlus100s = 0;
-    for (let i = 0; i < n; i++) {
-        const diff = _serviceTimeActual[i] - _serviceTimeExpected[i];
-        if (diff > dt) countAboveExpectedPlusDt++;
-        if (diff > 100) countAboveExpectedPlus100s++;
-    }
-
-    // Top 20 longest (sorted by actual desc)
-    const sortedRecords = [..._serviceCompletionRecords].sort((a, b) => b.actual - a.actual);
-    const top20 = sortedRecords.slice(0, 20);
-
-    return {
-        count: n,
-        actual: {
-            mean: meanActual,
-            p50: sortedActual[p50Idx],
-            p90: sortedActual[p90Idx],
-            max: maxActual,
-        },
-        expected: {
-            mean: meanExpected,
-            p50: sortedExpected[p50Idx],
-            p90: sortedExpected[p90Idx],
-        },
-        outliers: {
-            countAboveExpectedPlusDt,
-            countAboveExpectedPlus100s,
-        },
-        top20,
     };
 }
 
@@ -10047,66 +9887,150 @@ function drawCommuterHeatmap(ctx, camera) {
     const vp = camera.viewportWorld;
     const pad = roi.cellSize * 2;
 
-    // Only draw cells if they're visible
-    if (cellScreenSize >= 0.5) {
-        for (let y = 0; y < N; y++) {
-            for (let x = 0; x < N; x++) {
-                const idx = y * N + x;
-                const load = commuterLoad[idx];
-                if (load <= 0) continue;
+    for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+            const idx = y * N + x;
+            const load = commuterLoad[idx];
+            if (load <= 0) continue;
 
-                const wx = fieldToWorldX(x);
-                const wy = fieldToWorldY(y);
+            const wx = fieldToWorldX(x);
+            const wy = fieldToWorldY(y);
 
-                // Viewport culling
-                if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-                if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+            // Viewport culling
+            if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+            if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-                // Color by congestion intensity: green → yellow → red
-                // load typically ranges 0.2 to ~0.8, normalize aggressively
-                const t = Math.min(load / 0.5, 1.0);  // 0.5 load = full red
-                let r, g, b;
-                if (t < 0.5) {
-                    // Green to Yellow (0 → 0.5)
-                    const t2 = t * 2;
-                    r = Math.round(255 * t2);
-                    g = 255;
-                    b = 0;
-                } else {
-                    // Yellow to Red (0.5 → 1)
-                    const t2 = (t - 0.5) * 2;
-                    r = 255;
-                    g = Math.round(255 * (1 - t2));
-                    b = 0;
-                }
-
-                const alpha = 0.3 + load * 0.4;
-                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
-                const screen = camera.worldToScreen(wx, wy);
-                ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
+            // Color by congestion intensity: green → yellow → red
+            // load typically ranges 0.2 to ~0.8, normalize aggressively
+            const t = Math.min(load / 0.5, 1.0);  // 0.5 load = full red
+            let r, g, b;
+            if (t < 0.5) {
+                // Green to Yellow (0 → 0.5)
+                const t2 = t * 2;
+                r = Math.round(255 * t2);
+                g = 255;
+                b = 0;
+            } else {
+                // Yellow to Red (0.5 → 1)
+                const t2 = (t - 0.5) * 2;
+                r = 255;
+                g = Math.round(255 * (1 - t2));
+                b = 0;
             }
+
+            const alpha = 0.3 + load * 0.4;
+            ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+            const screen = camera.worldToScreen(wx, wy);
+            ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
+        }
+    }
+
+    // Draw intersection markers (hollow circles with thick border)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = Math.max(1, cellScreenSize * 0.08);
+    for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+            const idx = y * N + x;
+            if (!isIntersection[idx]) continue;
+
+            const wx = fieldToWorldX(x + 0.5);
+            const wy = fieldToWorldY(y + 0.5);
+
+            if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+            if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+
+            const screen = camera.worldToScreen(wx, wy);
+            ctx.beginPath();
+            ctx.arc(screen.x, screen.y, Math.max(2, cellScreenSize * 0.2), 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REPLAY ROAD HEATMAP — Sample-driven visualization during clockMontage
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _flowRenderMode = 'PARTICLES';  // 'PARTICLES' | 'ROAD_HEATMAP'
+let _replaySampleData = null;       // Current sample for heatmap rendering
+
+export function setFlowRenderMode(mode) {
+    _flowRenderMode = mode;
+    console.log(`[FLOW] Render mode: ${_flowRenderMode}`);
+    return _flowRenderMode;
+}
+
+export function getFlowRenderMode() {
+    return _flowRenderMode;
+}
+
+export function setReplaySampleData(sampleData) {
+    _replaySampleData = sampleData;
+}
+
+/**
+ * Draw road heatmap based on sample data during replay.
+ * Colors road cells by pressure derived from sinkQueueCount / truckHoursLostRate.
+ * Only renders when flowRenderMode === 'ROAD_HEATMAP'.
+ */
+function drawRoadHeatmap(ctx, camera) {
+    if (_flowRenderMode !== 'ROAD_HEATMAP') return;
+    if (!_replaySampleData) return;
+
+    const cellScreenSize = roi.cellSize * camera.zoom;
+    const vp = camera.viewportWorld;
+    const pad = roi.cellSize * 2;
+
+    // Normalize pressure: use sinkQueueCount (0-100+ range) and truckHoursLostRate
+    const queuePressure = Math.min((_replaySampleData.sinkQueueCount || 0) / 50, 1.0);
+    const ratePressure = Math.min((_replaySampleData.truckHoursLostRate || 0) / 10, 1.0);
+    const pressure = Math.max(queuePressure, ratePressure);
+
+    // Draw road cells with pressure-based color
+    for (const idx of roadCellIndices) {
+        const x = idx % N;
+        const y = Math.floor(idx / N);
+
+        const wx = fieldToWorldX(x);
+        const wy = fieldToWorldY(y);
+
+        // Viewport culling
+        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
+        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
+
+        // Color by system pressure: blue → cyan → green → yellow → red
+        const t = pressure;
+        let r, g, b;
+        if (t < 0.25) {
+            // Blue to Cyan
+            const t2 = t / 0.25;
+            r = 0;
+            g = Math.round(255 * t2);
+            b = 255;
+        } else if (t < 0.5) {
+            // Cyan to Green
+            const t2 = (t - 0.25) / 0.25;
+            r = 0;
+            g = 255;
+            b = Math.round(255 * (1 - t2));
+        } else if (t < 0.75) {
+            // Green to Yellow
+            const t2 = (t - 0.5) / 0.25;
+            r = Math.round(255 * t2);
+            g = 255;
+            b = 0;
+        } else {
+            // Yellow to Red
+            const t2 = (t - 0.75) / 0.25;
+            r = 255;
+            g = Math.round(255 * (1 - t2));
+            b = 0;
         }
 
-        // Draw intersection markers (hollow circles with thick border)
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = Math.max(1, cellScreenSize * 0.08);
-        for (let y = 0; y < N; y++) {
-            for (let x = 0; x < N; x++) {
-                const idx = y * N + x;
-                if (!isIntersection[idx]) continue;
-
-                const wx = fieldToWorldX(x + 0.5);
-                const wy = fieldToWorldY(y + 0.5);
-
-                if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-                if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-                const screen = camera.worldToScreen(wx, wy);
-                ctx.beginPath();
-                ctx.arc(screen.x, screen.y, Math.max(2, cellScreenSize * 0.2), 0, Math.PI * 2);
-                ctx.stroke();
-            }
-        }
+        const alpha = 0.3 + pressure * 0.5;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(2)})`;
+        const screen = camera.worldToScreen(wx, wy);
+        ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
     }
 }
 

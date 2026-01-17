@@ -31,11 +31,21 @@ let isLoaded = false;
 let _logPrefix = '';
 let _verbose = true;  // Set false for headless runs
 
+// Gate for scenarioPair writes - only director.js should call loadScenarioPairBundles
+let _scenarioPairWriteAllowed = false;
+
 export function setBundleConsumerLogPrefix(prefix) {
     _logPrefix = prefix ? `[${prefix}] ` : '';
 }
 
 export function setBundleConsumerVerbose(v) { _verbose = v; }
+
+/**
+ * Gate for scenarioPair writes. Call before loadScenarioPairBundles to mark it as authorized.
+ * Only director.js and init should use this.
+ */
+export function allowScenarioPairWrite() { _scenarioPairWriteAllowed = true; }
+export function disallowScenarioPairWrite() { _scenarioPairWriteAllowed = false; }
 
 // =============================================================================
 // PUBLIC API
@@ -351,6 +361,12 @@ import { loadScenarioPair, getInterserrana, hasScenarioPair } from './scenarioPa
  * @throws {Error} if validation or compatibility check fails
  */
 export function loadScenarioPairBundles(baselineBundle, interserranaBundle) {
+    // Gate check - only director.js and init should call this
+    if (!_scenarioPairWriteAllowed) {
+        console.warn(_logPrefix + '[BundleConsumer] WARNING: loadScenarioPairBundles called without authorization. Only director-controlled transitions should mutate scenarioPair.');
+    }
+    _scenarioPairWriteAllowed = false;  // Auto-reset after use
+
     loadScenarioPair(baselineBundle, interserranaBundle);
     // Also set current bundle to baseline for getMetadata(), getHourlyInflow(), etc.
     loadBundle(baselineBundle);
