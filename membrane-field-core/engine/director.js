@@ -148,7 +148,6 @@ export class Director {
         this.onSetLayerBAlpha = options.onSetLayerBAlpha || (() => { });
         this.onSwitchToLayerB = options.onSwitchToLayerB || (() => { });  // Layer A → Layer B weight regime switch
         this.onSetPoeMode = options.onSetPoeMode || (() => { });  // Switch POE distribution for particle coloring
-        this.onClearMacroParticles = options.onClearMacroParticles || (() => { });  // Clear macro particles for respawn
         this.onDimNonHighlighted = options.onDimNonHighlighted || (() => { });
         this.onSetCorridorColor = options.onSetCorridorColor || (() => { });
         this.onTogglePhysicsDebug = options.onTogglePhysicsDebug || (() => { });
@@ -583,12 +582,6 @@ export class Director {
                 // Switch POE distribution for particle coloring (independent of routing α)
                 // mode: 'baseline' = both slots baseline, 'interserrana' = baseline→interserrana
                 this.onSetPoeMode(instr.mode);
-                this._nextInstruction(now);
-                break;
-
-            case 'clearMacroParticles':
-                // Clear all macro particles to force respawn with current POE distribution
-                this.onClearMacroParticles();
                 this._nextInstruction(now);
                 break;
 
@@ -1170,8 +1163,9 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // Switch to baseline routing (α=1) and baseline POE coloring
             { type: 'setScenarioAlpha', alpha: 1.0 },
-            { type: 'setPoeMode', mode: 'baseline' },  // New particles use baseline POE distribution
-            { type: 'clearMacroParticles' },          // Clear old particles with stale poeIds, force respawn
+            { type: 'setPoeMode', mode: 'baseline' },  // Particles respawn with baseline POEs
+            // Immediately highlight corridors to mask stale poeIds from old distribution
+            // Old trucks keep routing, new trucks get correct poeIds, highlight hides the transition
             { type: 'highlightCorridors', poes: ['laredo', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'dimNonHighlighted', dimAlpha: 0.8 },
             // Beat 1: Feasibility rays (dashed) — instant structural collapse
@@ -1524,8 +1518,7 @@ export const Scripts = {
             { type: 'forceMacroRender', enabled: true },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
-            { type: 'setPoeMode', mode: 'interserrana' },                        // New particles use interserrana POE distribution
-            { type: 'clearMacroParticles' },                                      // Clear old particles with stale poeIds
+            { type: 'setPoeMode', mode: 'interserrana' },                        // Particles respawn with interserrana POEs
             // Pharr highlighted (magenta) immediately on entering Layer 3
             { type: 'highlightCorridors', poes: ['hidalgo_pharr', 'hidalgo_pharr'], equalBrightness: true },
             { type: 'setCorridorColor', poe: 'laredo', color: 'white' },
