@@ -5380,8 +5380,10 @@ export function draw(ctx, camera) {
     // Draw simplified commuter heatmap (green→yellow→red) if enabled
     drawCommuterHeatmap(ctx, camera);
 
-    // Draw commuter pressure (when in COMMUTER mode)
-    drawCommuterPressure(ctx, camera);
+    // Draw commuter pressure (when in COMMUTER mode, not during replay)
+    if (_flowRenderMode !== 'ROAD_HEATMAP') {
+        drawCommuterPressure(ctx, camera);
+    }
 
     // Draw speed limit polylines (when in SPEED mode)
     drawSpeedLimitPolylines(ctx, camera);
@@ -7425,6 +7427,11 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -1130.35, y: -13025.68 },
     { x: -1146.54, y: -13025.68 },
     { x: -344.90, y: -13043.14 },
+    { x: -510.69, y: -12792.56 },
+    { x: -342.69, y: -13042.56 },
+    { x: -1110.69, y: -13023.56 },
+    { x: -1123.69, y: -13024.56 },
+    { x: -1142.69, y: -13024.56 },
     // Horizontal path at y≈-12788 (13m spacing, shifted 80m south)
     { x: -494, y: -12787.22 },
     { x: -481, y: -12787.22 },
