@@ -10262,9 +10262,13 @@ function drawRoadHeatmap(ctx, camera) {
     const data = _heatmapImageData.data;
 
     // Blend new values into existing pixels
+    // Flip Y axis: ImageData has Y=0 at top, world has Y=0 at bottom
     for (const idx of roadCellIndices) {
         const presence = _heatmapPresence[idx];
-        const px = idx * 4;
+        const cx = idx % N;
+        const cy = Math.floor(idx / N);
+        const flippedIdx = (N - 1 - cy) * N + cx;
+        const px = flippedIdx * 4;
 
         if (presence <= 0) {
             // Fade out
@@ -10289,10 +10293,10 @@ function drawRoadHeatmap(ctx, camera) {
     _heatmapCtx.putImageData(_heatmapImageData, 0, 0);
 
     // Blit to main canvas with proper transform
-    // ROI origin is at (centerX - sizeM/2, centerY - sizeM/2)
-    const originX = roi.centerX - roi.sizeM / 2;
-    const originY = roi.centerY - roi.sizeM / 2;
-    const topLeft = camera.worldToScreen(originX, originY);
+    // After Y-flip, ImageData row 0 = world top, so draw at top-left of ROI
+    const worldLeft = roi.centerX - roi.sizeM / 2;
+    const worldTop = roi.centerY + roi.sizeM / 2;  // Top of ROI (high Y)
+    const topLeft = camera.worldToScreen(worldLeft, worldTop);
     const screenSize = roi.sizeM * camera.zoom;
 
     ctx.imageSmoothingEnabled = true;

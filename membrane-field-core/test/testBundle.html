@@ -3329,6 +3329,10 @@
                     console.log(`[Director] Macro particles ${paused ? 'PAUSED' : 'RUNNING'}`);
                 }
             },
+            onHideParticles: (hidden) => {
+                setHideParticles(hidden);
+                console.log(`[Director] Particles ${hidden ? 'HIDDEN' : 'VISIBLE'}`);
+            },
             // Dimension stack callbacks
             onShowDim: (dim, text) => {
                 const el = document.getElementById(`dim-${dim}`);
