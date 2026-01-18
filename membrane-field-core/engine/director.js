@@ -1532,7 +1532,13 @@ export const Scripts = {
             // ─────────────────────────────────────────────────────────────
             // PHASE 6: SCENARIO COMPARISON (temporal replay from results)
             // FIXED ORDER — additive infrastructure layers
+            // Replay uses sampled data, not live sim - clear all particles
             // ─────────────────────────────────────────────────────────────
+
+            // Clear and pause local sim - replay is a separate system
+            { type: 'resetSim' },
+            { type: 'pause', pause: true },        // Pause local sim physics
+            { type: 'macroPause', pause: true },
 
             // Reset ledger for fresh comparison
             { type: 'resetLedger' },
@@ -1563,8 +1569,6 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },  // Post-replay hold
             { type: 'clearMetrics' },
-            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
-            { type: 'hideParticles', hidden: true },  // Hide stale particles
             { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
@@ -1588,8 +1592,6 @@ export const Scripts = {
             { type: 'wait', duration: 5000 },
             { type: 'snapToFrame', target: 'scenarioRun' },
 
-            { type: 'hideParticles', hidden: false },  // Show particles
-            { type: 'macroPause', pause: false },  // Resume particles for replay
             { type: 'startReplay', scenario: 'Twinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
             { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
@@ -1599,8 +1601,6 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
             { type: 'clearMetrics' },
-            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
-            { type: 'hideParticles', hidden: true },  // Hide stale particles
             { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
@@ -1618,8 +1618,6 @@ export const Scripts = {
             { type: 'scenarioIntervention', name: 'InovusTwinspan', intervention: '+ Patios Inovus' },
             { type: 'visualChange', effect: 'inovusFull' },
             { type: 'wait', duration: 3000 },
-            { type: 'hideParticles', hidden: false },  // Show particles
-            { type: 'macroPause', pause: false },  // Resume particles for replay
             { type: 'startReplay', scenario: 'InovusTwinspan', days: 7 },
             { type: 'setReplayMode', enabled: true, timeScale: 168 },
             { type: 'setFlowRenderMode', mode: 'ROAD_HEATMAP' },
@@ -1629,8 +1627,6 @@ export const Scripts = {
             { type: 'setReplayMode', enabled: false },
             { type: 'wait', duration: 4000 },
             { type: 'clearMetrics' },
-            { type: 'macroPause', pause: true },   // Freeze particles between scenarios
-            { type: 'hideParticles', hidden: true },  // Hide stale particles
             { type: 'setHour', hour: 0 },          // Reset clock to start
 
             // ═══════════════════════════════════════════════════════════
@@ -1648,8 +1644,7 @@ export const Scripts = {
             { type: 'scenarioIntervention', name: 'InovusTwinspanInterserrana', intervention: '+ Interserrana' },
 
             // Show routing change visually (zoom out to show Pharr + Laredo corridors)
-            { type: 'hideParticles', hidden: false },  // Show particles
-            { type: 'macroPause', pause: false },  // Resume particles for corridor visualization
+            { type: 'macroPause', pause: false },  // Resume macro particles for corridor visualization
             { type: 'forceMacroRender', enabled: true },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },
             { type: 'setMacroParticleDensity', multiplier: 2.5 },

@@ -3321,7 +3321,9 @@
                 el.style.display = 'none';
             },
             onSimPause: (paused) => {
+                time.paused = paused;
                 document.getElementById('btn-pause').textContent = paused ? 'Resume' : 'Pause';
+                console.log(`[Director] Local sim ${paused ? 'PAUSED' : 'RUNNING'}`);
             },
             onMacroPause: (paused) => {
                 if (macroParticles) {
