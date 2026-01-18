@@ -10299,6 +10299,16 @@ function drawRoadHeatmap(ctx, camera) {
     const topLeft = camera.worldToScreen(worldLeft, worldTop);
     const screenSize = roi.sizeM * camera.zoom;
 
+    // Debug: log blit position every 60 frames
+    if (_heatmapFrame === 0) {
+        // Count pixels with alpha > 0
+        let pixelsWithAlpha = 0;
+        for (let i = 3; i < data.length; i += 4) {
+            if (data[i] > 0) pixelsWithAlpha++;
+        }
+        console.log(`[HEATMAP BLIT] topLeft=(${topLeft.x.toFixed(0)}, ${topLeft.y.toFixed(0)}) size=${screenSize.toFixed(0)} pixelsWithAlpha=${pixelsWithAlpha}`);
+    }
+
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(_heatmapCanvas, topLeft.x, topLeft.y, screenSize, screenSize);
 }
