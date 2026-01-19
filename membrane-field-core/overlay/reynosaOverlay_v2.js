@@ -50,6 +50,10 @@ import {
     recordAdmitLots,
 } from '../tracker/logger.js';
 
+// Shared utilities (deduplicated)
+import { MinHeap } from '../lib/MinHeap.js';
+import { PHI_LARGE, PHI_SINK, K_THRESHOLD } from '../lib/constants.js';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS — All with physical meaning or explicit knobs
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -237,9 +241,7 @@ let ROAD_CELL_CAP_KG = 27000;             // Hard cap: physical gridlock (recomp
 let RHO_CONGESTION_0 = 10800;             // Onset density: flow starts degrading (recomputed)
 let MAX_RENDER_OFFSET_M = 50;             // Max congestion spread offset (recomputed)
 
-const PHI_LARGE = 1e9;                    // "Unreachable" marker
-const PHI_SINK = 0.01;                    // Sink potential (slightly above zero)
-const K_THRESHOLD = 0.01;                 // Minimum conductance for traversability
+// PHI_LARGE, PHI_SINK, K_THRESHOLD now imported from ../lib/constants.js
 const SINK_CAP_MULT = 3.0;                // Bridge approach capacity multiplier (simulates 3 lanes)
 
 // Bridge approach region (quadrilateral in world coords)
@@ -2071,42 +2073,7 @@ function findNearestRoutableRoad(fromCellIdx) {
 // DIJKSTRA — Compute shortest paths to sinks
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class MinHeap {
-    constructor() { this.data = []; }
-    
-    push(item) {
-        this.data.push(item);
-        let i = this.data.length - 1;
-        while (i > 0) {
-            const parent = (i - 1) >> 1;
-            if (this.data[parent][0] <= this.data[i][0]) break;
-            [this.data[parent], this.data[i]] = [this.data[i], this.data[parent]];
-            i = parent;
-        }
-    }
-    
-    pop() {
-        if (this.data.length === 0) return undefined;
-        const top = this.data[0];
-        const last = this.data.pop();
-        if (this.data.length > 0) {
-            this.data[0] = last;
-            let i = 0;
-            while (true) {
-                let smallest = i;
-                const left = 2 * i + 1, right = 2 * i + 2;
-                if (left < this.data.length && this.data[left][0] < this.data[smallest][0]) smallest = left;
-                if (right < this.data.length && this.data[right][0] < this.data[smallest][0]) smallest = right;
-                if (smallest === i) break;
-                [this.data[smallest], this.data[i]] = [this.data[i], this.data[smallest]];
-                i = smallest;
-            }
-        }
-        return top;
-    }
-    
-    isEmpty() { return this.data.length === 0; }
-}
+// MinHeap now imported from ../lib/MinHeap.js
 
 function computePotential(sinkIndices, phiOutput, label, sinkBias = null, biasWeight = 0, KxxSource = null, KyySource = null) {
     // Use overrides if provided, otherwise global K fields

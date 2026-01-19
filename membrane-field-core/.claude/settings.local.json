@@ -40,7 +40,8 @@
       "Bash(move:*)",
       "Bash(cmd.exe:*)",
       "Bash(lsof:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(node --check:*)"
     ]
   }
 }
