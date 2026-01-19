@@ -41,7 +41,10 @@
       "Bash(cmd.exe:*)",
       "Bash(lsof:*)",
       "Bash(npm install)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(while read line)",
+      "Bash(do echo \"$line\")",
+      "Bash(sort:*)"
     ]
   }
 }

@@ -53,6 +53,36 @@ import {
 // Shared utilities (deduplicated)
 import { MinHeap } from '../lib/MinHeap.js';
 import { PHI_LARGE, PHI_SINK, K_THRESHOLD } from '../lib/constants.js';
+import { getNeighbors4 } from '../lib/grid.js';
+import {
+    BRIDGE_APPROACH_QUAD,
+    INDUSTRIAL_ZONES,
+    COMMUTER_POLYLINES,
+    INTERSECTION_POINTS,
+    INTERSECTION_RADIUS_M,
+    SPEED_LIMIT_POLYLINES,
+    SPEED_LIMIT_BUFFER_M,
+} from '../data/geometry.js';
+import {
+    COMMUTER_MULT_24,
+    COMMUTER_EQUIV_KG,
+    COMMUTER_LANE_SHRINK,
+    COMMUTER_SPEED_PENALTY,
+    arterialMultiplier,
+    approachMultiplier,
+    urbanMultiplier,
+    aduanaMultiplier,
+    commuterMultiplier,
+} from '../friction/commuter.js';
+import {
+    COLD_CHAIN_FRACTION,
+    PARK_DWELL_HOURS,
+    PARK_DWELL_S,
+    PARK_DWELL_24H_S,
+    PARK_KG_PER_M2,
+    LOT_COOLDOWN_S,
+    sampleDwellSeconds,
+} from '../lots/admission.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS — All with physical meaning or explicit knobs
@@ -119,42 +149,6 @@ export function isStressMode() {
     return _stressMultiplier > 1;
 }
 
-// DEPRECATED: Fixed dwell time replaced by sampleDwellSeconds()
-// Kept for reference: mean dwell is ~46h (weighted by cold chain fraction)
-const DWELL_HOURS_MEAN = 46;              // Approximate mean (for documentation only)
-const DWELL_S_MEAN = DWELL_HOURS_MEAN * 3600;
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// LOT DWELL TIME — Bimodal distribution (cold chain vs non-cold)
-// ═══════════════════════════════════════════════════════════════════════════════
-// Source: BTS HS2 x POE x direction x transport mode query (Pharr-specific)
-// 64% cold chain (shorter dwell), 36% non-cold (longer dwell)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const COLD_CHAIN_FRACTION = 0.64;
-
-// Triangular distribution: bounded, has mode, easy to reason about
-function triangular(min, mode, max) {
-    const u = rng();  // MUST use seeded rng(), not Math.random()
-    const f = (mode - min) / (max - min);
-    if (u < f) {
-        return min + Math.sqrt(u * (max - min) * (mode - min));
-    } else {
-        return max - Math.sqrt((1 - u) * (max - min) * (max - mode));
-    }
-}
-
-// Sample dwell time in seconds
-// Cold chain: 36-48 hours, mode 40h
-// Non-cold: 48-72 hours, mode 54h
-function sampleDwellSeconds() {
-    if (rng() < COLD_CHAIN_FRACTION) {
-        return triangular(36, 40, 48) * 3600;
-    } else {
-        return triangular(48, 54, 72) * 3600;
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // FIELD CALIBRATED CONGESTION PARAMETERS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -199,15 +193,6 @@ for (let i = 0; i < CONGESTION_LUT_SIZE; i++) {
     CONGESTION_LUT[i] = 1 / (1 + Math.pow(i / 100, CONGESTION_P));
 }
 
-// Commuter forcing curve: hourly congestion multiplier [0.3, 1.0]
-// Source: MetroCount P1 light-vehicle hourly volumes, normalized to peak (6am = 1.0)
-// Modulates effective density / friction seen by trucks
-const COMMUTER_MULT_24 = [
-    0.342, 0.300, 0.300, 0.352, 0.439, 0.853, 1.000, 0.816,  // 00:00-07:00
-    0.728, 0.642, 0.710, 0.784, 0.812, 0.779, 0.721, 0.767,  // 08:00-15:00
-    0.821, 0.839, 0.746, 0.599, 0.518, 0.485, 0.451, 0.383   // 16:00-23:00
-];
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROAD CONGESTION — Physical capacity gates with nonlinear throughput degradation
 // Exposes upstream shockwaves and variance propagation, not vehicle-level dynamics.
@@ -244,14 +229,7 @@ let MAX_RENDER_OFFSET_M = 50;             // Max congestion spread offset (recom
 // PHI_LARGE, PHI_SINK, K_THRESHOLD now imported from ../lib/constants.js
 const SINK_CAP_MULT = 3.0;                // Bridge approach capacity multiplier (simulates 3 lanes)
 
-// Bridge approach region (quadrilateral in world coords)
-// Cells inside this region get 3x capacity to simulate multi-lane approach
-const BRIDGE_APPROACH_QUAD = [
-    { x: 145.43365576849544, y: 2199.9614127275727 },   // Top-left
-    { x: 444.4335700493182, y: 2116.241436728942 },    // Top-right
-    { x: -285.12622079588925, y: -2416.5972637683303 }, // Bottom-right
-    { x: -536.2861487917803, y: -2308.957294627234 },  // Bottom-left
-];
+// BRIDGE_APPROACH_QUAD now imported from ../data/geometry.js
 
 // Point-in-quadrilateral test using cross products
 function isInBridgeApproach(wx, wy) {
@@ -352,9 +330,6 @@ const SIM_TIME_SCALE = SIM_SECONDS_PER_DAY / DAY_VIDEO_SECONDS;  // ~1152x
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const COMMUTER_EQUIV_KG = 9000;           // = 0.35 × 27,000 / 1.0 (field calibrated)
-const COMMUTER_LANE_SHRINK = 0.35;        // Lane narrowing visual factor
-const COMMUTER_SPEED_PENALTY = 0.15;      // Direct friction (texture, weaving/yielding)
 const MAGENTA_STRENGTH = 0.70;            // Deep magenta tint intensity (congestion glow)
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -541,63 +516,6 @@ function smoothPulse(hour, peakHour, rampWidth, peakValue, baseValue) {
     return baseValue + (peakValue - baseValue) * smooth;
 }
 
-/**
- * Arterial multiplier: peaks at 7:30AM, 2PM, 8PM.
- * Peak: 1.2, Medium: 0.6 (daytime), Low: 0.24 (night)
- */
-function arterialMultiplier(hour) {
-    // Peak: 7-8 (7:30AM), 14 (2PM), 20 (8PM)
-    if (hour === 7 || hour === 8 || hour === 14 || hour === 20) return 1.2;
-    if (hour === 6 || hour === 9 || hour === 13 || hour === 15 || hour === 19 || hour === 21) return 0.84;
-    // Medium: daytime
-    if (hour >= 6 && hour <= 22) return 0.6;
-    // Low: night
-    return 0.24;
-}
-
-/**
- * Industrial approach multiplier (PIR_COLONIAL segment).
- * ============================================================
- * FIELD CALIBRATED — MetroCount Colonial P1-P3, Mar 2023
- * Range: [0.3, 1.0], peak at 6am (industrial zone morning rush).
- * Source: COMMUTER_MULT_24 array (see calibration block at top of file).
- * ============================================================
- */
-function approachMultiplier(hour) {
-    return COMMUTER_MULT_24[hour % 24];
-}
-
-/**
- * Urban arterial multiplier: peak at 7PM only, otherwise clear.
- * Peak: 1.0 at 19:00, shoulder at 18-20, otherwise 0.
- */
-function urbanMultiplier(hour) {
-    if (hour === 19) return 1.0;
-    if (hour === 18 || hour === 20) return 0.5;
-    return 0;
-}
-
-/**
- * Aduana (customs/border) multiplier: dual peaks at shift boundaries.
- * Peak at 6AM and 4PM (shift start/end), medium at 10AM and 8PM.
- */
-function aduanaMultiplier(hour) {
-    // Peak: 6AM, 4PM (1.0)
-    // Medium: 10AM, 8PM (0.5)
-    // Low: night/off-peak (0.15)
-    if (hour === 6 || hour === 16) return 1.0;
-    if (hour === 5 || hour === 7 || hour === 15 || hour === 17) return 0.8;
-    if (hour === 10 || hour === 20) return 0.5;
-    if (hour === 9 || hour === 11 || hour === 19 || hour === 21) return 0.35;
-    if (hour >= 8 && hour <= 18) return 0.25;  // Daytime base
-    return 0.15;  // Night
-}
-
-/** Legacy wrapper for compatibility */
-function commuterMultiplier(hour) {
-    return approachMultiplier(hour);
-}
-
 // Hardcoded corridor entry points (from user coordinate picker)
 // These are located on the actual CIEN roads entering the ROI
 const CORRIDOR_ENTRY_COORDS = [
@@ -696,50 +614,7 @@ function getPulseMultiplier(simTimeS, phaseOffset = 0, sourceIdx = 0) {
     return Math.max(0.12, multiplier);
 }
 
-// Submarket zones for industrial park injection (world coordinates)
-// Each zone gets a fixed share of total industrial flow; parks within distribute by m²
-const INDUSTRIAL_ZONES = [
-    {
-        id: 'norte',
-        share: 0.07,  // 7%
-        polygon: [
-            { x: -15074.134959326351, y: 9637.908434651506 },
-            { x: -15178.790784024386, y: 7926.0381592336535 },
-            { x: -12405.411429526468, y: 7724.201925887443 },
-            { x: -12517.54267027436, y: 9608.006770452068 },
-        ]
-    },
-    {
-        id: 'poniente',
-        share: 0.32,  // 32%
-        polygon: [
-            { x: -19374.27564805051, y: 1861.8294955748534 },
-            { x: -17832.80399913455, y: -4934.659138281881 },
-            { x: -10020.345414855932, y: -4847.075521866202 },
-            { x: -9757.594565608893, y: 1616.5953696109507 },
-        ]
-    },
-    {
-        id: 'san_fernando',
-        share: 0.03,  // 3%
-        polygon: [
-            { x: -9261.317711786247, y: -5681.080225777392 },
-            { x: -9261.317711786247, y: -7866.3996312016425 },
-            { x: -4645.596350796708, y: -8540.376644089496 },
-            { x: -5605.503005515771, y: -4680.326479368156 },
-        ]
-    },
-    {
-        id: 'pharr_bridge',
-        share: 0.58,  // 58%
-        polygon: [
-            { x: -3481.454237626778, y: -1718.9123318306201 },
-            { x: -2317.31212445685, y: -9153.083019442089 },
-            { x: 5341.51756745057, y: -9663.67166556925 },
-            { x: 5116.858563154619, y: -3128.136995141586 },
-        ]
-    },
-];
+// INDUSTRIAL_ZONES now imported from ../data/geometry.js
 
 // Injection point weight ratios (from CIEN segment matching)
 // Key = entry point id, Value = ratio [0,1] (sums to 1)
@@ -1294,7 +1169,6 @@ let lotMass = new Float32Array(0);                // Current kg per lot
 // Once a lot hits cutoff and starts releasing, it stays excluded until empty + cooldown
 let lotDraining = new Set();                      // Lots currently draining (exclude from phi)
 let lotCooldownEndSimS = new Float64Array(0);     // Sim-time seconds when cooldown ends (0 = no cooldown)
-const LOT_COOLDOWN_S = 60;                        // 60 sim-seconds after empty (dt-invariant)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REPLAY LOT PARTICLES — Fake particles for lot fill visualization during replay
@@ -1450,14 +1324,8 @@ let parkMass = new Float32Array(0);               // Current kg per park
 const phi_parks = new Float32Array(N2);           // Distance to nearest park
 const nextHop_parks = new Int32Array(N2);         // Next cell toward park
 
-// Park release timing
-const PARK_DWELL_HOURS = 4;                       // Hours in park before release to lot
-const PARK_DWELL_S = PARK_DWELL_HOURS * 3600;     // Dwell time in seconds
-const PARK_DWELL_24H_S = 24 * 3600;               // 24-hour dwell for industrial park particles
+// Park release queue
 const parkReleaseQueue = [];                      // FIFO queue for park → lot/road release
-
-// Park capacity density (kg per m² of park area)
-const PARK_KG_PER_M2 = 4.0;                       // Higher than lots - staging is denser
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INDUSTRIAL PARK TRACKING — For source injection only (merged with regular parks)
@@ -2112,14 +1980,7 @@ function computePotential(sinkIndices, phiOutput, label, sinkBias = null, biasWe
         visited[idx] = 1;
         reachable++;
 
-        // 4-connected neighbors only
-        const x = idx % N;
-        const y = Math.floor(idx / N);
-        const neighbors = [];
-        if (x > 0) neighbors.push(idx - 1);
-        if (x < N - 1) neighbors.push(idx + 1);
-        if (y > 0) neighbors.push(idx - N);
-        if (y < N - 1) neighbors.push(idx + N);
+        const neighbors = getNeighbors4(idx, N);
 
         for (const ni of neighbors) {
             // Must be traversable (use K overrides if provided)
@@ -2164,13 +2025,7 @@ function buildNextHop(phiInput, nhOutput, label = null) {
     for (let idx = 0; idx < N2; idx++) {
         if (phiInput[idx] >= PHI_LARGE) continue;
 
-        const x = idx % N;
-        const y = Math.floor(idx / N);
-        const neighbors = [];
-        if (x > 0) neighbors.push(idx - 1);
-        if (x < N - 1) neighbors.push(idx + 1);
-        if (y > 0) neighbors.push(idx - N);
-        if (y < N - 1) neighbors.push(idx + N);
+        const neighbors = getNeighbors4(idx, N);
 
         let bestNh = -1;
         let bestPhi = phiInput[idx];
@@ -3038,18 +2893,12 @@ function stepDriftAndTransferInner(dt) {
                     if (fill >= _lotAdmissionCutoff) {
                         // Try alternative neighbor toward different lot (forward)
                         const currentPhi = phi_lots[cellIdx];
-                        const cx = cellIdx % N;
-                        const cy = Math.floor(cellIdx / N);
 
                         let altNh = -1;
                         let altPhi = currentPhi;
                         let backtrackNh = -1;
                         let backtrackPhi = Infinity;
-                        const neighbors = [];
-                        if (cx > 0) neighbors.push(cellIdx - 1);
-                        if (cx < N - 1) neighbors.push(cellIdx + 1);
-                        if (cy > 0) neighbors.push(cellIdx - N);
-                        if (cy < N - 1) neighbors.push(cellIdx + N);
+                        const neighbors = getNeighbors4(cellIdx, N);
 
                         for (const ni of neighbors) {
                             if (ni === nh) continue;  // Skip the full lot
@@ -3121,17 +2970,11 @@ function stepDriftAndTransferInner(dt) {
                 if (p.state === STATE.ROAD) {
                     // Industrial parks are source-only, not destinations
                     const currentPhi = phi_lots[cellIdx];
-                    const cx = cellIdx % N;
-                    const cy = Math.floor(cellIdx / N);
 
                     // Check 4 neighbors for less congested alternative
                     let altNh = -1;
                     let altCongestion = Infinity;
-                    const neighbors = [];
-                    if (cx > 0) neighbors.push(cellIdx - 1);
-                    if (cx < N - 1) neighbors.push(cellIdx + 1);
-                    if (cy > 0) neighbors.push(cellIdx - N);
-                    if (cy < N - 1) neighbors.push(cellIdx + N);
+                    const neighbors = getNeighbors4(cellIdx, N);
 
                     for (const ni of neighbors) {
                         if (ni === nh) continue;  // Skip the blocked one
@@ -3482,7 +3325,7 @@ function applyTransfer({ p, from, to, action }) {
                 removeFromMovingParticles(p);
                 p.lotIdx = lotIdx;
                 p.lotArrivalTime = simTime;
-                p.dwellEnd = simTime + sampleDwellSeconds();
+                p.dwellEnd = simTime + sampleDwellSeconds(rng);
                 p.renderStalled = false;  // Clear stall - now waiting normally
                 p.stallReason = null;     // Clear lot_full stall (instrumentation)
                 p.slotIdx = cellParticles[targetCell].length;
@@ -5673,271 +5516,7 @@ function unstampTwinSpanRoad() {
  *
  * NO cars, NO buses, NO new particles. This is capacity theft, not traffic simulation.
  */
-const COMMUTER_POLYLINES = [
-    {
-        type: 'industrial_approach',
-        weight: 1.0,
-        name: 'PIR_COLONIAL_SPINE',
-        polylines: [
-            [
-                [-214.49423692434993, -7500.193165803793],
-                [-214.49423692434993, -6204.256763733247],
-                [-324.0099892120017, -5751.591654277619],
-            ],
-        ],
-    },
-    {
-        type: 'industrial_approach',
-        weight: 0.6,
-        name: 'REX-RBR',
-        polylines: [
-            [
-                [-294.7045281296, -5749.520168684549],
-                [2999.6942131163346, -6601.03964126846],
-            ],
-        ],
-    },
-    {
-        type: 'aduana',
-        weight: 0.9,
-        name: 'ADUANA_APPROACH',
-        polylines: [
-            [
-                [-335.775121533232, -4271.348689457563],
-                [-417.0257555042095, -3875.9289374654722],
-                [-509.10980733798397, -3422.730956871798],
-                [-510.9153769817835, -3346.8970318322185],
-                [-460.35942695539745, -3036.3390530987044],
-                [-391.74778049101644, -2906.3380387451407],
-            ],
-        ],
-    },
-    {
-        type: 'industrial_approach',
-        weight: 0.8,
-        name: 'VILLAFLORIDA',
-        polylines: [
-            [
-                [-18471.80685735676, -2188.2584241885993],
-                [-16524.762802685364, -1361.195462912253],
-                [-15887.23510336818, -1748.8812260105403],
-                [-15590.009351659493, -1891.0326724799124],
-            ],
-        ],
-    },
-    {
-        type: 'commuter_arterial',
-        weight: 1.0,
-        name: 'SAN_FERNANDO_ARTERY',
-        polylines: [
-            [
-                [-7366.374550970289, -3970.4150578068948],
-                [-7345.63073495644, -3826.804023864861],
-                [-7269.038183520689, -3762.9768976684018],
-                [-7245.103011197017, -3691.171380697385],
-                [-7292.973355844361, -3590.6436569379616],
-                [-7299.356068464007, -3515.646783657122],
-                [-7261.059792746131, -3354.483290011062],
-                [-7249.890045661751, -3273.103704110576],
-                [-7186.062919465291, -3265.1253133360187],
-                [-7069.578414156753, -3320.9740487579206],
-            ],
-        ],
-    },
-    {
-        type: 'commuter_arterial',
-        weight: 0.7,
-        name: 'PORFIRIO_DIAZ',
-        polylines: [
-            [
-                [-4613.0306114751775, -4521.432135977184],
-                [-2814.5068624856867, -4989.726998921617],
-                [-473.0325477635197, -5648.0545598724875],
-            ],
-        ],
-    },
-    {
-        type: 'urban_arterial',
-        weight: 0.7,
-        name: 'ENTRADA_MTY',
-        polylines: [
-            [
-                [-37945.192676822146, -10833.036383865958],
-                [-8663.937237237742, 2123.9191481501402],
-            ],
-        ],
-    },
-];
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SPEED LIMIT ZONES — Road classification determines max speed (not friction)
-// ═══════════════════════════════════════════════════════════════════════════════
-const SPEED_LIMIT_POLYLINES = [
-    {
-        speedKph: 55,
-        name: 'BLVD_LIBRAMIENTO',
-        polylines: [
-            [
-                [-16574.487964270673, -1305.6248559919432],
-                [-15663.974536014346, -1882.332109016965],
-                [-8222.462782699557, -2696.002274209865],
-                [-8025.920266903473, -2833.899039324859],
-                [-7296.81093411155, -3228.5690912057044],
-                [-4600.6914230701095, -4544.135930808523],
-                [-1310.1893037743844, -5442.842434489004],
-                [931.0293844164419, -6045.1501441866785],
-                [3604.9586114163885, -6785.354618999349],
-            ],
-        ],
-    },
-    {
-        speedKph: 100,
-        name: 'LRSII_PONIENTE',
-        polylines: [
-            [
-                [-6007.013894734803, -15181.327649239845],
-                [-7299.582348194048, -15613.630907514353],
-                [-7738.900174284277, -15643.199973757553],
-                [-8096.33315750356, -15620.860412306349],
-                [-13679.444947061722, -14726.545011459011],
-                [-14011.146831257453, -14632.708294219428],
-                [-14340.666466215054, -14475.586349074083],
-                [-24174.208363900656, -7792.687776732117],
-                [-25312.160153590215, -5179.150149862686],
-            ],
-        ],
-    },
-    {
-        speedKph: 80,
-        name: 'LRSII_ESTE',
-        polylines: [
-            [
-                [-6368.473358043923, -15656.368140701457],
-                [-6301.114177286924, -15442.473198297654],
-                [-6168.759295799487, -15278.211336451637],
-                [-5986.771333754261, -15176.581695309498],
-                [-4934.735747801488, -14801.840246823089],
-                [-4247.4223822055665, -14047.257913530544],
-                [-4107.034971360443, -13968.289994930163],
-                [-3992.181464068437, -13935.825215512823],
-                [-3430.181464068437, -13885.825215512823],
-                [-3097.181464068437, -13861.825215512823],
-                [-2880.181464068437, -13836.825215512823],
-                [-2740.181464068437, -13805.825215512823],
-                [-2624.181464068437, -13765.825215512823],
-                [-2447.5932287743194, -13688.001686101059],
-                [-2232.5932287743194, -13568.001686101059],
-                [-2105.5932287743194, -13510.001686101059],
-                [-2025.5932287743194, -13494.001686101059],
-                [-1580.818552802236, -13285.33128553804],
-                [-1436.818552802236, -13205.33128553804],
-                [-1298.818552802236, -13082.33128553804],
-                [2701.563588760961, -8238.34914153981],
-                [2807.563588760961, -8080.34914153981],
-                [3145.563588760961, -7258.34914153981],
-            ],
-        ],
-    },
-    {
-        speedKph: 110,
-        name: 'ENTRADA_SANFERNANDO',
-        polylines: [
-            [
-                [-5313.633075342698, -27903.379680195907],
-                [-6409.465627335332, -15286.63804459721],
-            ],
-        ],
-    },
-    {
-        speedKph: 55,
-        name: 'REYNOSA_SANFERNANDO',
-        polylines: [
-            [
-                [-6414.56121856187, -15274.666116411796],
-                [-7355.329811062372, -4148.605235697094],
-                [-7265.419170352707, -3344.6983305283306],
-            ],
-        ],
-    },
-    {
-        speedKph: 60,
-        name: '2D',
-        polylines: [
-            [
-                [3156.928263876448, -7259.223566829529],
-                [3329.928263876448, -7116.223566829529],
-                [4100.928263876448, -6771.223566829529],
-                [5990.236081950355, -5914.857394929713],
-                [6214.236081950355, -5861.857394929713],
-                [6406.236081950355, -5853.857394929713],
-                [9768.246661723451, -5897.328711504852],
-                [11627.841972782506, -5919.581117947901],
-            ],
-        ],
-    },
-    {
-        speedKph: 100,
-        name: 'AVE_PTE_PHARR',
-        polylines: [
-            [
-                [-344.6282421308715, -13042.040588503369],
-                [-549.9350614429121, -12139.653375770506],
-                [-554.5252970950285, -10710.832667154451],
-                [-538.5252970950285, -10483.832667154451],
-                [-466.52529709502846, -10238.832667154451],
-                [-168.63719050313227, -9461.650814745419],
-                [-120.63719050313227, -9191.650814745419],
-                [-124.16125407285438, -8202.671062174459],
-                [-186.7697831430176, -7861.169994519023],
-                [-214.74712221281024, -6522.50849375271],
-                [-212.17383969920076, -6204.079288562246],
-                [-302.17383969920076, -5929.079288562246],
-                [-308.47102721409914, -5727.142442084996],
-            ],
-        ],
-    },
-    {
-        speedKph: 60,
-        name: 'LRSII_NORTE_60',
-        polylines: [
-            [
-                [-16558.58956968774, -1340.766476624469],
-                [-25277.560682617026, -5134.537879489104],
-            ],
-        ],
-    },
-    {
-        speedKph: 100,
-        name: 'LRSII_NORTE_100',
-        polylines: [
-            [
-                [-25277.560682617026, -5134.537879489104],
-                [-39213.000266958436, -11141.148604974645],
-            ],
-        ],
-    },
-    {
-        speedKph: 25,
-        name: 'ENTRADA_PUENTE',
-        polylines: [
-            [
-                [-301.47102721409914, -5688.142442084996],
-                [-330.15914851380217, -4290.670112505478],
-                [-464.58723897602334, -3567.648156670087],
-                [-508.58723897602334, -3346.648156670087],
-                [-465.58723897602334, -3036.648156670087],
-                [-414.58723897602334, -2954.648156670087],
-                [-386.58723897602334, -2818.648156670087],
-                [-365.58723897602334, -2696.648156670087],
-                [-379.4315421967008, -2631.832858514562],
-                [-387.58723897602334, -2596.648156670087],
-                [333.60928610387634, 2195.2086653000115],
-            ],
-        ],
-    },
-];
-
-const SPEED_LIMIT_BUFFER_M = 60;  // Buffer radius for speed limit zones
+// COMMUTER_POLYLINES, SPEED_LIMIT_POLYLINES, SPEED_LIMIT_BUFFER_M now imported from ../data/geometry.js
 
 function stampSpeedLimits() {
     speedLimitMS.fill(0);  // 0 = use default
@@ -5990,28 +5569,7 @@ function stampSpeedLimits() {
     }
 }
 
-/**
- * Explicit intersection points (world coords).
- * Each gets stamped with a 75m radius.
- */
-const INTERSECTION_POINTS = [
-    { x: -288.55119353020353, y: -5711.657348025975 },
-    { x: -218.11852623957964, y: -6523.704570906109 },
-    { x: -226.40472239141775, y: -7016.733241940477 },
-    { x: -205.68923201182247, y: -7480.760226443411 },
-    { x: 1961.1510616938422, y: -6324.835863261995 },
-    { x: 2876.7757364719528, y: -6569.278649741219 },
-    { x: 3013.4979729772817, y: -6606.56653242449 },
-    { x: -1303.6102221303713, y: -5409.211188483885 },
-    { x: -1332.6119086618048, y: -5475.50075769859 },
-    { x: -5931.74033199413, y: -3856.344878610892 },
-    { x: -5663.804292899273, y: -3981.613676109787 },
-    { x: -5315.8354109578995, y: -4134.719984163991 },
-    { x: -8147.731542817304, y: -2707.214527676298 },
-    { x: -9507.593650139586, y: -2540.564759622097 },
-];
-
-const INTERSECTION_RADIUS_M = 75;
+// INTERSECTION_POINTS, INTERSECTION_RADIUS_M now imported from ../data/geometry.js
 
 /**
  * Stamp intersection cells from explicit INTERSECTION_POINTS.
@@ -8125,13 +7683,7 @@ function bfsToRoad(startIdx, avoidRegion) {
         const nextFrontier = [];
         for (const idx of frontier) {
             steps++;
-            const x = idx % N;
-            const y = Math.floor(idx / N);
-            const neighbors = [];
-            if (x > 0) neighbors.push(idx - 1);
-            if (x < N - 1) neighbors.push(idx + 1);
-            if (y > 0) neighbors.push(idx - N);
-            if (y < N - 1) neighbors.push(idx + N);
+            const neighbors = getNeighbors4(idx, N);
 
             for (const ni of neighbors) {
                 if (parent.has(ni)) continue;
