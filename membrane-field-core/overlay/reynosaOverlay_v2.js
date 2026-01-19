@@ -4940,6 +4940,10 @@ async function initializeFromGeometry(geometry) {
     // Apply injection point overrides (move existing points)
     applyInjectionPointOverrides();
 
+    // Pre-compute blocker indices BEFORE any road stamping
+    // This allows stampConnector/etc to check and skip blocker cells
+    initBlockerIndices();
+
     // Bridge lots and industrial parks to road network
     bridgeLotsAndParksToRoads();
 
@@ -5003,8 +5007,9 @@ async function initializeFromGeometry(geometry) {
                 if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
                 const ni = ny * N + nx;
 
-                // Don't touch sinks
+                // Don't touch sinks or blockers
                 if (regionMap[ni] === REGION.SINK) continue;
+                if (_blockerCellIndices.has(ni)) continue;
 
                 // Mark as ROAD so stepFlow() processes it
                 if (regionMap[ni] !== REGION.ROAD) {
@@ -5634,6 +5639,8 @@ function stampTwinSpanRoad() {
                     if (cx < 0 || cx >= N || cy < 0 || cy >= N) continue;
 
                     const idx = cy * N + cx;
+                    // Don't touch blocker cells (permanent road breaks)
+                    if (_blockerCellIndices.has(idx)) continue;
                     // Only stamp if not already a road (avoid double-counting)
                     if (Kxx[idx] < 1) {
                         Kxx[idx] = 1;
@@ -7584,6 +7591,9 @@ function stampConnectorCoord(coord) {
     // Don't touch sinks
     if (regionMap[idx] === REGION.SINK) return false;
 
+    // Don't touch blocker cells (permanent road breaks)
+    if (_blockerCellIndices.has(idx)) return false;
+
     // Stamp as traversable road
     regionMap[idx] = REGION.ROAD;
     Kxx[idx] = Math.max(Kxx[idx], K_CONNECTOR);
@@ -7883,7 +7893,37 @@ const MANUAL_BLOCKER_COORDS = [
     { x: -507.31476305219303, y: -2558.043939326958 },
     { x: -507.31476305219303, y: -2574.043939326958 },
     { x: -509.98, y: -2543.46 },
+    // Road break through lot (prevent cleared particle shortcut)
+    { x: -526.5873941684329, y: -12909.97763824143 },
+    { x: -529.0139573036281, y: -12923.323735485003 },
+    { x: -529.0139573036281, y: -12940.30967743137 },
+    { x: -529.0139573036281, y: -12957.295619377737 },
+    { x: -529.0139573036281, y: -12973.068279756508 },
+    { x: -529.0139573036281, y: -12857.806530834729 },
+    { x: -527.8006757360305, y: -12840.820588888362 },
+    { x: -526.5873941684329, y: -12874.792472781097 },
+    { x: -527.8006757360305, y: -12894.204977862659 },
 ];
+
+// Cache of blocker cell indices (prevents re-stamping by connectors)
+const _blockerCellIndices = new Set();
+
+/**
+ * Pre-compute blocker cell indices BEFORE any road stamping.
+ * This populates _blockerCellIndices so stampConnector/etc can check it.
+ * Must be called early in initializeFromGeometry, before bridgeLotsAndParksToRoads.
+ */
+function initBlockerIndices() {
+    _blockerCellIndices.clear();
+    for (const coord of MANUAL_BLOCKER_COORDS) {
+        const fx = Math.floor(worldToFieldX(coord.x));
+        const fy = Math.floor(worldToFieldY(coord.y));
+        if (fx < 0 || fx >= N || fy < 0 || fy >= N) continue;
+        const idx = fy * N + fx;
+        _blockerCellIndices.add(idx);
+    }
+    log(`[BLOCKERS] Pre-computed ${_blockerCellIndices.size} blocker cell indices`);
+}
 
 function stampManualBlockers() {
     let blocked = 0;
@@ -8175,8 +8215,9 @@ function stampConnector(centerIdx, radius) {
             const nx = cx + dx, ny = cy + dy;
             if (nx < 0 || nx >= N || ny < 0 || ny >= N) continue;
             const ni = ny * N + nx;
-            // Don't overwrite lots, parks, or sinks
+            // Don't overwrite lots, parks, sinks, or blockers
             if (regionMap[ni] === REGION.LOT || regionMap[ni] === REGION.PARK || regionMap[ni] === REGION.SINK) continue;
+            if (_blockerCellIndices.has(ni)) continue;
             // Stamp conductance
             if (Kxx[ni] < K_CONNECTOR) {
                 Kxx[ni] = K_CONNECTOR;
@@ -9669,7 +9710,10 @@ export async function togglePhasesAsLots() {
         // Unstamp phase lots
         for (const idx of _phaseLotCells) {
             cellToLotIndex[idx] = -1;
-            regionMap[idx] = REGION.ROAD;  // Revert to road
+            // Don't revert blocker cells (permanent road breaks)
+            if (!_blockerCellIndices.has(idx)) {
+                regionMap[idx] = REGION.ROAD;  // Revert to road
+            }
         }
 
         // Remove phase lot indices from tracking (keep base lots)

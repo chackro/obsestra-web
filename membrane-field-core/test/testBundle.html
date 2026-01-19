@@ -6359,14 +6359,34 @@
             console.log('[R10] INOVUS: ON');
 
             // Interserrana - set alpha directly and apply
-            if (interserranaBundleLoaded) {
+            // CRITICAL: Reset interserrana scenario adapter (LAYER_A overwrote it with baseline data)
+            if (interserranaBundleLoaded && _storedInterserranaBundle) {
+                // Recreate the correct interserrana scenario adapter
+                const interserranaScenarioAdapter = {
+                    getPharrInflow(hour) {
+                        const h = Math.floor(hour) % 24;
+                        const total = _storedInterserranaBundle.inflow?.hourly_kg?.[h] || 0;
+                        const byHs2 = _storedInterserranaBundle.inflow?.hourly_kg_by_hs2?.[h];
+                        return { hs2_kg: byHs2 || { "99": total } };
+                    },
+                    getPharrGateCapacity(hour) {
+                        const h = Math.floor(hour) % 24;
+                        const cap = _storedInterserranaBundle.capacity?.hourly_kg?.[h] || 0;
+                        return { cap_kg_per_hour: cap };
+                    },
+                };
+                setInterserranaScenario(interserranaScenarioAdapter);
+
+                // Set injection ratios for LocalSim (segment weight distribution)
+                updateInjectionRatios(_storedBaselineBundle, _storedInterserranaBundle);
+
                 macroAlpha = 1;
                 macroTargetAlpha = 1;
                 macroRampStartTime = null;  // No ramp needed
                 setScenarioAlpha(1);
                 if (macroParticles) macroParticles.setScenarioAlpha(1);
                 syncInterserranaButtons(true);
-                console.log('[R10] Interserrana: ON');
+                console.log('[R10] Interserrana: ON (scenario + injection ratios set)');
             }
 
             console.log('[R10] Local sim running. Free camera enabled. Spacebar=pause, D=debug, M=particle colors.');
