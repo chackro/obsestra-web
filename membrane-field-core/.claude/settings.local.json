@@ -44,7 +44,8 @@
       "Bash(node --check:*)",
       "Bash(while read line)",
       "Bash(do echo \"$line\")",
-      "Bash(sort:*)"
+      "Bash(sort:*)",
+      "Bash(node --experimental-vm-modules -e:*)"
     ]
   }
 }

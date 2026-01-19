@@ -94,6 +94,84 @@ import {
     buildNextHop as buildNextHopExtracted,
 } from '../routing/potential.js';
 import { applyTransfer as applyTransferExtracted } from '../physics/transfer.js';
+import {
+    initParticleColors,
+    getParticleClassColor,
+    getParticleStallColor,
+    getParticleDebugColor,
+    getParticleSourceColor,
+    getParticleClassColorRGB,
+    getParticleStallColorRGB,
+    getParticleSourceColorRGB,
+    cycleParticleColorMode,
+    getParticleColorMode,
+    getParticleColorModeName,
+    toggleParticleDebugClassColors,
+    isParticleDebugColors,
+    toggleParticleSourceColors,
+    isParticleSourceColors,
+} from '../viz/particle-colors.js';
+import {
+    drawCongestionHeatmap as drawCongestionHeatmapExtracted,
+    drawCongestionCells as drawCongestionCellsExtracted,
+    drawReplayHeatmap as drawReplayHeatmapExtracted,
+    thermalGradient,
+} from '../viz/heatmap.js';
+import {
+    drawMetricsPanel as drawMetricsPanelExtracted,
+    drawStallModeLegend as drawStallModeLegendExtracted,
+} from '../viz/panels.js';
+import {
+    SPEED_COLORS,
+    drawSpeedLimitPolylines as drawSpeedLimitPolylinesExtracted,
+} from '../viz/speed-limits.js';
+import {
+    buildLotPaths as buildLotPathsExtracted,
+    drawLots as drawLotsExtracted,
+    resetLotsDebug,
+} from '../viz/lots.js';
+import {
+    buildRoadPath as buildRoadPathExtracted,
+    addCitySegmentsToPath,
+    drawRoads as drawRoadsExtracted,
+} from '../viz/roads.js';
+import {
+    isInBridgeApproach as isInBridgeApproachExtracted,
+    getTwinSpanXAtY as getTwinSpanXAtYExtracted,
+    isInQueueZone as isInQueueZoneExtracted,
+} from '../lib/geometry-queries.js';
+import {
+    setTrailsEnabled as setTrailsEnabledExtracted,
+    getTrailsEnabled as getTrailsEnabledExtracted,
+    getParticleTrails,
+    updateParticleTrails as updateParticleTrailsExtracted,
+    clearParticleTrails as clearParticleTrailsExtracted,
+    removeParticleTrail as removeParticleTrailExtracted,
+} from '../lib/particle-trails.js';
+import { computeServiceTimeStats as computeServiceTimeStatsExtracted } from '../lib/metrics.js';
+import {
+    getNextBridgeOpenHour as getNextBridgeOpenHourExtracted,
+    stepSleepRelease as stepSleepReleaseExtracted,
+} from '../physics/sleep-release.js';
+import { stepCBPLanes as stepCBPLanesExtracted } from '../physics/cbp-lanes.js';
+import {
+    releasePark as releaseParkExtracted,
+    stepParkRelease as stepParkReleaseExtracted,
+} from '../physics/park-release.js';
+import {
+    PRIOR_INDUSTRIAL_SHIFT_SHARES,
+    SHIFT_END_HOURS,
+    SHIFT_BIAS_WINDOW,
+    SHIFT_BIAS_MAX,
+    INDUSTRIAL_PULSE_DAMPING,
+    CORRIDOR_PHASE_OFFSETS,
+    ZONE_PHASE_OFFSETS,
+    getTrapezoidMultiplier,
+    getShiftBoundaryBias,
+    getIndustrialShiftFraction,
+    smoothPulse,
+    getPulseMultiplier,
+} from '../physics/pulse.js';
 
 // Wrapper to capture N (avoids changing all call sites)
 const dirFromTo = (a, b) => _dirFromTo(a, b, state.N);
@@ -246,16 +324,9 @@ const SINK_CAP_MULT = 3.0;                // Bridge approach capacity multiplier
 
 // BRIDGE_APPROACH_QUAD now imported from ../data/geometry.js
 
-// Point-in-quadrilateral test using cross products
+// Wrapper for extracted geometry query
 function isInBridgeApproach(wx, wy) {
-    const q = BRIDGE_APPROACH_QUAD;
-    // Check if point is on same side of all 4 edges
-    const cross = (ax, ay, bx, by, px, py) => (bx - ax) * (py - ay) - (by - ay) * (px - ax);
-    const s0 = cross(q[0].x, q[0].y, q[1].x, q[1].y, wx, wy) >= 0;
-    const s1 = cross(q[1].x, q[1].y, q[2].x, q[2].y, wx, wy) >= 0;
-    const s2 = cross(q[2].x, q[2].y, q[3].x, q[3].y, wx, wy) >= 0;
-    const s3 = cross(q[3].x, q[3].y, q[0].x, q[0].y, wx, wy) >= 0;
-    return (s0 === s1) && (s1 === s2) && (s2 === s3);
+    return isInBridgeApproachExtracted(wx, wy, BRIDGE_APPROACH_QUAD);
 }
 
 // Cache for cell bridge approach status (computed once per cell)
@@ -384,152 +455,8 @@ let LOOP_NEXT_HOP = null;       // Map: cellIdx -> next cell in sequence
 let _loopRoutingEnabled = true; // ON by default
 
 // ───────────────────────────────────────────────────────────────────────────────
-// INDUSTRIAL SHIFT PATTERN (3-shift manufacturing schedule)
-//
-// PRIOR — not empirically measured.
-// Industrial parks produce on shift schedules, NOT following CIEN demand.
-// Corridors follow CIEN hourly profile (demand-driven, empirical).
-// Industrial follows shift pattern (production-driven, assumed).
-//
-// NOTE: These shift shares are modeling priors, not observed data.
-// Corridor/industrial split (64.7%/35.3%) is derived from CIEN segment matching.
-// Shift distribution within industrial is assumed based on typical maquiladora ops.
-//
-// SHAPE: Soft trapezoid within each shift (no hard edges)
-//   - First 20% of shift → ramp up
-//   - Middle 60% → flat
-//   - Last 20% → ramp down
-//
-// BIAS: Mild release boost near shift END times (06, 14, 22)
-//   - ±1.5 hour window, max +25% boost, linear falloff
+// INDUSTRIAL SHIFT PATTERN — Now imported from physics/pulse.js
 // ───────────────────────────────────────────────────────────────────────────────
-const PRIOR_INDUSTRIAL_SHIFT_SHARES = {
-    day:     0.45,  // 06:00-14:00: 45% — highest staffing, fresh workers
-    evening: 0.35,  // 14:00-22:00: 35% — moderate
-    night:   0.20,  // 22:00-06:00: 20% — skeleton crew, maintenance windows
-};
-
-// Shift boundaries (end times where release bias peaks)
-const SHIFT_END_HOURS = [6, 14, 22];
-const SHIFT_BIAS_WINDOW = 1.5;    // Hours before/after shift end
-const SHIFT_BIAS_MAX = 0.25;      // Max +25% boost at shift boundary
-
-// Industrial pulse damping (smoother than corridors)
-const INDUSTRIAL_PULSE_DAMPING = 0.17;  // ±15% range (vs corridor's full ±88%)
-
-/**
- * Compute trapezoid multiplier for within-shift density.
- * Ramp up first 20%, flat middle 60%, ramp down last 20%.
- * @param {number} progressInShift - 0.0 to 1.0 progress through 8-hour shift
- * @returns {number} Multiplier (0.0 to 1.0, averages ~0.8 for mass conservation)
- */
-function getTrapezoidMultiplier(progressInShift) {
-    const p = Math.max(0, Math.min(1, progressInShift));
-    if (p < 0.2) {
-        // Ramp up: 0→1 over first 20%
-        return p / 0.2;
-    } else if (p < 0.8) {
-        // Flat middle 60%
-        return 1.0;
-    } else {
-        // Ramp down: 1→0 over last 20%
-        return (1.0 - p) / 0.2;
-    }
-}
-
-/**
- * Compute shift boundary bias (release surge near shift ends).
- * @param {number} hour - Hour (0-23)
- * @returns {number} Bias multiplier (1.0 to 1.25)
- */
-function getShiftBoundaryBias(hour) {
-    const h = hour % 24;
-    let minDist = 24;
-    for (const endHour of SHIFT_END_HOURS) {
-        // Distance considering wrap-around
-        let dist = Math.abs(h - endHour);
-        if (dist > 12) dist = 24 - dist;
-        if (dist < minDist) minDist = dist;
-    }
-    if (minDist >= SHIFT_BIAS_WINDOW) return 1.0;
-    // Linear falloff: max boost at boundary, 1.0 at edge of window
-    const bias = SHIFT_BIAS_MAX * (1 - minDist / SHIFT_BIAS_WINDOW);
-    return 1.0 + bias;
-}
-
-/**
- * Get industrial shift hourly fraction with trapezoid shaping and boundary bias.
- * Returns what fraction of daily industrial production happens THIS HOUR.
- * PRIOR — assumed distribution, not empirically measured.
- * @param {number} hour - Hour (0-23, can be fractional)
- * @returns {number} Fraction of daily industrial production
- */
-function getIndustrialShiftFraction(hour) {
-    const h = hour % 24;
-
-    // Determine which shift and base share
-    let shiftShare, shiftStart;
-    if (h >= 6 && h < 14) {
-        shiftShare = PRIOR_INDUSTRIAL_SHIFT_SHARES.day;
-        shiftStart = 6;
-    } else if (h >= 14 && h < 22) {
-        shiftShare = PRIOR_INDUSTRIAL_SHIFT_SHARES.evening;
-        shiftStart = 14;
-    } else {
-        shiftShare = PRIOR_INDUSTRIAL_SHIFT_SHARES.night;
-        shiftStart = (h >= 22) ? 22 : -2;  // Night wraps around midnight
-    }
-
-    // Progress through 8-hour shift (0.0 to 1.0)
-    let progressInShift;
-    if (shiftStart === -2) {
-        // Night shift before midnight: hour 0-6 → progress 0.25-1.0
-        progressInShift = (h + 2) / 8;
-    } else if (shiftStart === 22) {
-        // Night shift after midnight: hour 22-24 → progress 0-0.25
-        progressInShift = (h - 22) / 8;
-    } else {
-        progressInShift = (h - shiftStart) / 8;
-    }
-
-    // Base hourly fraction (uniform within shift)
-    const baseHourlyFraction = shiftShare / 8;
-
-    // Apply trapezoid shaping (smooth ramp up/down)
-    // Trapezoid averages ~0.8, so scale to preserve mass
-    const trapezoid = getTrapezoidMultiplier(progressInShift);
-    const trapezoidScale = 1.0 / 0.8;  // Normalize so average = 1.0
-
-    // Apply shift boundary bias (surge near shift ends)
-    const boundaryBias = getShiftBoundaryBias(h);
-
-    return baseHourlyFraction * trapezoid * trapezoidScale * boundaryBias;
-}
-
-// ───────────────────────────────────────────────────────────────────────────────
-// COMMUTER FRICTION TEMPORAL MODULATION
-//
-// Models commuter presence based on industrial shift patterns.
-// Peak at day shift arrival (05:00-07:00), secondary peaks at shift turnovers.
-// Baseline 25% during off-peak hours (city never fully empty).
-// ───────────────────────────────────────────────────────────────────────────────
-
-/**
- * Compute commuter presence multiplier based on time of day.
- * @param {number} hour - Hour (0-23)
- * @returns {number} Multiplier [0.25, 1.0]
- */
-/**
- * Smooth ramp function: rises from 0 to 1 over rampWidth hours centered at peakHour.
- */
-function smoothPulse(hour, peakHour, rampWidth, peakValue, baseValue) {
-    const dist = Math.abs(hour - peakHour);
-    if (dist >= rampWidth) return baseValue;
-    // Cosine smoothstep: smooth rise and fall
-    const t = 1 - dist / rampWidth;
-    const smooth = t * t * (3 - 2 * t);  // smoothstep
-    return baseValue + (peakValue - baseValue) * smooth;
-}
 
 // Hardcoded corridor entry points (from user coordinate picker)
 // These are located on the actual CIEN roads entering the ROI
@@ -574,60 +501,12 @@ function getCorridorLabelPos(corridorId) {
 }
 
 // ───────────────────────────────────────────────────────────────────────────────
-// INJECTION PULSE MODULATION (Organic arrival waves)
-//
-// Uses overlapping sine waves at incommensurate periods for natural variation.
-// No hard on/off - always some trucks, with varying intensity (~12% to ~190%).
-// Per-source jitter prevents mechanical synchronization between sources.
-// Average multiplier = 1.0 preserves hourly totals.
+// INJECTION PULSE MODULATION — Functions imported from physics/pulse.js
+// Phase offset constants (CORRIDOR_PHASE_OFFSETS, ZONE_PHASE_OFFSETS) also imported.
 // ───────────────────────────────────────────────────────────────────────────────
-
-// Phase offsets for different source types (creates staggered waves)
-const CORRIDOR_PHASE_OFFSETS = {
-    'ENTRY_VICTORIA': 0,
-    'ENTRY_MTY': 1350,  // 22.5 min offset (half period - maximally out of phase)
-};
-
-const ZONE_PHASE_OFFSETS = {
-    'norte': 450,         // 7.5 min offset
-    'poniente': 1800,     // 30 min offset
-    'san_fernando': 900,  // 15 min offset
-    'pharr_bridge': 2250, // 37.5 min offset
-};
 
 // Map source cell index -> phase offset (populated in stampSourcesFromConfig)
 const _sourcePhaseOffset = new Map();
-
-/**
- * Get pulse multiplier for injection at given sim time.
- * Uses overlapping sine waves at incommensurate periods for organic variation.
- * Always some flow (never fully off), peaks and troughs vary naturally.
- * Average multiplier ≈ 1.0 to preserve hourly totals.
- *
- * @param {number} simTimeS - Current simulation time in seconds
- * @param {number} phaseOffset - Base phase offset for this source type
- * @param {number} sourceIdx - Source cell index (adds per-source micro-variation)
- */
-function getPulseMultiplier(simTimeS, phaseOffset = 0, sourceIdx = 0) {
-    // Per-source jitter: each source gets unique micro-offset (0-10 min range)
-    // Uses prime multiplier to spread sources pseudo-randomly
-    const sourceJitter = (sourceIdx * 137) % 600;
-    const t = simTimeS + phaseOffset + sourceJitter;
-
-    // Overlapping waves at incommensurate periods (creates organic, non-mechanical feel)
-    // Periods chosen to not align: 47min, 31min, 19min, 11min
-    const wave1 = Math.sin(t * 2 * Math.PI / 2820) * 0.35;   // ~47 min, ±35%
-    const wave2 = Math.sin(t * 2 * Math.PI / 1860) * 0.25;   // ~31 min, ±25%
-    const wave3 = Math.sin(t * 2 * Math.PI / 1140) * 0.18;   // ~19 min, ±18%
-    const wave4 = Math.sin(t * 2 * Math.PI / 660) * 0.12;    // ~11 min, ±12%
-
-    // Sum oscillates around 1.0 with range ~0.1 to ~1.9
-    // Average is 1.0 (sine averages to 0), preserving hourly totals
-    const multiplier = 1.0 + wave1 + wave2 + wave3 + wave4;
-
-    // Soft floor: always some trucks (min 12% of average rate)
-    return Math.max(0.12, multiplier);
-}
 
 // INDUSTRIAL_ZONES now imported from ../data/geometry.js
 
@@ -643,15 +522,6 @@ let _industrialParkInjectionPoints = [];
 
 // Corridor entry points (populated by initCorridorEntries)
 let corridorEntryPoints = [];
-
-// Particle color mode (M key cycles)
-// 0 = OFF (default white/black)
-// 1 = STALL (normal colors, yellow when stalled)
-// 2 = SOURCE (corridor origin colors)
-// 3 = STATE (restricted=orange, cleared=cyan)
-let _particleColorMode = 0;
-const PARTICLE_COLOR_MODE_NAMES = ['OFF', 'STALL', 'SOURCE', 'STATE'];
-
 // Source type enum for tracking particle origin
 const SOURCE_TYPE = {
     UNKNOWN: 0,
@@ -764,6 +634,9 @@ const STATE = {
     SLEEPING: 5,    // Cleared mass parked overnight in sleep lot (waiting for bridge to open)
     DEPARTING: 6,   // Processed, animating departure from sink
 };
+
+// Initialize particle colors with enums
+initParticleColors(STATE, SOURCE_TYPE);
 
 // Exit zone for departing particles (world coords, ~4 cells north of PHARR)
 const EXIT_ZONE = {
@@ -878,7 +751,7 @@ function syncPositionsToGL(camera) {
             _glPositions[j++] = renderY;
 
             // Get particle color based on mode (using pooled _particleColor)
-            if (_particleColorMode === 3) {
+            if (getParticleColorMode() === 3) {
                 // STATE mode: color by particle state (restricted vs cleared)
                 if (p.state === STATE.ROAD || p.state === STATE.LOT || p.state === STATE.PARK) {
                     _particleColor.r = 1.0; _particleColor.g = 0.5; _particleColor.b = 0.0;  // Orange - restricted
@@ -887,10 +760,10 @@ function syncPositionsToGL(camera) {
                 } else {
                     _particleColor.r = 0.5; _particleColor.g = 0.5; _particleColor.b = 0.5;  // Gray - unknown
                 }
-            } else if (_particleColorMode === 2) {
+            } else if (getParticleColorMode() === 2) {
                 const src = getParticleSourceColorRGB(p);
                 _particleColor.r = src.r; _particleColor.g = src.g; _particleColor.b = src.b;
-            } else if (_particleColorMode === 1) {
+            } else if (getParticleColorMode() === 1) {
                 // STALL mode: distinct color per stall reason + congestion + queue
                 if (regionMap[p.cellIdx] === REGION.SINK) {
                     _particleColor.r = 0.0; _particleColor.g = 0.5; _particleColor.b = 1.0;  // Blue - in sink queue
@@ -920,7 +793,8 @@ function syncPositionsToGL(camera) {
     }
 
     // Add particle trails (motion streaks for high-speed replay)
-    if (_trailsEnabled && REPLAY_MODE && _particleTrails.size > 0) {
+    const _particleTrails = getParticleTrails();
+    if (getTrailsEnabled() && REPLAY_MODE && _particleTrails.size > 0) {
         // Trail color: faded version of default particle color
         // Older positions = more faded (lower brightness)
         for (const [particleId, trail] of _particleTrails) {
@@ -956,9 +830,9 @@ function syncPositionsToGL(camera) {
     // Add replay lot particles (fake particles for lot fill during replay)
     if (_replayLotParticleMode && _replayLotParticles.length > 0) {
         // Lot particles: white by default, orange in STATE mode (mode 3)
-        const lotR = _particleColorMode === 3 ? 1.0 : 1.0;
-        const lotG = _particleColorMode === 3 ? 0.5 : 1.0;
-        const lotB = _particleColorMode === 3 ? 0.0 : 1.0;
+        const lotR = getParticleColorMode() === 3 ? 1.0 : 1.0;
+        const lotG = getParticleColorMode() === 3 ? 0.5 : 1.0;
+        const lotB = getParticleColorMode() === 3 ? 0.0 : 1.0;
 
         for (const rp of _replayLotParticles) {
             // Viewport culling
@@ -998,9 +872,9 @@ function syncReplayLotParticlesToGL(camera) {
     let c = 0;  // Color index (r,g,b triplets)
 
     // Lot particles: white by default, orange in STATE mode (mode 3)
-    const lotR = _particleColorMode === 3 ? 1.0 : 1.0;
-    const lotG = _particleColorMode === 3 ? 0.5 : 1.0;
-    const lotB = _particleColorMode === 3 ? 0.0 : 1.0;
+    const lotR = getParticleColorMode() === 3 ? 1.0 : 1.0;
+    const lotG = getParticleColorMode() === 3 ? 0.5 : 1.0;
+    const lotB = getParticleColorMode() === 3 ? 0.0 : 1.0;
 
     for (const rp of _replayLotParticles) {
         // Viewport culling
@@ -1131,15 +1005,12 @@ function isBridgeOpen() {
     return SERVICE_TIME_S !== Infinity && sinkCapKgPerHour > 0;
 }
 
+// Wrapper for extracted function
 function getNextBridgeOpenHour() {
-    const currentHour = Math.floor(simTime / 3600) % 24;
-    for (let i = 1; i <= 24; i++) {
-        const h = (currentHour + i) % 24;
-        if (!rendererContext?.scenario?.getPharrGateCapacity) return currentHour;
-        const cap = rendererContext.scenario.getPharrGateCapacity(h);
-        if (cap && cap.cap_kg_per_hour > 0) return h;
-    }
-    return currentHour;  // Fallback: never opens
+    return getNextBridgeOpenHourExtracted({
+        simTime,
+        scenario: rendererContext?.scenario,
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1240,73 +1111,38 @@ export function clearReplayLotParticles() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PARTICLE TRAILS — Motion streaks for high-speed replay visualization
+// PARTICLE TRAILS — Wrappers for extracted module (lib/particle-trails.js)
 // ═══════════════════════════════════════════════════════════════════════════════
-// At 168x replay speed, particles move too fast to see. Trails show motion by
-// keeping the last N positions of each particle and rendering them as fading streaks.
 
-const TRAIL_LENGTH = 8;                            // Number of past positions to keep
-const _particleTrails = new Map();                 // particle.id → [{x, y}, ...]  (ring buffer)
-let _trailsEnabled = false;                        // Whether to render trails
-
-/**
- * Enable or disable particle trails for replay mode.
- */
 export function setTrailsEnabled(enabled) {
-    _trailsEnabled = enabled;
-    if (!enabled) {
-        _particleTrails.clear();
+    if (setTrailsEnabledExtracted(enabled)) {
+        _particlesDirty = true;
     }
-    _particlesDirty = true;
 }
 
-export function getTrailsEnabled() {
-    return _trailsEnabled;
+export const getTrailsEnabled = getTrailsEnabledExtracted;
+
+function buildTrailsContext() {
+    return {
+        replayMode: REPLAY_MODE,
+        activeParticleCount: _activeParticleCount,
+        activeParticles: _activeParticles,
+        STATE,
+    };
 }
 
-/**
- * Update trail history for all active particles.
- * Should be called each tick during REPLAY_MODE before position updates.
- */
 function updateParticleTrails() {
-    if (!_trailsEnabled || !REPLAY_MODE) return;
+    updateParticleTrailsExtracted(buildTrailsContext());
+}
 
-    for (let i = 0; i < _activeParticleCount; i++) {
-        const p = _activeParticles[i];
-
-        // Skip particles in lots (they don't move, no trail needed)
-        if (p.state === STATE.LOT || p.state === STATE.PARK) continue;
-
-        let trail = _particleTrails.get(p.id);
-        if (!trail) {
-            trail = [];
-            _particleTrails.set(p.id, trail);
-        }
-
-        // Add current position to trail
-        trail.push({ x: p.x, y: p.y });
-
-        // Keep only last TRAIL_LENGTH positions
-        if (trail.length > TRAIL_LENGTH) {
-            trail.shift();
-        }
+export function clearParticleTrails() {
+    if (clearParticleTrailsExtracted()) {
+        _particlesDirty = true;
     }
 }
 
-/**
- * Clear all particle trails.
- * Call when replay ends or trails are disabled.
- */
-export function clearParticleTrails() {
-    _particleTrails.clear();
-    _particlesDirty = true;
-}
-
-/**
- * Remove trail for a specific particle (call when particle exits).
- */
 function removeParticleTrail(particleId) {
-    _particleTrails.delete(particleId);
+    removeParticleTrailExtracted(particleId);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1869,30 +1705,15 @@ function convertParticle(p) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PARK TRANSITIONS — Authorized writes for park waiting zones
+// PARK TRANSITIONS — Wrappers for extracted module (physics/park-release.js)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// AUTHORIZED WRITE: particle released from park ONLY IN releasePark()
+function buildParkReleaseContext() {
+    return { STATE, parkMass, particleMass, addToMovingParticles, metrics };
+}
+
 function releasePark(p) {
-    if (p.state !== STATE.PARK) {
-        throw new Error(`[INVARIANT:RELEASE] Cannot release particle in state ${p.state}`);
-    }
-
-    // Release from park mass accounting
-    if (p.parkIdx >= 0) {
-        parkMass[p.parkIdx] -= particleMass();
-    }
-
-    // Transition to ROAD state (will seek lot or exit via normal flow)
-    p.state = STATE.ROAD;
-    addToMovingParticles(p);
-    p.parkIdx = -1;
-    p.parkArrivalTime = 0;
-    p.parkDwell24h = false;
-
-    metrics.releasedFromParks = (metrics.releasedFromParks || 0) + particleMass();
-
-    return particleMass();
+    return releaseParkExtracted(p, buildParkReleaseContext());
 }
 
 // Park invariant check
@@ -2348,77 +2169,26 @@ function updateCBPServiceTime() {
     }
 }
 
-/**
- * Process CBP lane completions and assignments for the time window [simTime-dt, simTime].
- * Handles multiple completions per lane per tick when dt > SERVICE_TIME_S.
- * This is the ONLY place particles exit the system.
- *
- * @param {number} dt - Time step in seconds
- */
+// CBP completion counter object (for extracted function to mutate)
+const _cbpCounters = { cbpCompletionCount: 0 };
+
+// Wrapper for extracted function
 function stepCBPLanes(dt) {
-    // Closed hours or blocked: do nothing
-    if (!isFinite(SERVICE_TIME_S)) return;
-
-    const tickStart = simTime - dt;
-    const tickEnd = simTime;
-
-    for (const lane of CBP_LANES) {
-        // Process all completions that should happen within [tickStart, tickEnd]
-        while (lane.particle && lane.busyUntil <= tickEnd) {
-            const p = lane.particle;
-
-            // === AUTHORITATIVE EXIT ===
-            // Particle is officially processed - count it as exited
-            metrics.exited += particleMass();
-            _cbpCompletionCount++;
-
-            // AUDIT: Record actual vs expected service time
-            if (p._cbpAssignTime !== undefined) {
-                const actualServiceTime = simTime - p._cbpAssignTime;
-                _serviceTimeActual.push(actualServiceTime);
-                _serviceTimeExpected.push(p._cbpExpectedServiceTime || 0);
-                _serviceTimeAssignSim.push(p._cbpAssignTime);
-            }
-
-            // Transition to DEPARTING state for exit animation
-            // Particle stays in sink cell, drift loop will move it out
-            // Note: particle is already in movingParticles (was CLEARED, entered SINK but never removed)
-            p.state = STATE.DEPARTING;
-            p.departureTime = simTime;
-
-            // Lane becomes free at busyUntil time (not simTime)
-            const laneFreeTime = lane.busyUntil;
-            lane.particle = null;
-
-            // Immediately assign next particle if queue has particles
-            if (sinkQueue.length > 0) {
-                const next = sinkQueue.shift();
-                lane.particle = next;
-                // busyUntil starts from when lane became free, not simTime
-                lane.busyUntil = laneFreeTime + SERVICE_TIME_S;
-                next._cbpLane = lane;
-                next._cbpEndTime = lane.busyUntil;
-                // AUDIT: Record assignment time and expected service time
-                next._cbpAssignTime = laneFreeTime;
-                next._cbpExpectedServiceTime = SERVICE_TIME_S;
-            } else {
-                break;  // No more particles to process in queue
-            }
-        }
-
-        // Also assign to lanes that were empty at start of tick
-        if (lane.particle === null && sinkQueue.length > 0) {
-            const p = sinkQueue.shift();
-            lane.particle = p;
-            // Service starts at beginning of tick window
-            lane.busyUntil = tickStart + SERVICE_TIME_S;
-            p._cbpLane = lane;
-            p._cbpEndTime = lane.busyUntil;
-            // AUDIT: Record assignment time and expected service time
-            p._cbpAssignTime = tickStart;
-            p._cbpExpectedServiceTime = SERVICE_TIME_S;
-        }
-    }
+    _cbpCounters.cbpCompletionCount = _cbpCompletionCount;
+    stepCBPLanesExtracted(dt, {
+        serviceTimeS: SERVICE_TIME_S,
+        simTime,
+        lanes: CBP_LANES,
+        metrics,
+        particleMass,
+        sinkQueue,
+        STATE,
+        serviceTimeActual: _serviceTimeActual,
+        serviceTimeExpected: _serviceTimeExpected,
+        serviceTimeAssignSim: _serviceTimeAssignSim,
+        counters: _cbpCounters,
+    });
+    _cbpCompletionCount = _cbpCounters.cbpCompletionCount;
 }
 
 let _lastGateCapHour = -1;
@@ -2792,82 +2562,31 @@ function stepConversion() {
 }
 
 function stepParkRelease() {
-    // Scan queue for any ready particles (dwell times vary: 4h vs 24h)
-    // Process in queue order but don't assume ordering by readiness
-    let i = 0;
-    while (i < parkReleaseQueue.length) {
-        const p = parkReleaseQueue[i];
-
-        // Check particle still valid (still in park state)
-        if (p.state !== STATE.PARK) {
-            parkReleaseQueue.splice(i, 1);
-            continue;
-        }
-
-        // Check dwell time (24-hour for industrial park particles, 4-hour for others)
-        const waited = simTime - p.parkArrivalTime;
-        const requiredDwell = p.parkDwell24h ? PARK_DWELL_24H_S : PARK_DWELL_S;
-
-        if (waited >= requiredDwell) {
-            // Release and remove from queue
-            releasePark(p);
-            parkReleaseQueue.splice(i, 1);
-        } else {
-            i++;
-        }
-    }
+    stepParkReleaseExtracted({
+        parkReleaseQueue,
+        simTime,
+        dwellS: PARK_DWELL_S,
+        dwell24hS: PARK_DWELL_24H_S,
+        STATE,
+        parkMass,
+        particleMass,
+        addToMovingParticles,
+        metrics,
+    });
 }
 
-/**
- * Release sleeping particles before bridge opens.
- * Staggered waves: 25% at 1hr, 45min, 30min, 0min before opening.
- */
+// Wrapper for extracted function
 function stepSleepRelease() {
-    if (sleepingParticles.length === 0) return;
-
-    // Only release when bridge is about to open or is open
-    const openHour = getNextBridgeOpenHour();
-    const currentHour = Math.floor(simTime / 3600) % 24;
-    const currentDaySeconds = simTime % (24 * 3600);
-
-    // Calculate target open time (in current day seconds)
-    let openTimeS = openHour * 3600;
-    if (openHour <= currentHour) {
-        // Bridge opens tomorrow - add 24 hours
-        openTimeS += 24 * 3600;
-    }
-
-    // Release particles whose wake time has arrived
-    for (let i = sleepingParticles.length - 1; i >= 0; i--) {
-        const p = sleepingParticles[i];
-        if (p.state !== STATE.SLEEPING) {
-            // Already released somehow - remove from list
-            sleepingParticles.splice(i, 1);
-            continue;
-        }
-
-        const wakeTimeS = openTimeS - p.wakeOffset;
-        if (currentDaySeconds >= wakeTimeS || (wakeTimeS > 24 * 3600 && currentDaySeconds + 24 * 3600 >= wakeTimeS)) {
-            // Time to wake up
-            const lotIdx = p.sleepLotIdx;
-            p.state = STATE.CLEARED;
-            addToMovingParticles(p);
-            // Assign to twin span based on particle ID (deterministic 50/50 split)
-            p.useTwinSpan = _twinSpanActive && (p.id % 2 === 0);
-            p.sleepLotIdx = undefined;
-            p.sleepArrivalTime = undefined;
-            p.wakeOffset = undefined;
-            p.lotParked = false;
-
-            // Decrement lot mass
-            if (lotIdx >= 0 && lotIdx < lotMass.length) {
-                lotMass[lotIdx] -= particleMass();
-                if (lotMass[lotIdx] < 0) lotMass[lotIdx] = 0;
-            }
-
-            sleepingParticles.splice(i, 1);
-        }
-    }
+    stepSleepReleaseExtracted({
+        sleepingParticles,
+        simTime,
+        STATE,
+        addToMovingParticles,
+        particleMass,
+        lotMass,
+        twinSpanActive: _twinSpanActive,
+        openHour: getNextBridgeOpenHour(),
+    });
 }
 
 
@@ -2875,169 +2594,20 @@ function stepSleepRelease() {
 // LOT RENDERING — Draw lot geometries with per-layer styles
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Build cached Path2D objects for each layer.
- * Called once during initialization to avoid per-frame path construction.
- * - Stroke-only layers (lots): all polygons batched into one Path2D
- * - Filled layers: individual Path2D per polygon to handle overlaps correctly
- */
+// Build lot paths - wrapper calling extracted function
 function buildLotPaths() {
-    // Skip in Node.js (no Path2D)
-    if (typeof Path2D === 'undefined') return;
-    if (!_loadedLots || _loadedLots.length === 0) return;
-
-    const renderOrder = ['urbanFootprint', 'industrialParks', 'electricity', 'phases', 'parkWaiting', 'lots'];
-
-    // Layer styles (same as drawLots)
-    const layerStyles = {
-        lots: { fill: null, stroke: true },
-        parkWaiting: { fill: true, stroke: true }
-        // Others use default (fill + stroke)
-    };
-
-    _lotPathsByLayer = {};
-    let totalPolygons = 0;
-
-    for (const layerName of renderOrder) {
-        const layerLots = _loadedLots.filter(lot => lot.layer === layerName);
-        if (layerLots.length === 0) continue;
-
-        const style = layerStyles[layerName] || { fill: true, stroke: true };
-        const hasStroke = style.stroke !== false;
-        const hasFill = style.fill !== false && style.fill !== null;
-
-        // Build stroke path (batches all polygons)
-        const strokePath = hasStroke ? new Path2D() : null;
-        // Build individual fill paths (for overlapping polygons)
-        const fillPaths = hasFill ? [] : null;
-
-        for (const lot of layerLots) {
-            for (const poly of (lot.polygons || [])) {
-                if (!poly.worldCoords || poly.worldCoords.length < 2) continue;
-                const geometry = poly.geometry || 'Polygon';
-
-                // Build path in world coordinates
-                const polyPath = new Path2D();
-                polyPath.moveTo(poly.worldCoords[0].x, poly.worldCoords[0].y);
-                for (let i = 1; i < poly.worldCoords.length; i++) {
-                    polyPath.lineTo(poly.worldCoords[i].x, poly.worldCoords[i].y);
-                }
-                if (geometry === 'Polygon') {
-                    polyPath.closePath();
-                }
-
-                // Add to stroke batch
-                if (strokePath) {
-                    strokePath.addPath(polyPath);
-                }
-                // Store individual path for fills
-                if (fillPaths) {
-                    fillPaths.push({ path: polyPath, geometry });
-                }
-
-                totalPolygons++;
-            }
-        }
-
-        _lotPathsByLayer[layerName] = {
-            stroke: strokePath,
-            fills: fillPaths,
-            style: style
-        };
-    }
-
-    log('[INIT] Lot Path2D cached:', totalPolygons, 'polygons across', Object.keys(_lotPathsByLayer).length, 'layers');
+    _lotPathsByLayer = buildLotPathsExtracted(_loadedLots, log);
 }
 
-/**
- * Draw lot geometries with per-layer styles using cached Path2D.
- * Renders in z-order: urbanFootprint, industrialParks, electricity, phases, parkWaiting, lots.
- */
+// Draw lots - wrapper calling extracted function
 function drawLots(ctx, camera) {
-    if (!_lotPathsByLayer || !camera) return;
-
-    // Render order (back to front)
-    const renderOrder = ['urbanFootprint', 'industrialParks', 'electricity', 'phases', 'parkWaiting', 'lots'];
-
-    // Default style fallback (dark mode aware)
-    const defaultStyle = _darkMode
-        ? { fill: 'rgba(255, 255, 255, 0.08)', stroke: 'rgba(255, 255, 255, 0.4)', strokeWidth: 1 }
-        : { fill: 'rgba(0, 0, 0, 0.06)', stroke: 'rgba(0, 0, 0, 0.3)', strokeWidth: 1 };
-
-    // Layer-specific style overrides (dark mode aware)
-    const layerStyles = {
-        lots: {
-            fill: null,  // No fill - just outlines
-            stroke: _darkMode ? 'rgba(153, 153, 153, 0.8)' : 'rgba(80, 80, 80, 0.6)',
-            strokeWidth: 1
-        },
-        parkWaiting: {
-            fill: 'rgba(204, 0, 204, 0.15)',  // Magenta tint (matches particle color)
-            stroke: 'rgba(204, 0, 204, 0.6)',  // Magenta outline
-            strokeWidth: 1.5
-        },
-        industrialParks: {
-            fill: _darkMode ? 'rgba(35, 35, 35, 1)' : 'rgba(200, 200, 200, 1)',
-            stroke: null,
-            strokeWidth: 1
-        }
-    };
-
-    // Camera transform: world → screen
-    const cx = camera.centerWorld.x;
-    const cy = camera.centerWorld.y;
-    const zoom = camera.zoom;
-    const halfW = camera.canvasWidth * 0.5;
-    const halfH = camera.canvasHeight * 0.5;
-
-    ctx.save();
-
-    // Clip to canvas bounds - helps browser optimize path clipping at high zoom
-    ctx.beginPath();
-    ctx.rect(0, 0, camera.canvasWidth, camera.canvasHeight);
-    ctx.clip();
-
-    // Apply camera transform (same as drawRoads)
-    ctx.setTransform(zoom, 0, 0, -zoom, halfW - cx * zoom, halfH + cy * zoom);
-
-    // DEBUG: log once per layer
-    if (!drawLots._debugged) {
-        drawLots._debugged = true;
-        for (const ln of renderOrder) {
-            const ll = _loadedLots.filter(lot => lot.layer === ln);
-            const polyCount = ll.reduce((sum, l) => sum + (l.polygons?.length || 0), 0);
-            const wcCount = ll.reduce((sum, l) => sum + (l.polygons?.filter(p => p.worldCoords?.length > 0).length || 0), 0);
-            log(`[LOTS RENDER v2] layer=${ln} lots=${ll.length} polygons=${polyCount} withWorldCoords=${wcCount}`);
-        }
-    }
-
-    for (const layerName of renderOrder) {
-        // Skip phases layer when Inovus is disabled
-        if (layerName === 'phases' && !_phasesAsLots) continue;
-
-        const cached = _lotPathsByLayer[layerName];
-        if (!cached) continue;
-
-        const style = layerStyles[layerName] || defaultStyle;
-
-        // Draw fills (individual paths to handle overlaps)
-        if (cached.fills && style.fill) {
-            ctx.fillStyle = style.fill;
-            for (const fillData of cached.fills) {
-                ctx.fill(fillData.path);
-            }
-        }
-
-        // Draw strokes (batched for performance)
-        if (cached.stroke && style.stroke) {
-            ctx.strokeStyle = style.stroke;
-            // Line width in world units - convert to screen: 1px at any zoom
-            ctx.lineWidth = 1 / zoom;
-            ctx.stroke(cached.stroke);
-        }
-    }
-
-    ctx.restore();
+    drawLotsExtracted(ctx, camera, {
+        lotPathsByLayer: _lotPathsByLayer,
+        loadedLots: _loadedLots,
+        darkMode: _darkMode,
+        phasesAsLots: _phasesAsLots,
+        log,
+    });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3049,206 +2619,26 @@ let _twinSpanPath = null;  // Twin span bridge/approach path
 let _twinSpanAlpha = 0;  // Twin span visibility (0 = hidden, 1 = fully visible)
 let _twinSpanSegments = null;  // Actual segment points for offset calculation
 
+// Build road path - wrapper calling extracted function
 function buildRoadPath(geometry) {
-    // Skip in Node.js (no Path2D)
-    if (typeof Path2D === 'undefined') return;
     const segments = geometry?.roadSegments || rendererContext?.geometry?.roadSegments;
-    if (!segments) return;
-
-    // Filter to segments that pass within 100km of ROI center
-    const cx = roi.centerX;
-    const cy = roi.centerY;
-    const maxDist = 100000;  // 100km
-
-    _roadPath = new Path2D();
-    let segCount = 0;
-    for (const seg of segments) {
-        if (!seg.points || seg.points.length < 2) continue;
-        // Check if ANY point is within range
-        let inRange = false;
-        for (const p of seg.points) {
-            if (Math.abs(p.x - cx) <= maxDist && Math.abs(p.y - cy) <= maxDist) {
-                inRange = true;
-                break;
-            }
-        }
-        if (!inRange) continue;
-
-        segCount++;
-        _roadPath.moveTo(seg.points[0].x, seg.points[0].y);
-        for (let i = 1; i < seg.points.length; i++) {
-            _roadPath.lineTo(seg.points[i].x, seg.points[i].y);
-        }
-    }
+    _roadPath = buildRoadPathExtracted({ roadSegments: segments }, roi);
 }
 
 // Add city segments to road path (called from testBundle after load)
 export function setCitySegments(citySegments) {
-    if (!_roadPath) _roadPath = new Path2D();
-
-    const cx = roi.centerX;
-    const cy = roi.centerY;
-    const maxDist = 100000;  // 100km
-
-    let segCount = 0;
-    for (const seg of citySegments) {
-        if (!seg.points || seg.points.length < 2) continue;
-        // Check if ANY point is within range
-        let inRange = false;
-        for (const p of seg.points) {
-            if (Math.abs(p.x - cx) <= maxDist && Math.abs(p.y - cy) <= maxDist) {
-                inRange = true;
-                break;
-            }
-        }
-        if (!inRange) continue;
-
-        segCount++;
-        _roadPath.moveTo(seg.points[0].x, seg.points[0].y);
-        for (let i = 1; i < seg.points.length; i++) {
-            _roadPath.lineTo(seg.points[i].x, seg.points[i].y);
-        }
-    }
+    _roadPath = addCitySegmentsToPath(_roadPath, citySegments, roi);
 }
 
+// Draw roads - wrapper calling extracted function
 function drawRoads(ctx, camera) {
-    if (!_roadPath) return;
-
-    const cx = camera.centerWorld.x;
-    const cy = camera.centerWorld.y;
-    const zoom = camera.zoom;
-    const halfW = camera.canvasWidth * 0.5;
-    const halfH = camera.canvasHeight * 0.5;
-
-    ctx.save();
-
-    // Clip to canvas bounds - helps browser optimize path clipping at high zoom
-    ctx.beginPath();
-    ctx.rect(0, 0, camera.canvasWidth, camera.canvasHeight);
-    ctx.clip();
-
-    // Apply camera transform: world → screen
-    ctx.setTransform(zoom, 0, 0, -zoom, halfW - cx * zoom, halfH + cy * zoom);
-
-    // Dark mode: subtle gray so particles stand out. Light mode: darker gray.
-    ctx.strokeStyle = _darkMode ? 'rgb(70, 70, 70)' : 'rgb(140, 140, 140)';
-    ctx.lineWidth = 24;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    ctx.stroke(_roadPath);
-
-    // Draw twin span if active
-    if (_twinSpanPath && _twinSpanAlpha > 0.01) {
-        ctx.globalAlpha = _twinSpanAlpha;
-        ctx.strokeStyle = _darkMode ? 'rgb(70, 70, 70)' : 'rgb(140, 140, 140)';
-        ctx.stroke(_twinSpanPath);
-        ctx.globalAlpha = 1;
-    }
-
-    ctx.restore();
+    drawRoadsExtracted(ctx, camera, {
+        roadPath: _roadPath,
+        twinSpanPath: _twinSpanPath,
+        twinSpanAlpha: _twinSpanAlpha,
+        darkMode: _darkMode,
+    });
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// RENDER — Shows exactly what exists, nothing more
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// MODE 1: CLASS - Simple class colors (hex for canvas)
-function getParticleClassColor(p) {
-    if (p.state === STATE.CLEARED) return '#00cc00';  // Green
-    if (p.state === STATE.LOT || p.state === STATE.PARK) return '#ff8800';  // Orange
-    if (p.state === STATE.ROAD) return '#0088ff';  // Blue
-    return '#888888';
-}
-
-// MODE 2: STALL - Class + stall overlays (hex for canvas)
-function getParticleStallColor(p) {
-    if (p.state === STATE.CLEARED) {
-        if (p.renderStalled || p.stallReason) {
-            if (p.stallReason === 'dead_end') return '#ff0000';
-            if (p.stallReason === 'road_full') return '#ff8800';
-            return '#ffcc00';
-        }
-        return '#00cc00';
-    }
-    if (p.state === STATE.LOT || p.state === STATE.PARK) {
-        return '#ff8800';
-    }
-    if (p.state === STATE.ROAD) {
-        if (p.renderStalled || p.stallReason) {
-            if (p.stallReason === 'dead_end') return '#ff0000';
-            if (p.stallReason === 'lot_full') return '#ff6600';
-            if (p.stallReason === 'road_full') return '#ff9900';
-            return '#ffcc00';
-        }
-        return '#0088ff';
-    }
-    return '#888888';
-}
-
-// Legacy function (kept for compatibility)
-function getParticleDebugColor(p) {
-    return getParticleStallColor(p);
-}
-
-// MODE 1: CLASS - Simple class colors (no stall overlays)
-// ROAD=blue, CLEARED=green, LOT/INDUSTRIAL/PARK=orange
-function getParticleClassColorRGB(p) {
-    if (p.state === STATE.CLEARED) {
-        return { r: 0, g: 0.8, b: 0 };  // Green
-    }
-    if (p.state === STATE.LOT || p.state === STATE.PARK) {
-        return { r: 1, g: 0.533, b: 0 };  // Orange (all waiting states)
-    }
-    if (p.state === STATE.ROAD) {
-        return { r: 0, g: 0.533, b: 1 };  // Blue
-    }
-    return { r: 0.533, g: 0.533, b: 0.533 };
-}
-
-// MODE 2: STALL - Class colors + stall reason overlays
-function getParticleStallColorRGB(p) {
-    // Cleared particles → green (stalls shown)
-    if (p.state === STATE.CLEARED) {
-        if (p.renderStalled || p.stallReason) {
-            if (p.stallReason === 'dead_end') return { r: 1, g: 0, b: 0 };
-            if (p.stallReason === 'road_full') return { r: 1, g: 0.5, b: 0 };
-            return { r: 1, g: 0.8, b: 0 };  // Gold generic
-        }
-        return { r: 0, g: 0.8, b: 0 };
-    }
-    // Waiting states → orange (uniform)
-    if (p.state === STATE.LOT || p.state === STATE.PARK) {
-        return { r: 1, g: 0.533, b: 0 };
-    }
-    // ROAD with stall reasons
-    if (p.state === STATE.ROAD) {
-        if (p.renderStalled || p.stallReason) {
-            if (p.stallReason === 'dead_end') return { r: 1, g: 0, b: 0 };     // Red
-            if (p.stallReason === 'lot_full') return { r: 1, g: 0.4, b: 0 };   // Orange-red
-            if (p.stallReason === 'road_full') return { r: 1, g: 0.6, b: 0 };  // Orange
-            return { r: 1, g: 0.8, b: 0 };  // Gold generic
-        }
-        return { r: 0, g: 0.533, b: 1 };  // Blue
-    }
-    return { r: 0.533, g: 0.533, b: 0.533 };
-}
-
-// RGB version for WebGL source colors
-function getParticleSourceColorRGB(p) {
-    switch (p.sourceType) {
-        case SOURCE_TYPE.CORRIDOR_WEST:
-            return { r: 1, g: 0.2, b: 0.2 };
-        case SOURCE_TYPE.CORRIDOR_EAST:
-            return { r: 0.2, g: 0.4, b: 1 };
-        case SOURCE_TYPE.INDUSTRIAL:
-            return { r: 0.2, g: 0.8, b: 0.2 };
-        default:
-            return { r: 0.533, g: 0.533, b: 0.533 };
-    }
-}
-
-// Canvas render function removed - WebGL only
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
@@ -4256,150 +3646,30 @@ function drawMetricsPanel(ctx) {
         _hudCache.maxUtil = maxUtil;
     }
 
-    const { roadMass, peakCell, lotMassTotal, lotsOccupied, maxUtil } = _hudCache;
-    const totalMass = roadMass + lotMassTotal + metrics.exited;
-
-    // Format sim time as HH:MM
-    const hours = Math.floor(simTime / 3600) % 24;
-    const minutes = Math.floor((simTime % 3600) / 60);
-    const simTimeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-
-    // // Text styling: IBM Plex Mono, black/white based on dark mode (no background, no border)
-    // ctx.fillStyle = _darkMode ? '#ddd' : '#000';
-
-    // let y = 32;
-    // const x = 20;
-    // const lineH = 22;
-    // const groupGap = 28;
-
-    // // Total Mass
-    // ctx.font = "700 16px 'IBM Plex Mono', monospace";
-    // ctx.fillText('Total Mass', x, y);
-    // y += lineH;
-    // ctx.font = "400 16px 'IBM Plex Mono', monospace";
-    // ctx.fillText(`${(totalMass / 1000).toLocaleString('en-US', { maximumFractionDigits: 1 })} kt`, x, y);
-    // y += lineH + groupGap;
-
-    // // IN/OUT rates
-    // ctx.font = "700 16px 'IBM Plex Mono', monospace";
-    // ctx.fillText(`IN:  ${_inRateKtMin.toFixed(1)} kt/min`, x, y);
-    // y += lineH;
-    // ctx.fillText(`OUT: ${_outRateKtMin.toFixed(1)} kt/min`, x, y);
-    // y += lineH + groupGap;
-
-    // // Lot stats
-    // ctx.fillText(`LOTS: ${lotsOccupied} / ${lotMass.length}`, x, y);
-    // y += lineH;
-    // ctx.fillText(`MAX UTIL: ${(maxUtil * 100).toFixed(0)}%`, x, y);
-    // y += lineH + groupGap;
-
-    // // Road mass
-    // ctx.fillText(`ROAD MASS: ${(roadMass / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })} t`, x, y);
-    // y += lineH;
-    // ctx.fillText(`PEAK CELL: ${(peakCell / 1000).toFixed(0)} t`, x, y);
-    // y += lineH + groupGap;
-
-    // // DT (keep in left panel)
-    // ctx.fillText(`DT: ${_dtMs.toFixed(1)} ms`, x, y);
-
-    // SIM CLOCK — Top-right corner, 5x size (80px)
-    ctx.save();
-    ctx.font = "700 80px 'IBM Plex Mono', monospace";
-    ctx.textAlign = 'right';
-    ctx.fillStyle = _darkMode ? '#ddd' : '#000';
-    ctx.fillText(simTimeStr, ctx.canvas.width - 30, 80);
-
-    // STATUS NOTES — Below clock, Spanish
-    ctx.font = "600 18px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = _darkMode ? '#ddd' : '#000';
-    let statusY = 110;
-    const statusX = ctx.canvas.width - 30;
-
-    // Bridge closed indicator
-    if (sinkCapKgPerHour === 0) {
-        ctx.fillText('Puente cerrado', statusX, statusY);
-        statusY += 24;
-    }
-
-    // Shift change indicator (during peak hours: 4-8, 12-16, 20-24)
-    const h = hours;
-    const isShiftChange = (h >= 4 && h < 8) || (h >= 12 && h < 16) || (h >= 20 && h < 24);
-    if (isShiftChange) {
-        ctx.fillText('Cambio de turno', statusX, statusY);
-    }
-
-    ctx.restore();
+    // Call extracted function with context
+    drawMetricsPanelExtracted(ctx, {
+        simTime,
+        metrics,
+        inRateKtMin: _inRateKtMin,
+        outRateKtMin: _outRateKtMin,
+        hudCache: _hudCache,
+        darkMode: _darkMode,
+        sinkCapKgPerHour,
+    });
 }
 
-// Stall mode legend (drawn when M key cycles to STALL mode)
+// Stall mode legend - wrapper calling extracted function
 function drawStallModeLegend(ctx) {
-    // Count particles by state
-    let inQueue = 0;      // In SINK region OR in queue zone (bridge approach)
-    let deadEnd = 0;      // stallReason === 'dead_end'
-    let lotFull = 0;      // stallReason === 'lot_full'
-    let roadFull = 0;     // stallReason === 'road_full'
-    let preLotHold = 0;   // stallReason === 'pre_lot_hold'
-    let congested = 0;    // On road with mass > RHO_CONGESTION_0
-    let moving = 0;       // Normal flow
-
-    for (let i = 0; i < N2; i++) {
-        for (const p of cellParticles[i]) {
-            if (regionMap[p.cellIdx] === REGION.SINK) {
-                inQueue++;
-            } else if (p.renderStalled && isInQueueZone(p.x, p.y)) {
-                // Stalled in queue zone = bridge queue, not road congestion
-                inQueue++;
-            } else if (p.stallReason === 'dead_end') {
-                deadEnd++;
-            } else if (p.stallReason === 'lot_full') {
-                lotFull++;
-            } else if (p.stallReason === 'road_full') {
-                roadFull++;
-            } else if (p.stallReason === 'pre_lot_hold') {
-                preLotHold++;
-            } else if (regionMap[p.cellIdx] === REGION.ROAD && cellMass[p.cellIdx] > RHO_CONGESTION_0) {
-                congested++;
-            } else {
-                moving++;
-            }
-        }
-    }
-
-    const lineH = 20;
-    const boxSize = 12;
-    const x = ctx.canvas.width - 30;
-    let y = 160;
-
-    ctx.save();
-    ctx.textAlign = 'right';
-
-    ctx.font = "700 14px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = _darkMode ? '#fff' : '#000';
-    ctx.fillText('STALL MODE', x, y);
-    y += lineH + 4;
-
-    const legend = [
-        { color: '#0080ff', label: 'queue', count: inQueue },
-        { color: '#ff0000', label: 'dead_end', count: deadEnd },
-        { color: '#ff00ff', label: 'lot_full', count: lotFull },
-        { color: '#ff8000', label: 'road_full', count: roadFull },
-        { color: '#00ffff', label: 'pre_lot_hold', count: preLotHold },
-        { color: '#ffff00', label: 'congested', count: congested },
-        { color: '#00ff00', label: 'moving', count: moving },
-    ];
-
-    ctx.font = "400 13px 'IBM Plex Mono', monospace";
-    for (const item of legend) {
-        // Draw color box
-        ctx.fillStyle = item.color;
-        ctx.fillRect(x - boxSize, y - boxSize + 3, boxSize, boxSize);
-        // Draw label and count
-        ctx.fillStyle = _darkMode ? '#fff' : '#000';
-        ctx.fillText(`${item.label}: ${item.count}`, x - boxSize - 8, y);
-        y += lineH;
-    }
-
-    ctx.restore();
+    drawStallModeLegendExtracted(ctx, {
+        N2,
+        cellParticles,
+        regionMap,
+        REGION,
+        cellMass,
+        RHO_CONGESTION_0,
+        isInQueueZone,
+        darkMode: _darkMode,
+    });
 }
 
 // Source mode labels (drawn when M key cycles to SOURCE mode)
@@ -4596,11 +3866,11 @@ export function draw(ctx, camera) {
     drawMetricsPanel(ctx);
 
     // Draw stall mode legend when active
-    if (_particleColorMode === 1) {
+    if (getParticleColorMode() === 1) {
         drawStallModeLegend(ctx);
     }
     // Draw source labels when in SOURCE mode
-    if (_particleColorMode === 2) {
+    if (getParticleColorMode() === 2) {
         drawSourceLabels(ctx, camera);
     }
 
@@ -7558,38 +6828,9 @@ export function getMetricsPhase1() {
     };
 }
 
-/**
- * Compute mean/p50/p90 for service time arrays.
- * Returns stats in seconds.
- */
+// Wrapper for extracted statistics function
 function computeServiceTimeStats() {
-    const n = _serviceTimeActual.length;
-    if (n === 0) {
-        return { count: 0, actual: { mean: 0, p50: 0, p90: 0 }, expected: { mean: 0, p50: 0, p90: 0 } };
-    }
-
-    const sortedActual = [..._serviceTimeActual].sort((a, b) => a - b);
-    const sortedExpected = [..._serviceTimeExpected].sort((a, b) => a - b);
-
-    const meanActual = _serviceTimeActual.reduce((a, b) => a + b, 0) / n;
-    const meanExpected = _serviceTimeExpected.reduce((a, b) => a + b, 0) / n;
-
-    const p50Idx = Math.floor(n * 0.5);
-    const p90Idx = Math.floor(n * 0.9);
-
-    return {
-        count: n,
-        actual: {
-            mean: meanActual,
-            p50: sortedActual[p50Idx],
-            p90: sortedActual[p90Idx],
-        },
-        expected: {
-            mean: meanExpected,
-            p50: sortedExpected[p50Idx],
-            p90: sortedExpected[p90Idx],
-        },
-    };
+    return computeServiceTimeStatsExtracted(_serviceTimeActual, _serviceTimeExpected);
 }
 
 /**
@@ -8104,99 +7345,13 @@ export function setTwinSpanSegments(segments, alpha) {
     }
 }
 
-/**
- * Compute X coordinate on twin span path for a given Y position.
- * Returns the X coordinate on the twin span path, or null if Y is out of range.
- */
+// Wrapper for extracted geometry query
 function getTwinSpanXAtY(y) {
-    if (!_twinSpanSegments || _twinSpanSegments.length === 0) {
-        return null;
-    }
-
-    // Search all segments for the one containing this Y value
-    for (const seg of _twinSpanSegments) {
-        if (!seg || seg.length < 2) continue;
-
-        // Find the two points that bracket this Y value
-        for (let i = 0; i < seg.length - 1; i++) {
-            const p0 = seg[i];
-            const p1 = seg[i + 1];
-            
-            // Check if Y is between these two points (handle both directions)
-            const yMin = Math.min(p0.y, p1.y);
-            const yMax = Math.max(p0.y, p1.y);
-            
-            if (y >= yMin && y <= yMax) {
-                // Interpolate X based on Y
-                const dy = p1.y - p0.y;
-                if (Math.abs(dy) < 0.001) {
-                    // Nearly horizontal segment, use average X
-                    return (p0.x + p1.x) / 2;
-                }
-                const t = (y - p0.y) / dy;
-                const x = p0.x + t * (p1.x - p0.x);
-                return x;
-            }
-        }
-    }
-
-    // Y is outside all segments
-    return null;
+    return getTwinSpanXAtYExtracted(y, _twinSpanSegments);
 }
 
-// Queue zone: 95m on each side of the bridge approach polyline (190m total width)
-// This is the bridge approach geometry - always available, independent of TwinSpan activation
-const QUEUE_ZONE_HALF_WIDTH = 95;
-const QUEUE_ZONE_SEGMENTS = [
-    // Approach segment: south start -> junction
-    [
-        { x: -363.6711606637666, y: -2694.9719926976927 },   // approach start (south)
-        { x: -481.6711606637666, y: -2583.9719926976927 },   // junction
-    ],
-    // Bridge segment: junction -> north end
-    [
-        { x: -481.6711606637666, y: -2583.9719926976927 },   // junction
-        { x: 236.39229354591248, y: 2212.2113236596624 },    // bridge end (north)
-    ],
-];
-
-/**
- * Check if a point (x, y) is within the queue zone (within 95m of bridge approach polyline).
- * Uses point-to-segment distance for each segment in the polyline.
- */
-function isInQueueZone(x, y) {
-    for (const seg of QUEUE_ZONE_SEGMENTS) {
-        if (!seg || seg.length < 2) continue;
-
-        for (let i = 0; i < seg.length - 1; i++) {
-            const p0 = seg[i];
-            const p1 = seg[i + 1];
-
-            // Point-to-segment distance
-            const dx = p1.x - p0.x;
-            const dy = p1.y - p0.y;
-            const lenSq = dx * dx + dy * dy;
-
-            let dist;
-            if (lenSq < 0.001) {
-                // Degenerate segment (single point)
-                dist = Math.sqrt((x - p0.x) ** 2 + (y - p0.y) ** 2);
-            } else {
-                // Project point onto segment, clamped to [0,1]
-                const t = Math.max(0, Math.min(1, ((x - p0.x) * dx + (y - p0.y) * dy) / lenSq));
-                const projX = p0.x + t * dx;
-                const projY = p0.y + t * dy;
-                dist = Math.sqrt((x - projX) ** 2 + (y - projY) ** 2);
-            }
-
-            if (dist <= QUEUE_ZONE_HALF_WIDTH) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
+// Alias for extracted queue zone check (constants now in lib/geometry-queries.js)
+const isInQueueZone = isInQueueZoneExtracted;
 
 /**
  * Set the interserrana scenario adapter for interpolation.
@@ -8335,48 +7490,16 @@ export function isPhiRebuilding() {
     return _phiRebuilding;
 }
 
-// Cycle particle color mode (M key)
-// 0=OFF → 1=STALL → 2=SOURCE → 3=STATE → 0=OFF
-export function cycleParticleColorMode() {
-    _particleColorMode = (_particleColorMode + 1) % 4;
-    const modeName = PARTICLE_COLOR_MODE_NAMES[_particleColorMode];
-    console.log(`[PARTICLE] Color mode: ${modeName} (${_particleColorMode}/3)`);
-    if (_particleColorMode === 1) {
-        console.log('  BLUE=queue, RED=dead_end(NO ROUTE), MAGENTA=lot_full, ORANGE=road_full, CYAN=pre_lot_hold, YELLOW=congested');
-    } else if (_particleColorMode === 2) {
-        console.log('  RED=West corridor, BLUE=East corridor, GREEN=Industrial parks');
-    } else if (_particleColorMode === 3) {
-        console.log('  ORANGE=restricted (ROAD/LOT/PARK), CYAN=cleared (heading to bridge)');
-    }
-    return _particleColorMode;
-}
-
-export function getParticleColorMode() {
-    return _particleColorMode;
-}
-
-export function getParticleColorModeName() {
-    return PARTICLE_COLOR_MODE_NAMES[_particleColorMode];
-}
-
-// Legacy compatibility
-export function toggleParticleDebugClassColors() {
-    return cycleParticleColorMode();
-}
-
-export function isParticleDebugColors() {
-    return _particleColorMode > 0;
-}
-
-export function toggleParticleSourceColors() {
-    _particleColorMode = 2;  // Jump to source mode
-    console.log('[PARTICLE] Color mode: SOURCE');
-    return _particleColorMode;
-}
-
-export function isParticleSourceColors() {
-    return _particleColorMode === 2;
-}
+// Re-export particle color API functions (from viz/particle-colors.js)
+export {
+    cycleParticleColorMode,
+    getParticleColorMode,
+    getParticleColorModeName,
+    toggleParticleDebugClassColors,
+    isParticleDebugColors,
+    toggleParticleSourceColors,
+    isParticleSourceColors,
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HEATMAP EXPORT — For headless PNG generation
@@ -8414,19 +7537,6 @@ export function getCongestionHeatmapData() {
 export function resetCongestionAccumulators() {
     cellPresenceHours.fill(0);
     cellLotDwellHours.fill(0);
-}
-
-function getParticleSourceColor(p) {
-    switch (p.sourceType) {
-        case SOURCE_TYPE.CORRIDOR_WEST:
-            return '#ff3333';  // Red - SW/West corridor
-        case SOURCE_TYPE.CORRIDOR_EAST:
-            return '#3366ff';  // Blue - East corridor
-        case SOURCE_TYPE.INDUSTRIAL:
-            return '#33cc33';  // Green - Industrial parks
-        default:
-            return '#888888';  // Grey - Unknown
-    }
 }
 
 export function toggleDarkMode() {
@@ -8671,108 +7781,34 @@ export function isShowingCongestionHeatmap() {
     return _showCongestionHeatmap;
 }
 
-// Draw congestion heatmap - cyan cells where congestion slows particles
-let _congestionDebugFrame = 0;
-function drawCongestionHeatmap(ctx, camera) {
-    if (!_showCongestionHeatmap) return;
-
-    const cellScreenSize = roi.cellSize * camera.zoom;
-
-    // Debug every 60 frames
-    const debug = (++_congestionDebugFrame % 60 === 1);
-    if (debug) {
-        log(`[CONG] cellScreenSize=${cellScreenSize.toFixed(1)}, N=${N}, roi.cellSize=${roi.cellSize}`);
-    }
-
-    // Only draw if cells are visible (not too zoomed out)
-    if (cellScreenSize < 2) {
-        if (debug) log('[CONG] Skipping - cells too small');
-        return;
-    }
-
-    const vp = camera.viewportWorld;
-    const pad = roi.cellSize * 2;
-
-    let cellsWithMass = 0;
-    let cellsDrawn = 0;
-    for (let y = 0; y < N; y++) {
-        for (let x = 0; x < N; x++) {
-            const idx = y * N + x;
-            const rho = cellMass[idx];
-            if (rho <= 0) continue;
-            cellsWithMass++;
-
-            // Skip lot cells (they don't experience congestion)
-            if (regionMap[idx] === REGION.LOT) continue;
-
-            const c = congestionFactor(rho);
-
-            const wx = fieldToWorldX(x);
-            const wy = fieldToWorldY(y);
-
-            // Viewport culling
-            if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-            if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-            // Intensity: all cells visible, congestion = brighter
-            const intensity = 1 - c;
-            const alpha = 0.2 + intensity * 0.7;
-
-            ctx.fillStyle = `rgba(0, 255, 255, ${alpha.toFixed(2)})`;
-            const screen = camera.worldToScreen(wx, wy);
-            ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
-            cellsDrawn++;
-        }
-    }
-    if (debug) {
-        log(`[CONG] cellsWithMass=${cellsWithMass}, cellsDrawn=${cellsDrawn}`);
-    }
+// Heatmap context builder (lazy, reuses references)
+function buildHeatmapContext() {
+    return {
+        N,
+        roi,
+        cellMass,
+        regionMap,
+        REGION,
+        RHO_CONGESTION_0,
+        ROAD_CELL_CAP_KG,
+        COMMUTER_EQUIV_KG,
+        commuterLoad,
+        roadCellIndices,
+        fieldToWorldX,
+        fieldToWorldY,
+        congestionFactor,
+        log,
+    };
 }
 
-/**
- * Draw cell-based congestion visualization (always on).
- * Shows effective congestion = freight mass + commuter friction.
- * Renders BEFORE particles so particles appear on top.
- */
+// Draw congestion heatmap - wrapper calling extracted function
+function drawCongestionHeatmap(ctx, camera) {
+    drawCongestionHeatmapExtracted(ctx, camera, buildHeatmapContext(), _showCongestionHeatmap);
+}
+
+// Draw cell-based congestion visualization - wrapper calling extracted function
 function drawCongestionCells(ctx, camera) {
-    // Skip during replay heatmap mode
-    if (_flowRenderMode === 'ROAD_HEATMAP') return;
-
-    const cellScreenSize = roi.cellSize * camera.zoom;
-
-    // Skip if cells too small to see
-    if (cellScreenSize < 1) return;
-
-    const vp = camera.viewportWorld;
-    const pad = roi.cellSize * 2;
-
-    // Iterate only road cells (sparse set)
-    for (const idx of roadCellIndices) {
-        const freightMass = cellMass[idx];
-        const commuterMass = COMMUTER_EQUIV_KG * commuterLoad[idx];
-        const effectiveRho = freightMass + commuterMass;
-
-        // Normalize: 0 at onset, 1 at gridlock
-        const congestionLevel = (effectiveRho - RHO_CONGESTION_0) / (ROAD_CELL_CAP_KG - RHO_CONGESTION_0);
-
-        // Skip if below visibility threshold
-        if (congestionLevel < 0.1) continue;
-
-        const x = idx % N;
-        const y = Math.floor(idx / N);
-        const wx = fieldToWorldX(x);
-        const wy = fieldToWorldY(y);
-
-        // Viewport culling
-        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-        // Magenta fill, alpha proportional to congestion (clamped 0.02-0.08)
-        const alpha = 0.02 + Math.min(1, congestionLevel) * 0.06;
-        ctx.fillStyle = `rgba(200, 0, 200, ${alpha.toFixed(2)})`;
-        const screen = camera.worldToScreen(wx, wy);
-        ctx.fillRect(screen.x, screen.y, cellScreenSize, cellScreenSize);
-    }
+    drawCongestionCellsExtracted(ctx, camera, buildHeatmapContext(), _flowRenderMode);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -9123,26 +8159,6 @@ export function setReplaySampleData(sampleData) {
     _replaySampleData = sampleData;
 }
 
-/**
- * Thermal gradient: blue → cyan → green → yellow → red
- * Same as heatmapExport.js for consistency.
- */
-function thermalGradient(t) {
-    if (t < 0.25) {
-        const s = t / 0.25;
-        return { r: 0, g: Math.round(255 * s), b: 255 };
-    } else if (t < 0.5) {
-        const s = (t - 0.25) / 0.25;
-        return { r: 0, g: 255, b: Math.round(255 * (1 - s)) };
-    } else if (t < 0.75) {
-        const s = (t - 0.5) / 0.25;
-        return { r: Math.round(255 * s), g: 255, b: 0 };
-    } else {
-        const s = (t - 0.75) / 0.25;
-        return { r: 255, g: Math.round(255 * (1 - s)), b: 0 };
-    }
-}
-
 // Replay heatmap frame data (set externally from testBundle)
 let _replayHeatmapFrame = null;
 
@@ -9170,55 +8186,7 @@ function drawRoadHeatmap(ctx, camera) {
     if (_flowRenderMode !== 'ROAD_HEATMAP') return;
     if (!_replayHeatmapFrame) return;
 
-    drawReplayHeatmap(ctx, camera, _replayHeatmapFrame);
-}
-
-/**
- * Draw replay heatmap from pre-computed frame data.
- * @param {CanvasRenderingContext2D} ctx
- * @param {Object} camera
- * @param {Object} frameData - { roadCellIndices, roadPresence, roi, N }
- */
-function drawReplayHeatmap(ctx, camera, frameData) {
-    const { roadCellIndices: frameRoadCells, roadPresence, roi: frameRoi, N: frameN } = frameData;
-
-    // Find max for normalization (p99 for better color range)
-    const sortedValues = [...roadPresence].filter(v => v > 0).sort((a, b) => a - b);
-    const maxVal = sortedValues.length > 0
-        ? sortedValues[Math.floor(sortedValues.length * 0.99)] || sortedValues[sortedValues.length - 1]
-        : 1;
-
-    const cellSize = roi.cellSize * camera.zoom * 2;
-    const vp = camera.viewportWorld;
-    const pad = roi.cellSize * 4;
-
-    let nonZeroCount = 0;
-    for (let i = 0; i < frameRoadCells.length; i++) {
-        const presence = roadPresence[i];
-        if (presence <= 0) continue;
-        nonZeroCount++;
-
-        const idx = frameRoadCells[i];
-        const cx = idx % frameN;
-        const cy = Math.floor(idx / frameN);
-
-        // Convert field coords to world coords using frame's roi
-        const wx = frameRoi.minX + (cx + 0.5) * frameRoi.cellSize;
-        const wy = frameRoi.minY + (cy + 0.5) * frameRoi.cellSize;
-
-        // Viewport culling
-        if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
-        if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
-
-        // Normalize to [0,1] using p99 max
-        const t = Math.min(1, presence / maxVal);
-        const color = thermalGradient(t);
-
-        // Bright, fully opaque colors
-        ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
-        const screen = camera.worldToScreen(wx, wy);
-        ctx.fillRect(screen.x - cellSize/2, screen.y - cellSize/2, cellSize, cellSize);
-    }
+    drawReplayHeatmapExtracted(ctx, camera, _replayHeatmapFrame, roi);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -9496,98 +8464,15 @@ export function deleteSpeedNode(nodeInfo) {
     return true;
 }
 
-// Speed limit colors by kph
-const SPEED_COLORS = {
-    25: '#ff0000',   // Red - slow zone
-    55: '#ffaa00',   // Orange - arterial
-    60: '#ffff00',   // Yellow - default (won't be drawn, but for reference)
-    80: '#aaff00',   // Yellow-green - fast arterial
-    100: '#55ff00',  // Light green - fast road
-    110: '#00ff00',  // Green - highway
-};
-
-/**
- * Draw speed limit polylines as colored lines.
- * Color indicates speed: red=25, orange=55, green=110 kph.
- * When edit mode is active, draws draggable nodes at each vertex.
- */
+// Draw speed limit polylines - wrapper calling extracted function
 function drawSpeedLimitPolylines(ctx, camera) {
-    if (_overlayMode !== 'SPEED') return;
-
-    // Use edit data if editing, otherwise use original
-    const data = _speedLimitEditMode && _speedLimitEditData ? _speedLimitEditData : SPEED_LIMIT_POLYLINES;
-
-    ctx.save();
-    ctx.lineWidth = Math.max(3, camera.zoom * 8);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-
-    for (const zone of data) {
-        const color = SPEED_COLORS[zone.speedKph] || '#ffffff';
-        ctx.strokeStyle = color;
-
-        for (const polyline of zone.polylines) {
-            if (polyline.length < 2) continue;
-
-            ctx.beginPath();
-            const start = camera.worldToScreen(polyline[0][0], polyline[0][1]);
-            ctx.moveTo(start.x, start.y);
-
-            for (let i = 1; i < polyline.length; i++) {
-                const pt = camera.worldToScreen(polyline[i][0], polyline[i][1]);
-                ctx.lineTo(pt.x, pt.y);
-            }
-            ctx.stroke();
-
-            // Draw nodes when in edit mode
-            if (_speedLimitEditMode) {
-                for (let i = 0; i < polyline.length; i++) {
-                    const pt = camera.worldToScreen(polyline[i][0], polyline[i][1]);
-                    // Outer ring
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, SPEED_NODE_RADIUS, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    // Inner dot
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
-                    ctx.fillStyle = color;
-                    ctx.fill();
-                }
-                ctx.lineWidth = Math.max(3, camera.zoom * 8);  // restore line width
-            }
-        }
-
-        // Draw speed label at midpoint of first polyline
-        if (zone.polylines.length > 0 && zone.polylines[0].length >= 2) {
-            const pl = zone.polylines[0];
-            const midIdx = Math.floor(pl.length / 2);
-            const midPt = camera.worldToScreen(pl[midIdx][0], pl[midIdx][1]);
-
-            ctx.fillStyle = color;
-            ctx.font = 'bold 14px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${zone.speedKph} kph`, midPt.x, midPt.y - 15);
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '12px sans-serif';
-            ctx.fillText(zone.name, midPt.x, midPt.y + 15);
-        }
-    }
-
-    // Edit mode indicator
-    if (_speedLimitEditMode) {
-        ctx.fillStyle = '#00ff00';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText('SPEED EDIT: drag=move | dblclick=add | rightclick=delete | C=copy | TAB=exit', 10, 10);
-    }
-
-    ctx.restore();
+    drawSpeedLimitPolylinesExtracted(ctx, camera, {
+        overlayMode: _overlayMode,
+        editMode: _speedLimitEditMode,
+        editData: _speedLimitEditData,
+        polylineData: SPEED_LIMIT_POLYLINES,
+        nodeRadius: SPEED_NODE_RADIUS,
+    });
 }
 
 // Alias update -> onFrame for compatibility
