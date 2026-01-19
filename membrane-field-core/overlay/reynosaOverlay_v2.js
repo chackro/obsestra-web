@@ -1100,6 +1100,47 @@ function syncPositionsToGL(camera) {
     _glParticleCount = j / 2;
 }
 
+/**
+ * Sync ONLY replay lot particles to GL arrays (for ROAD_HEATMAP mode).
+ * Used during scenario replay when regular particles are paused/cleared.
+ */
+function syncReplayLotParticlesToGL(camera) {
+    if (!_replayLotParticleMode || _replayLotParticles.length === 0) {
+        _glParticleCount = 0;
+        return;
+    }
+
+    const { viewportWorld } = camera;
+    const minX = viewportWorld.minX;
+    const maxX = viewportWorld.maxX;
+    const minY = viewportWorld.minY;
+    const maxY = viewportWorld.maxY;
+
+    let j = 0;  // Position index (x,y pairs)
+    let c = 0;  // Color index (r,g,b triplets)
+
+    // Lot particles: white by default, orange in STATE mode (mode 3)
+    const lotR = _particleColorMode === 3 ? 1.0 : 1.0;
+    const lotG = _particleColorMode === 3 ? 0.5 : 1.0;
+    const lotB = _particleColorMode === 3 ? 0.0 : 1.0;
+
+    for (const rp of _replayLotParticles) {
+        // Viewport culling
+        if (rp.x < minX || rp.x > maxX || rp.y < minY || rp.y > maxY) continue;
+
+        // Check buffer capacity
+        if (j >= MAX_PARTICLES * 2) break;
+
+        _glPositions[j++] = rp.x;
+        _glPositions[j++] = rp.y;
+        _glColors[c++] = lotR;
+        _glColors[c++] = lotG;
+        _glColors[c++] = lotB;
+    }
+
+    _glParticleCount = j / 2;
+}
+
 /** Add particle to flat array (call on inject) */
 function addToActiveParticles(p) {
     p.activeIdx = _activeParticleCount;
@@ -1272,10 +1313,6 @@ export function updateReplayLotParticles(lotFillRatios) {
         _replayLotParticleMode = false;
         return;
     }
-
-    // DEBUG: Check if lot geometry is initialized
-    const nonZeroFills = lotFillRatios.filter(r => r > 0).length;
-    console.log(`[ReplayLots] lotFillRatios=${lotFillRatios.length} (${nonZeroFills} non-zero), lotToCellIndices=${lotToCellIndices.length}, lotCapacity=${lotCapacity.length}`);
 
     _replayLotParticleMode = true;
     const newParticles = [];
@@ -5399,6 +5436,15 @@ export function draw(ctx, camera) {
     // This replaces particles during clockMontage replay
     if (_flowRenderMode === 'ROAD_HEATMAP') {
         drawRoadHeatmap(ctx, camera);
+
+        // Render replay lot particles via WebGL even in ROAD_HEATMAP mode
+        if (_replayLotParticleMode && _replayLotParticles.length > 0 && _webglRenderer && _webglRenderer.isAvailable()) {
+            syncReplayLotParticlesToGL(camera);
+            const pointSize = Math.max(2, camera.zoom * 6 * (_darkMode ? 1 : 2));
+            _webglRenderer.updatePositions(_glPositions, _glParticleCount);
+            _webglRenderer.updateColors(_glColors, _glParticleCount);
+            _webglRenderer.draw(camera, pointSize);
+        }
     }
 
     // Draw particles (WebGL) - skip when particles hidden for lot highlight OR in ROAD_HEATMAP mode
@@ -10193,85 +10239,75 @@ function thermalGradient(t) {
     }
 }
 
-// Rolling presence accumulator for road heatmap
-let _heatmapPresence = null;
-let _heatmapMax = TRUCK_KG;
-let _heatmapFrame = 0;
-const HEATMAP_DECAY = 0.92;
+// Replay heatmap frame data (set externally from testBundle)
+let _replayHeatmapFrame = null;
 
 /**
  * Reset heatmap state (call when switching scenarios).
  */
 export function resetHeatmap() {
-    if (_heatmapPresence) _heatmapPresence.fill(0);
-    _heatmapMax = TRUCK_KG;
-    console.log('[HEATMAP] Reset');
+    _replayHeatmapFrame = null;
 }
 
 /**
- * Draw road heatmap - direct cell rendering, 2x size, bright colors.
+ * Set replay heatmap frame data for current sim-time.
+ * Called from testBundle during clock montage to provide pre-computed frame data.
+ * @param {Object|null} frameData - { roadCellIndices, roadPresence, roi, N } or null to clear
+ */
+export function setReplayHeatmapFrame(frameData) {
+    _replayHeatmapFrame = frameData;
+}
+
+/**
+ * Draw road heatmap from pre-computed replay data.
+ * Only works in REPLAY_MODE with frame data set via setReplayHeatmapFrame().
  */
 function drawRoadHeatmap(ctx, camera) {
     if (_flowRenderMode !== 'ROAD_HEATMAP') return;
+    if (!_replayHeatmapFrame) return;
 
-    // Lazy init
-    if (!_heatmapPresence) {
-        _heatmapPresence = new Float64Array(N2);
-    }
+    drawReplayHeatmap(ctx, camera, _replayHeatmapFrame);
+}
 
-    // Compute current presence from particle positions
-    const currentPresence = new Float64Array(N2);
-    const mass = TRUCK_KG;
-    for (let i = 0; i < _activeParticleCount; i++) {
-        const p = _activeParticles[i];
-        if (p.cellIdx >= 0 && p.cellIdx < N2) {
-            currentPresence[p.cellIdx] += mass;
-        }
-    }
+/**
+ * Draw replay heatmap from pre-computed frame data.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Object} camera
+ * @param {Object} frameData - { roadCellIndices, roadPresence, roi, N }
+ */
+function drawReplayHeatmap(ctx, camera, frameData) {
+    const { roadCellIndices: frameRoadCells, roadPresence, roi: frameRoi, N: frameN } = frameData;
 
-    // Update rolling presence with decay
-    let max = 0;
-    let nonZeroCount = 0;
-    for (const idx of roadCellIndices) {
-        _heatmapPresence[idx] = _heatmapPresence[idx] * HEATMAP_DECAY + currentPresence[idx];
-        if (_heatmapPresence[idx] > 0) {
-            nonZeroCount++;
-            if (_heatmapPresence[idx] > max) max = _heatmapPresence[idx];
-        }
-    }
+    // Find max for normalization (p99 for better color range)
+    const sortedValues = [...roadPresence].filter(v => v > 0).sort((a, b) => a - b);
+    const maxVal = sortedValues.length > 0
+        ? sortedValues[Math.floor(sortedValues.length * 0.99)] || sortedValues[sortedValues.length - 1]
+        : 1;
 
-    // Update max with smoothing
-    if (max > 0) {
-        _heatmapMax = _heatmapMax * 0.95 + max * 0.05;
-    }
-
-    // Log every 30 frames
-    _heatmapFrame++;
-    if (_heatmapFrame >= 30) {
-        _heatmapFrame = 0;
-        console.log(`[HEATMAP] particles=${_activeParticleCount} nonZero=${nonZeroCount} max=${_heatmapMax.toFixed(0)}`);
-    }
-
-    // Direct cell rendering - 2x size for visibility
     const cellSize = roi.cellSize * camera.zoom * 2;
     const vp = camera.viewportWorld;
     const pad = roi.cellSize * 4;
 
-    for (const idx of roadCellIndices) {
-        const presence = _heatmapPresence[idx];
+    let nonZeroCount = 0;
+    for (let i = 0; i < frameRoadCells.length; i++) {
+        const presence = roadPresence[i];
         if (presence <= 0) continue;
+        nonZeroCount++;
 
-        const cx = idx % N;
-        const cy = Math.floor(idx / N);
-        const wx = fieldToWorldX(cx);
-        const wy = fieldToWorldY(cy);
+        const idx = frameRoadCells[i];
+        const cx = idx % frameN;
+        const cy = Math.floor(idx / frameN);
+
+        // Convert field coords to world coords using frame's roi
+        const wx = frameRoi.minX + (cx + 0.5) * frameRoi.cellSize;
+        const wy = frameRoi.minY + (cy + 0.5) * frameRoi.cellSize;
 
         // Viewport culling
         if (wx < vp.minX - pad || wx > vp.maxX + pad) continue;
         if (wy < vp.minY - pad || wy > vp.maxY + pad) continue;
 
-        // Normalize to [0,1] using current max
-        const t = Math.min(1, presence / _heatmapMax);
+        // Normalize to [0,1] using p99 max
+        const t = Math.min(1, presence / maxVal);
         const color = thermalGradient(t);
 
         // Bright, fully opaque colors

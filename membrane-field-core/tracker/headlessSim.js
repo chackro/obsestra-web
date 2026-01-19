@@ -15,6 +15,7 @@ import {
   getCongestionHeatmapData,
   resetCongestionAccumulators,
   getLotState,
+  getStallStats,
 } from '../overlay/reynosaOverlay_v2.js';
 
 import {
@@ -88,14 +89,20 @@ export class HeadlessSim {
     setBundleConsumerVerbose(false);
     setScenarioPairVerbose(false);
 
-    // Load baseline bundle
+    // Load shared geometry (externalized from bundles to reduce file size)
+    const geometryPath = path.resolve(__dirname, '../test/geometry.json');
+    const sharedGeometry = JSON.parse(fs.readFileSync(geometryPath, 'utf-8'));
+
+    // Load baseline bundle and merge geometry
     const baselineBundle = JSON.parse(fs.readFileSync(this.bundlePath, 'utf-8'));
+    baselineBundle.geometry = sharedGeometry;
 
     // Load interserrana bundle for scenario pair interpolation
     const interserranaBundlePath = path.resolve(__dirname, '../test/interserrana_bundle.json');
     let interserranaBundle = null;
     try {
       interserranaBundle = JSON.parse(fs.readFileSync(interserranaBundlePath, 'utf-8'));
+      interserranaBundle.geometry = sharedGeometry;
     } catch (e) {
       // Interserrana bundle not found - Interserrana toggle will be a no-op
     }
@@ -209,6 +216,10 @@ export class HeadlessSim {
     const violations = [];
     const heatmapFrames = [];
 
+    // Separate tracking for heartbeat-to-heartbeat drain rate
+    let hbPrevExitedKg = 0;
+    let hbPrevT = 0;
+
     let nextSample = 0;
     let sinkFlatlineCount = 0;
 
@@ -232,6 +243,17 @@ export class HeadlessSim {
       if (consumeHeartbeatFlag()) {
         const raw = this.getMetricsRaw();
         const lotState = getLotState();
+        const stallStats = getStallStats();
+
+        // Compute drain rate from heartbeat-to-heartbeat delta (6h window)
+        let drainKgPerHour = 0;
+        if (hbPrevT > 0 && this.simTime > hbPrevT) {
+          const deltaT = this.simTime - hbPrevT;
+          drainKgPerHour = ((raw.exitedKg - hbPrevExitedKg) / deltaT) * 3600;
+        }
+        hbPrevExitedKg = raw.exitedKg;
+        hbPrevT = this.simTime;
+
         heartbeat({
           day: this.simTime / 86400,
           totalDays,
@@ -240,6 +262,14 @@ export class HeadlessSim {
           avgDelay: raw.cbpCompletions > 0 ? raw.truckHoursLost / raw.cbpCompletions : 0,
           lots: lotState,
           rebuildsLastWindow: getRebuildsInWindow(),
+          // Sink observability
+          sinkQueue: raw.sinkQueueCount,
+          sinkCapKgPerHour: raw.sinkCapKgPerHour,
+          drainKgPerHour,
+          cbpLanesInUse: raw.cbpLanesInUse,
+          sinkOpen: raw.sinkOpen,
+          // Stall breakdown
+          stalls: stallStats,
         });
       }
 

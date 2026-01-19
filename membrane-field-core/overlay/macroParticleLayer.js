@@ -965,11 +965,12 @@ export class MacroParticleLayer {
             const getPoeIsWhite = (poe) => this.poeColorOverrides.get(poe) === 'white';
 
             // 2. Draw SECONDARY POE (Pharr) - magenta or white if overridden
+            // No brightness modulation - both POEs draw at equal intensity
             const secondaryIsWhite = getPoeIsWhite(this.corridorSecondaryPoe);
-            ctx.fillStyle = secondaryIsWhite ? color : (this.corridorEqualBrightness ? '#ff00ff' : '#b300b3');
+            ctx.fillStyle = secondaryIsWhite ? color : '#ff00ff';
             ctx.globalAlpha = secondaryIsWhite
                 ? this.nonHighlightedAlpha
-                : this.highlightedAlpha * (this.corridorEqualBrightness ? 1.0 : 0.85);
+                : this.highlightedAlpha;
             for (let i = 0; i < 5; i++) {
                 const count = secondaryBucketCounts[i];
                 if (count === 0) continue;

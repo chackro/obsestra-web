@@ -1350,7 +1350,7 @@
     <script type="module">
         import { loadBundle, loadScenarioPairBundles, getHourlyInflow, getHourlyCapacity, getSegmentsInROI, getMetadata, createScenarioAdapter, createFieldGeometryProvider, getPharrWorldCoords, latLonToWorld } from '../overlay/bundleConsumer.js';
         import { POENodeLayer } from '../overlay/poeNodeLayer.js';
-        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode, setReplaySampleData, showPharrInfraPolygon, hidePharrInfraPolygon, resetHeatmap } from '../overlay/reynosaOverlay_v2.js';
+        import { ReynosaEastOverlay, getMetrics, getState, setLocalScenario, getCorridorEntries, getPhysicsDebugData, forceRebuildPhiBase, isPhiRebuilding, cycleParticleColorMode, getParticleColorMode, toggleDarkMode, toggleCongestionHeatmap, toggleCommuterDebug, isShowingCommuterDebug, setCommuterHeatmap, setHideParticles, setWebGLRenderer, getSourceShares, printSourceShares, setScenarioAlpha, setInterserranaScenario, setTwinSpanCapacityMultiplier, setTwinSpanSegments, step, reset, setSimTime, getSimTime, getMetricsPhase1, assertMassInvariantPhase1, captureSnapshot, restoreSnapshot, getSnapshotCount, getOldestSnapshotTime, getModelSpec, getLiveMassInSystemT, setReplayMode, updateReplayLotParticles, clearReplayLotParticles, setTrailsEnabled, clearParticleTrails, getParticleCount, setCorridorLabelOverride, updateInjectionRatios, setStressMode, isStressMode, cycleOverlayMode, getOverlayMode, toggleSpeedLimitEditMode, isSpeedLimitEditMode, hitTestSpeedNode, startDragSpeedNode, dragSpeedNode, endDragSpeedNode, isDraggingSpeedNode, copySpeedLimitPolylines, findNearestSegment, insertSpeedNode, deleteSpeedNode, setFlowRenderMode, setReplaySampleData, showPharrInfraPolygon, hidePharrInfraPolygon, resetHeatmap, setReplayHeatmapFrame } from '../overlay/reynosaOverlay_v2.js';
         import { ParticleRenderer } from '../overlay/particleRenderer.js';
         import { loadWeightMaps, extractWeights, getInterpolatedWeight, hasWeightMaps, getSegmentPoeDistribution } from '../overlay/segmentWeights.js';
         import { MacroParticleLayer } from '../overlay/macroParticleLayer.js';
@@ -3843,11 +3843,15 @@
                         updateReplayLotParticles(lotFillRatios);
                     }
 
-                    // Pass sample data to overlay for road heatmap
+                    // Pass sample data to overlay for road heatmap (legacy)
                     const sample = getScenarioSampleByIndex(replayState.scenarioName, sampleIndex);
                     if (sample) {
                         setReplaySampleData(sample);
                     }
+
+                    // Pass interpolated heatmap frame data for replay visualization
+                    const heatmapFrame = getInterpolatedHeatmapFrame(replayState.scenarioName, simTimeSeconds);
+                    setReplayHeatmapFrame(heatmapFrame);
                 }
             },
 
@@ -3857,6 +3861,8 @@
                 // Clear replay lot particles and trails
                 clearReplayLotParticles();
                 clearParticleTrails();
+                // Clear replay heatmap frame
+                setReplayHeatmapFrame(null);
                 // Final update at end of sim-time
                 if (replayState.active) {
                     updateMetricsReplayAtHour(replayState.totalDays, 24);
@@ -4033,6 +4039,15 @@
         }
 
         // =====================================================================
+        // RESULTS FOLDER CONFIG
+        // =====================================================================
+
+        const RESULTS_FOLDER = '../tracker/results/260113_1138';
+
+        // Cache of loaded heatmap frame data per scenario (initialized early for loadScenarioMetrics)
+        const heatmapFrameCache = {};
+
+        // =====================================================================
         // SCENARIO METRICS
         // =====================================================================
 
@@ -4047,9 +4062,15 @@
         };
 
         async function loadScenarioMetrics() {
-            const res = await fetch('../tracker/results/260113_1138/comparison_Baseline_Twinspan_Inovus_InovusTwinspan_InovusTwinspanInterserrana_7d.json');
+            const res = await fetch(`${RESULTS_FOLDER}/comparison_Baseline_Twinspan_Inovus_InovusTwinspan_InovusTwinspanInterserrana_7d.json`);
             scenarioMetricsData = await res.json();
             console.log('[Scenario Metrics] Loaded from tracker:', scenarioMetricsData.meta);
+
+            // Pre-load heatmap frames for all scenarios (parallel, non-blocking errors)
+            if (scenarioMetricsData.scenarios) {
+                const scenarioNames = scenarioMetricsData.scenarios.map(s => s.scenarioName);
+                await Promise.all(scenarioNames.map(name => loadHeatmapFrames(name)));
+            }
         }
 
         function getScenarioSummary(scenarioName) {
@@ -4123,6 +4144,107 @@
                 result[i] = before.lotFillRatios[i] + t * (after.lotFillRatios[i] - before.lotFillRatios[i]);
             }
             return result;
+        }
+
+        // =====================================================================
+        // HEATMAP FRAME DATA FOR REPLAY
+        // =====================================================================
+
+        /**
+         * Load heatmap frame data for a scenario.
+         * Returns cached data if already loaded.
+         */
+        async function loadHeatmapFrames(scenarioName) {
+            if (heatmapFrameCache[scenarioName]) {
+                return heatmapFrameCache[scenarioName];
+            }
+
+            try {
+                const url = `${RESULTS_FOLDER}/heatmap_frames_${scenarioName}.json`;
+                const res = await fetch(url);
+                if (!res.ok) {
+                    console.warn(`[HeatmapFrames] Not found: ${url}`);
+                    return null;
+                }
+                const data = await res.json();
+
+                // Decode base64 roadPresence arrays to Float32Arrays
+                // (quantized uint16 → normalized float)
+                const { globalMax } = data.meta;
+                for (const frame of data.frames) {
+                    const b64 = frame.roadPresence;
+                    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                    const u16 = new Uint16Array(bytes.buffer);
+                    const f32 = new Float32Array(u16.length);
+                    for (let i = 0; i < u16.length; i++) {
+                        f32[i] = (u16[i] / 65535) * globalMax;
+                    }
+                    frame.roadPresence = f32;
+                }
+
+                heatmapFrameCache[scenarioName] = data;
+                console.log(`[HeatmapFrames] Loaded ${scenarioName}: ${data.frames.length} frames, ${data.roadCellIndices.length} road cells`);
+                return data;
+            } catch (err) {
+                console.warn(`[HeatmapFrames] Failed to load ${scenarioName}:`, err);
+                return null;
+            }
+        }
+
+        /**
+         * Get interpolated heatmap presence values for a given sim-time.
+         * Returns { roadCellIndices, roadPresence, roi, N } or null.
+         */
+        function getInterpolatedHeatmapFrame(scenarioName, simTimeSeconds) {
+            const data = heatmapFrameCache[scenarioName];
+            if (!data || !data.frames || data.frames.length === 0) return null;
+
+            const frames = data.frames;
+
+            // Find surrounding frames
+            let before = null, after = null;
+            for (let i = 0; i < frames.length; i++) {
+                if (frames[i].t <= simTimeSeconds) {
+                    before = frames[i];
+                }
+                if (frames[i].t >= simTimeSeconds && !after) {
+                    after = frames[i];
+                    break;
+                }
+            }
+
+            // Edge cases
+            if (!before && !after) return null;
+            if (!before) {
+                return {
+                    roadCellIndices: data.roadCellIndices,
+                    roadPresence: after.roadPresence,
+                    roi: data.roi,
+                    N: data.meta.N,
+                };
+            }
+            if (!after || before.t === after.t) {
+                return {
+                    roadCellIndices: data.roadCellIndices,
+                    roadPresence: before.roadPresence,
+                    roi: data.roi,
+                    N: data.meta.N,
+                };
+            }
+
+            // Linear interpolation
+            const t = (simTimeSeconds - before.t) / (after.t - before.t);
+            const interp = new Float32Array(before.roadPresence.length);
+            for (let i = 0; i < interp.length; i++) {
+                interp[i] = before.roadPresence[i] + t * (after.roadPresence[i] - before.roadPresence[i]);
+            }
+
+            return {
+                roadCellIndices: data.roadCellIndices,
+                roadPresence: interp,
+                roi: data.roi,
+                N: data.meta.N,
+            };
         }
 
         function showScenarioMetrics(scenarioName) {
@@ -6217,6 +6339,35 @@
             if (btnInterserrana) btnInterserrana.disabled = false;
             if (btnTwinSpan) btnTwinSpan.disabled = false;
             if (btnInovus) btnInovus.disabled = false;
+
+            // 10. Turn ON all scenario toggles: Interserrana, TwinSpan, INOVUS
+            // Apply changes directly (don't rely on ramp processing)
+
+            // TwinSpan - set alpha directly and apply
+            twinSpanAlpha = 1;
+            twinSpanTargetAlpha = 1;
+            twinSpanRampStartTime = null;  // No ramp needed
+            updateTwinSpanState(1);
+            syncTwinspanButtons(true);
+            console.log('[R10] TwinSpan: ON');
+
+            // INOVUS
+            if (!ReynosaEastOverlay.isPhasesAsLots()) {
+                await ReynosaEastOverlay.togglePhasesAsLots();
+            }
+            syncInovusButtons(true);
+            console.log('[R10] INOVUS: ON');
+
+            // Interserrana - set alpha directly and apply
+            if (interserranaBundleLoaded) {
+                macroAlpha = 1;
+                macroTargetAlpha = 1;
+                macroRampStartTime = null;  // No ramp needed
+                setScenarioAlpha(1);
+                if (macroParticles) macroParticles.setScenarioAlpha(1);
+                syncInterserranaButtons(true);
+                console.log('[R10] Interserrana: ON');
+            }
 
             console.log('[R10] Local sim running. Free camera enabled. Spacebar=pause, D=debug, M=particle colors.');
         }

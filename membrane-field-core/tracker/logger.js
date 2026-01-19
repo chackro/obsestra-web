@@ -125,6 +125,12 @@ export function shouldEmitHeartbeat() {
  * @param {number} metrics.avgDelay - Average delay per truck (hours)
  * @param {Object} metrics.lots - { available, draining, blocked }
  * @param {number} metrics.rebuildsLastWindow - Rebuilds in last window
+ * @param {number} metrics.sinkQueue - Particles waiting for CBP
+ * @param {number} metrics.sinkCapKgPerHour - Current sink capacity
+ * @param {number} metrics.drainKgPerHour - Instantaneous drain rate
+ * @param {number} metrics.cbpLanesInUse - CBP lanes in use
+ * @param {boolean} metrics.sinkOpen - Bridge open flag
+ * @param {Object} metrics.stalls - { total, dead_end, lot_full, road_full, pre_lot_hold, moving }
  */
 export function heartbeat(metrics) {
     const phiState = detectPhiState();
@@ -147,12 +153,32 @@ export function heartbeat(metrics) {
     const windowHours = REBUILD_WINDOW_S / 3600;
     const rebuildRate = rebuildsInWindow / windowHours;
 
+    // Sink status
+    const sinkOpen = metrics.sinkOpen;
+    const sinkQueue = metrics.sinkQueue ?? 0;
+    const sinkCap = metrics.sinkCapKgPerHour ?? 0;
+    const drain = metrics.drainKgPerHour ?? 0;
+    const lanes = metrics.cbpLanesInUse ?? 0;
+    const drainPct = sinkCap > 0 ? ((drain / sinkCap) * 100).toFixed(0) : '-';
+    const sinkStatus = sinkOpen
+        ? `sink:{q=${sinkQueue} drain=${(drain/1000).toFixed(0)}t/h (${drainPct}%) lanes=${lanes}}`
+        : `sink:CLOSED`;
+
+    // Stall breakdown
+    const stalls = metrics.stalls || { total: 0, dead_end: 0, lot_full: 0, road_full: 0, pre_lot_hold: 0, moving: 0 };
+    const stalledCount = stalls.dead_end + stalls.lot_full + stalls.road_full + stalls.pre_lot_hold;
+    const stallStatus = stalledCount > 0
+        ? `stall:{${stalledCount} de=${stalls.dead_end} lf=${stalls.lot_full} rf=${stalls.road_full}}`
+        : `stall:0`;
+
     const line = [
         `day=${metrics.day.toFixed(2)}/${metrics.totalDays}`,
         `particles=${metrics.particles}`,
         `throughput=${metrics.throughputMt.toFixed(1)}Mt`,
         `avg_delay=${metrics.avgDelay.toFixed(1)}h`,
         `lots:{avail=${lots.available} drain=${lots.draining} block=${lots.blocked}}`,
+        sinkStatus,
+        stallStatus,
         `phi=${phiState}`,
         `rebuilds=${rebuildsInWindow} (${rebuildRate.toFixed(1)}/hr)`,
     ].join(' ');
