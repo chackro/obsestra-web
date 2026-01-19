@@ -8,7 +8,8 @@
       "Bash(node -e:*)",
       "Bash(python:*)",
       "Bash(powershell:*)",
-      "Bash(dir /b \"C:\\\\Users\\\\pablo\\\\projects\\\\obsestra-web\\\\membrane-field-core\\\\tracker\\\\results\\\\260113_1138\\\\*.json\")"
+      "Bash(dir /b \"C:\\\\Users\\\\pablo\\\\projects\\\\obsestra-web\\\\membrane-field-core\\\\tracker\\\\results\\\\260113_1138\\\\*.json\")",
+      "Bash(curl:*)"
     ]
   }
 }

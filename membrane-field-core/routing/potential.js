@@ -81,9 +81,8 @@ export function computePotential(config) {
                 if (lotIdx >= 0 && drainingSet.has(lotIdx)) continue;
             }
 
-            // PHARR field: prevent roads from getting phi VIA lots
-            // This keeps lot phi valid for exit routing while roads use road-only paths
-            if (label === 'PHARR' && regionMap[idx] === REGION_LOT && regionMap[ni] !== REGION_LOT) {
+            // PHARR/PHARR_TWIN: lots are not valid routing paths - cleared particles must stay on roads
+            if ((label === 'PHARR' || label === 'PHARR_TWIN') && regionMap[ni] === REGION_LOT) {
                 continue;
             }
 
@@ -136,8 +135,8 @@ export function buildNextHop(phi, N, N2, regionMap, label) {
         let bestNh = -1;
         let bestPhi = phi[idx];
 
-        // PHARR: non-lot cells cannot route through lots
-        const skipLots = (label === 'PHARR' && regionMap[idx] !== REGION_LOT);
+        // PHARR/PHARR_TWIN: non-lot cells cannot route through lots
+        const skipLots = ((label === 'PHARR' || label === 'PHARR_TWIN') && regionMap[idx] !== REGION_LOT);
 
         for (const ni of neighbors) {
             if (skipLots && regionMap[ni] === REGION_LOT) continue;

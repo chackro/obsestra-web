@@ -83,13 +83,28 @@ import {
     LOT_COOLDOWN_S,
     sampleDwellSeconds,
 } from '../lots/admission.js';
+import { state, resetState } from '../state.js';
+import {
+    dirFromTo as _dirFromTo,
+    oppositeDir,
+    stepDrift,
+} from '../physics/drift.js';
+import {
+    computePotential as computePotentialExtracted,
+    buildNextHop as buildNextHopExtracted,
+} from '../routing/potential.js';
+import { applyTransfer as applyTransferExtracted } from '../physics/transfer.js';
+
+// Wrapper to capture N (avoids changing all call sites)
+const dirFromTo = (a, b) => _dirFromTo(a, b, state.N);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS — All with physical meaning or explicit knobs
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const N = COMPUTE_WINDOW.RESOLUTION;      // Grid dimension (cells per side)
-const N2 = N * N;                         // Total cells
+// Grid dimensions (aliased from state for compatibility)
+const N = state.N;
+const N2 = state.N2;
 
 /*
 ───────────────────────────────────────────────────────────────────────────────
@@ -767,14 +782,16 @@ const REGION = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GRID STATE — Single source of truth
+// GRID STATE — Aliases to state.js (single source of truth)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Cell arrays
-const cellMass = new Float64Array(N2);           // kg per cell (Float64 for precision at scale)
-const cellParticles = new Array(N2);             // particles[] per cell
+// Core grid arrays (aliased from state.js)
+const cellMass = state.grid.cellMass;
+const cellParticles = state.grid.cellParticles;
+const regionMap = state.grid.regionMap;
+
+// Local grid state (not shared with physics modules)
 const activeCells = new Set();                   // cells with particles > 0
-const regionMap = new Uint8Array(N2);            // REGION enum per cell
 
 // Heatmap accumulators (for headless PNG export)
 const cellPresenceHours = new Float64Array(N2);  // total truck-hours present in cell (roads)
@@ -785,23 +802,7 @@ const outCount4 = new Uint16Array(N2 * 4);
 const touchedCells = [];
 const touchedMark = new Uint8Array(N2);
 
-// Initialize particle arrays
-for (let i = 0; i < N2; i++) {
-    cellParticles[i] = [];
-}
-
-// Direction helpers for O(P) pairwise cancellation
-function dirFromTo(a, b) {
-    const d = b - a;
-    if (d === -1) return 0;      // W
-    if (d === +1) return 1;      // E
-    if (d === -N) return 2;      // N
-    if (d === +N) return 3;      // S
-    return -1;  // not 4-neighbor
-}
-function oppositeDir(dir) {
-    return dir ^ 1;  // 0<->1, 2<->3
-}
+// Direction helpers now imported from physics/drift.js
 
 
 
@@ -1060,19 +1061,19 @@ export function setWebGLRenderer(renderer) {
     log('[OVERLAY] WebGL renderer attached');
 }
 
-// Conductance tensor (road network shape)
-const Kxx = new Float32Array(N2);
-const Kyy = new Float32Array(N2);
+// Conductance tensor (aliased from state.js)
+const Kxx = state.grid.Kxx;
+const Kyy = state.grid.Kyy;
 
-// Routing tables
-const phi_lots = new Float32Array(N2);           // Distance to nearest lot
-const phi_pharr = new Float32Array(N2);          // Distance to PHARR (main span)
-const nextHop_lots = new Int32Array(N2);         // Next cell toward lot
-const nextHop_pharr = new Int32Array(N2);        // Next cell toward PHARR (main span)
+// Routing tables (aliased from state.js)
+const phi_lots = state.routing.phi_lots;
+const phi_pharr = state.routing.phi_pharr;
+const nextHop_lots = state.routing.nextHop_lots;
+const nextHop_pharr = state.routing.nextHop_pharr;
 
-// Twin span routing (separate parallel bridge)
-const phi_pharr_twin = new Float32Array(N2);     // Distance to PHARR via twin span
-const nextHop_pharr_twin = new Int32Array(N2);   // Next cell toward PHARR via twin span
+// Twin span routing (aliased from state.js)
+const phi_pharr_twin = state.routing.phi_pharr_twin;
+const nextHop_pharr_twin = state.routing.nextHop_pharr_twin;
 let _twinSpanCellIndices = [];                   // Cells stamped for twin span road
 let _twinSpanActive = false;                     // Whether twin span road is physically stamped
 
@@ -1083,12 +1084,12 @@ const cellCenterY = new Float32Array(N2);
 // Source field
 const sourceField = new Float32Array(N2);        // kg/s injection rate per cell
 
-// Cell lists (sparse iteration)
-let roadCellIndices = [];
-let lotCellIndices = [];
-let sinkCellIndices = [];
-let sourceCellIndices = [];
-let conductiveCellIndices = [];  // All cells with K > 0 (for debug viz)
+// Cell lists (aliased from state.js)
+let roadCellIndices = state.cellIndices.road;
+let lotCellIndices = state.cellIndices.lot;
+let sinkCellIndices = state.cellIndices.sink;
+let sourceCellIndices = state.cellIndices.source;
+let conductiveCellIndices = state.cellIndices.conductive;
 
 // Sink rate limiting (PHARR gate capacity)
 let sinkCapKgPerHour = 0;                         // Hourly capacity from scenario (0 = unlimited)
@@ -1118,9 +1119,9 @@ const sleepingParticles = [];                     // Particles currently sleepin
 // Phase sleep lots (FASE 1 when inovus enabled)
 let _phaseSleepLotIndices = [];                   // Lot indices for phase sleep lots
 
-// Sleep lot routing (computed in rebuildPhi)
-const phi_sleepLots = new Float32Array(N2);       // Distance to sleep lots
-const nextHop_sleepLots = new Int32Array(N2);     // Next cell toward sleep lot
+// Sleep lot routing (aliased from state.js)
+const phi_sleepLots = state.routing.phi_sleepLots;
+const nextHop_sleepLots = state.routing.nextHop_sleepLots;
 
 function isSleepLot(lotIdx) {
     return SLEEP_LOT_INDICES.includes(lotIdx) || _phaseSleepLotIndices.includes(lotIdx);
@@ -1159,16 +1160,15 @@ function getEffectiveLanes() {
     return Math.floor(BASE_LANES * _twinSpanCapMult);
 }
 
-// Lot tracking
-let cellToLotIndex = new Int16Array(N2);         // Cell → lot index (-1 if not lot)
-let lotToCellIndices = [];                        // Lot → array of cell indices
-let lotCapacity = new Float32Array(0);            // Max kg per lot
-let lotMass = new Float32Array(0);                // Current kg per lot
+// Lot tracking (aliased from state.js)
+const cellToLotIndex = state.lots.cellToLotIndex;
+let lotToCellIndices = state.lots.lotToCellIndices;
+let lotCapacity = state.lots.capacity;
+let lotMass = state.lots.mass;
 
-// Lot draining/cooldown state
-// Once a lot hits cutoff and starts releasing, it stays excluded until empty + cooldown
-let lotDraining = new Set();                      // Lots currently draining (exclude from phi)
-let lotCooldownEndSimS = new Float64Array(0);     // Sim-time seconds when cooldown ends (0 = no cooldown)
+// Lot draining/cooldown state (aliased from state.js)
+const lotDraining = state.lots.draining;
+let lotCooldownEndSimS = state.lots.cooldownEndSimS;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REPLAY LOT PARTICLES — Fake particles for lot fill visualization during replay
@@ -1313,19 +1313,19 @@ function removeParticleTrail(particleId) {
 // PARK WAITING ZONES — First-class physical container for staging/holds
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Park zone tracking (parallel to lot tracking, but semantically distinct)
-let parkCellIndices = [];                         // All cells in any park zone
-let cellToParkIndex = new Int16Array(N2);         // Cell → park index (-1 if not park)
-let parkToCellIndices = [];                       // Park → array of cell indices
-let parkCapacity = new Float32Array(0);           // Max kg per park
-let parkMass = new Float32Array(0);               // Current kg per park
+// Park zone tracking (aliased from state.js)
+let parkCellIndices = state.cellIndices.park;
+const cellToParkIndex = state.parks.cellToParkIndex;
+let parkToCellIndices = state.parks.parkToCellIndices;
+let parkCapacity = state.parks.capacity;
+let parkMass = state.parks.mass;
 
-// Routing to parks (restricted mass seeks parks before lots)
-const phi_parks = new Float32Array(N2);           // Distance to nearest park
-const nextHop_parks = new Int32Array(N2);         // Next cell toward park
+// Routing to parks (aliased from state.js)
+const phi_parks = state.routing.phi_parks;
+const nextHop_parks = state.routing.nextHop_parks;
 
-// Park release queue
-const parkReleaseQueue = [];                      // FIFO queue for park → lot/road release
+// Park release queue (aliased from state.js)
+const parkReleaseQueue = state.parks.releaseQueue;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INDUSTRIAL PARK TRACKING — For source injection only (merged with regular parks)
@@ -1341,8 +1341,8 @@ let industrialParkToCellIndices = [];             // Park → array of cell indi
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMMUTER FRICTION FIELD — Spatial arrays
 // ═══════════════════════════════════════════════════════════════════════════════
-const commuterLoad = new Float32Array(N2);        // [0, 1+] dynamic, updated each tick
-const baseCommuterWeight = new Float32Array(N2);  // [0, 1] static spatial map (arterials=1, collectors=0.4)
+const commuterLoad = state.grid.commuterLoad;
+const baseCommuterWeight = state.grid.baseCommuterWeight;
 const commuterType = new Uint8Array(N2);          // 0=none, 1=arterial, 2=industrial_approach, 3=aduana
 const isIntersection = new Uint8Array(N2);        // 1 = intersection cell (3+ road neighbors)
 const speedLimitMS = new Float32Array(N2);        // Speed limit per cell (m/s), 0 = use default
@@ -1936,115 +1936,10 @@ function findNearestRoutableRoad(fromCellIdx) {
     return bestCell;
 }
 
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// DIJKSTRA — Compute shortest paths to sinks
+// DIJKSTRA — Now using extracted routing/potential.js
+// computePotentialExtracted and buildNextHopExtracted imported above
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// MinHeap now imported from ../lib/MinHeap.js
-
-function computePotential(sinkIndices, phiOutput, label, sinkBias = null, biasWeight = 0, KxxSource = null, KyySource = null) {
-    // Use overrides if provided, otherwise global K fields
-    const KxxUse = KxxSource || Kxx;
-    const KyyUse = KyySource || Kyy;
-
-    const dijkstraStart = Date.now();
-    phiOutput.fill(PHI_LARGE);
-
-    if (sinkIndices.length === 0) {
-        log(`[DIJKSTRA:${label}] No sinks`);
-        return 0;
-    }
-
-    const edgeCost = roi.cellSize;
-    const heap = new MinHeap();
-    const visited = new Uint8Array(N2);
-
-    // Initialize sinks (optionally biased by distance to another target)
-    for (const idx of sinkIndices) {
-        let initCost = PHI_SINK;
-        if (sinkBias && biasWeight > 0 && sinkBias[idx] < PHI_LARGE) {
-            // Add bias: sinks closer to bias target (lower sinkBias) are more attractive
-            initCost += biasWeight * sinkBias[idx];
-        }
-        phiOutput[idx] = initCost;
-        heap.push([initCost, idx]);
-    }
-
-    let reachable = 0;
-
-    while (!heap.isEmpty()) {
-        const [cost, idx] = heap.pop();
-
-        if (visited[idx]) continue;
-        visited[idx] = 1;
-        reachable++;
-
-        const neighbors = getNeighbors4(idx, N);
-
-        for (const ni of neighbors) {
-            // Must be traversable (use K overrides if provided)
-            if (KxxUse[ni] < K_THRESHOLD && KyyUse[ni] < K_THRESHOLD) continue;
-
-            // Draining lots are walls - completely impassable
-            if (regionMap[ni] === REGION.LOT) {
-                const lotIdx = cellToLotIndex[ni];
-                if (lotIdx >= 0 && lotDraining.has(lotIdx)) continue;
-            }
-
-            // For PHARR routing: prevent roads from getting phi VIA lots (keeps lot phi valid for exit)
-            // Block LOT→ROAD propagation so roads use road-only paths, but lots still get phi from roads
-            if (label === 'PHARR' && regionMap[idx] === REGION.LOT && regionMap[ni] !== REGION.LOT) continue;
-
-            // Capacity bias: penalize entry into fuller lots (advisory, not hard gate)
-            // This biases routing toward emptier lots; physics still enforces hard gate at entry
-            let capacityPenalty = 1.0;
-            if (label === 'LOTS' && regionMap[ni] === REGION.LOT) {
-                const lotIdx = cellToLotIndex[ni];
-                if (lotIdx >= 0 && lotCapacity[lotIdx] > 0) {
-                    const util = lotMass[lotIdx] / lotCapacity[lotIdx];
-                    capacityPenalty = 1.0 + 4.0 * Math.pow(util, 3);  // Ramps up as lot fills
-                }
-            }
-
-            const newCost = cost + edgeCost * capacityPenalty;
-            if (newCost < phiOutput[ni]) {
-                phiOutput[ni] = newCost;
-                heap.push([newCost, ni]);
-            }
-        }
-    }
-
-    logBuild(`[DIJKSTRA:${label}] reachable=${reachable} (${((Date.now() - dijkstraStart)/1000).toFixed(1)}s)`);
-    return reachable;
-}
-
-function buildNextHop(phiInput, nhOutput, label = null) {
-    nhOutput.fill(-1);
-
-    for (let idx = 0; idx < N2; idx++) {
-        if (phiInput[idx] >= PHI_LARGE) continue;
-
-        const neighbors = getNeighbors4(idx, N);
-
-        let bestNh = -1;
-        let bestPhi = phiInput[idx];
-
-        // For PHARR routing: non-lot cells cannot pick lot neighbors
-        // (cleared particles must use roads only, lots can exit to roads)
-        const skipLots = (label === 'PHARR' && regionMap[idx] !== REGION.LOT);
-
-        for (const ni of neighbors) {
-            if (skipLots && regionMap[ni] === REGION.LOT) continue;
-            if (phiInput[ni] < bestPhi) {
-                bestPhi = phiInput[ni];
-                bestNh = ni;
-            }
-        }
-
-        nhOutput[idx] = bestNh;
-    }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ROAD CELL CAPACITY — Physical density limit, resolution-independent
@@ -2714,763 +2609,140 @@ function stepInjection(dt) {
 // This prevents Jensen's inequality drift from density spikes at large dt.
 
 function stepDriftAndTransferInner(dt) {
-    // Collect transfers to apply after iteration (avoids concurrent modification)
-    const transfers = [];
+    // Build context for extracted drift function
+    const ctx = {
+        // Dimensions
+        N,
+        dt,
+        simTime,
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PASS A: Build directed outflow counts for O(P) pairwise cancellation
-    // For each moving particle, increment outCount4[cellIdx * 4 + dir] where dir is toward nh
-    // Loop particles are EXCLUDED (exempt from congestion — bridge/overpass in 3D)
-    // ═══════════════════════════════════════════════════════════════════════════
-    for (let i = 0; i < _movingParticleCount; i++) {
-        const p = _movingParticles[i];
+        // Grid arrays
+        regionMap,
+        cellMass,
+        cellParticles,
+        Kxx,
+        Kyy,
+        commuterLoad,
+        isIntersection,
+        speedLimitMS,
+        sourceField,
+        cellCenterX,
+        cellCenterY,
 
-        // Skip particles waiting in sink queue
-        if (p.state === STATE.CLEARED && regionMap[p.cellIdx] === REGION.SINK) continue;
+        // Routing arrays
+        nextHop_lots,
+        nextHop_pharr,
+        nextHop_pharr_twin,
+        nextHop_sleepLots,
+        phi_lots,
 
-        // Skip loop particles (exempt from congestion)
-        if (p.loopTargetIdx !== undefined && p.loopTargetIdx >= 0) continue;
+        // Lot state
+        cellToLotIndex,
+        lotMass,
+        lotCapacity,
 
-        // Compute nh using same logic as main loop
-        let nh;
-        if (p.state === STATE.ROAD) {
-            nh = nextHop_lots[p.cellIdx];
-        } else if (p.state === STATE.CLEARED) {
-            if (!isBridgeOpen() && nextHop_sleepLots[p.cellIdx] >= 0) {
-                nh = nextHop_sleepLots[p.cellIdx];
-            } else if (p.useTwinSpan && _twinSpanActive && nextHop_pharr_twin[p.cellIdx] >= 0) {
-                nh = nextHop_pharr_twin[p.cellIdx];
-            } else {
-                nh = nextHop_pharr[p.cellIdx];
-            }
-        } else {
-            continue;
-        }
+        // Particles
+        movingParticles: _movingParticles,
+        movingParticleCount: _movingParticleCount,
 
-        if (nh < 0) continue;
+        // Buffers (reused)
+        outCount4,
+        touchedCells,
+        touchedMark,
 
-        const dir = dirFromTo(p.cellIdx, nh);
-        if (dir >= 0) {
-            outCount4[p.cellIdx * 4 + dir]++;
-            if (!touchedMark[p.cellIdx]) {
-                touchedMark[p.cellIdx] = 1;
-                touchedCells.push(p.cellIdx);
-            }
-        }
-    }
+        // Enums
+        STATE,
+        REGION,
 
-    for (let i = 0; i < _movingParticleCount; i++) {
-        const p = _movingParticles[i];
-        const cellIdx = p.cellIdx;
+        // Config
+        TRUCK_KG,
+        ROAD_CELL_CAP_KG,
+        SINK_CAP_MULT,
+        STALL_CUTOFF,
+        COMMUTER_EQUIV_KG,
+        COMMUTER_SPEED_PENALTY,
+        VISUAL_SPEED_MS,
+        EXIT_ZONE,
+        REPLAY_MODE,
+        REPLAY_TIME_SCALE,
+        DEBUG_PAIRWISE_CANCELLATION,
 
-        // Age particle
-        p.age += dt;
+        // Module state
+        roi,
+        twinSpanActive: _twinSpanActive,
+        routingVersion: _routingVersion,
+        lotAdmissionCutoff: _lotAdmissionCutoff,
+        verbose: _verbose,
 
-        // Stuck detection: track stalled time in seconds, log only if stuck > 72 hours
-        if (p.px !== undefined && p.x === p.px && p.y === p.py) {
-            p.stalledTime = (p.stalledTime || 0) + dt;
-            const STUCK_THRESHOLD_S = 72 * 3600;  // 72 hours
-            if (p.stalledTime >= STUCK_THRESHOLD_S && !p.stuckLogged) {
-                p.stuckLogged = true;
-                const nh = (p.state === STATE.CLEARED ? nextHop_pharr : nextHop_lots)[p.cellIdx];
-                if (_verbose) console.log(`[STUCK >72h] id=${p.id} cell=${p.cellIdx} nh=${nh} state=${p.state} region=${regionMap[p.cellIdx]} reason=${p.stallReason}`);
-            }
-        } else {
-            p.stalledTime = 0;
-            p.stuckLogged = false;
-        }
+        // Helper functions
+        isBridgeOpen,
+        isCellInBridgeApproach,
+        getLoopNextHop,
+        congestionFactor,
+        worldToFieldX,
+        worldToFieldY,
+    };
 
-        // Skip particles in CBP area (still in movingParticles but not drifting)
-        // Separate queue time (waiting) from service time (in lane)
-        if (p.state === STATE.CLEARED && regionMap[cellIdx] === REGION.SINK) {
-            _truckHoursLostThisTick += dt;           // c=0 → loss=1
-            if (p._cbpLane) {
-                // In service — assigned to lane, being processed
-                _truckHoursLostBridgeServiceTick += dt;
-            } else {
-                // In queue — waiting for lane assignment
-                _truckHoursLostBridgeQueueTick += dt;
-            }
-            continue;
-        }
+    // Call extracted drift function
+    const { transfers, accumulators } = stepDrift(ctx);
 
-        // Early exit zone check for DEPARTING particles (in case they get stuck)
-        if (p.state === STATE.DEPARTING) {
-            const edx = p.x - EXIT_ZONE.x;
-            const edy = p.y - EXIT_ZONE.y;
-            const exitDist2 = edx * edx + edy * edy;
-            const exitRadiusM = EXIT_ZONE.radiusCells * roi.cellSize;
-            const timedOut = (simTime - p.departureTime) > EXIT_ZONE.maxTimeS;
-            if (exitDist2 < exitRadiusM * exitRadiusM || timedOut) {
-                transfers.push({ p, from: cellIdx, to: -1, action: 'departed' });
-                continue;
-            }
-        }
-
-            // Get routing table for this particle's state
-            let nhTable;
-            let nh;
-            if (p.state === STATE.ROAD) {
-                // Industrial parks are source-only, not destinations
-                nhTable = nextHop_lots;
-                nh = nhTable[p.cellIdx];
-            } else if (p.state === STATE.CLEARED) {
-                // Route to sleep lots when bridge is closed (and sleep lots available)
-                if (!isBridgeOpen() && nextHop_sleepLots[p.cellIdx] >= 0) {
-                    nhTable = nextHop_sleepLots;
-                } else if (p.useTwinSpan && _twinSpanActive && nextHop_pharr_twin[p.cellIdx] >= 0) {
-                    // Twin span particles use separate routing
-                    nhTable = nextHop_pharr_twin;
-                } else {
-                    nhTable = nextHop_pharr;
-                }
-                nh = nhTable[p.cellIdx];
-            } else if (p.state === STATE.DEPARTING) {
-                // DEPARTURE ROUTING: Move toward exit zone (north of sink)
-                // Find conductive neighbor closest to exit zone
-                const cx = cellIdx % N;
-                const cy = Math.floor(cellIdx / N);
-                const myX = cellCenterX[cellIdx];
-                const myY = cellCenterY[cellIdx];
-                const myDist2 = (myX - EXIT_ZONE.x) * (myX - EXIT_ZONE.x) + (myY - EXIT_ZONE.y) * (myY - EXIT_ZONE.y);
-                let bestDist2 = myDist2;
-                nh = -1;
-                // Check all 4 neighbors, pick one closest to exit zone with conductivity
-                if (cx > 0 && (Kxx[cellIdx - 1] > 0 || Kyy[cellIdx - 1] > 0)) {
-                    const nx = cellCenterX[cellIdx - 1], ny = cellCenterY[cellIdx - 1];
-                    const d2 = (nx - EXIT_ZONE.x) * (nx - EXIT_ZONE.x) + (ny - EXIT_ZONE.y) * (ny - EXIT_ZONE.y);
-                    if (d2 < bestDist2) { bestDist2 = d2; nh = cellIdx - 1; }
-                }
-                if (cx < N - 1 && (Kxx[cellIdx + 1] > 0 || Kyy[cellIdx + 1] > 0)) {
-                    const nx = cellCenterX[cellIdx + 1], ny = cellCenterY[cellIdx + 1];
-                    const d2 = (nx - EXIT_ZONE.x) * (nx - EXIT_ZONE.x) + (ny - EXIT_ZONE.y) * (ny - EXIT_ZONE.y);
-                    if (d2 < bestDist2) { bestDist2 = d2; nh = cellIdx + 1; }
-                }
-                if (cy > 0 && (Kxx[cellIdx - N] > 0 || Kyy[cellIdx - N] > 0)) {
-                    const nx = cellCenterX[cellIdx - N], ny = cellCenterY[cellIdx - N];
-                    const d2 = (nx - EXIT_ZONE.x) * (nx - EXIT_ZONE.x) + (ny - EXIT_ZONE.y) * (ny - EXIT_ZONE.y);
-                    if (d2 < bestDist2) { bestDist2 = d2; nh = cellIdx - N; }
-                }
-                if (cy < N - 1 && (Kxx[cellIdx + N] > 0 || Kyy[cellIdx + N] > 0)) {
-                    const nx = cellCenterX[cellIdx + N], ny = cellCenterY[cellIdx + N];
-                    const d2 = (nx - EXIT_ZONE.x) * (nx - EXIT_ZONE.x) + (ny - EXIT_ZONE.y) * (ny - EXIT_ZONE.y);
-                    if (d2 < bestDist2) { bestDist2 = d2; nh = cellIdx + N; }
-                }
-            } else {
-                continue;
-            }
-
-            // LOOP OVERRIDE: Per-particle waypoint tracking
-            const loopNh = getLoopNextHop(p);
-            if (loopNh >= 0) {
-                nh = loopNh;
-            }
-
-            if (nh < 0) {
-                p.renderStalled = true;
-                p.stallReason = 'dead_end';
-                if (p.stallStartVersion < 0) p.stallStartVersion = _routingVersion;
-                _truckHoursLostThisTick += dt;           // c=0 → loss=1
-                _truckHoursLostCongestionTick += dt;    // attribute to congestion
-                continue;
-            }
-            // LINEAGE: Clear stall tracking on successful route
-            p.renderStalled = false;
-            p.stallReason = null;
-            p.stallStartVersion = -1;
-            p.routingVersion = _routingVersion;
-            p.lastRouteCell = cellIdx;
-            p.lastRouteNh = nh;
-
-            // ─────────────────────────────────────────────────────────────────
-            // CAPACITY GATE: Check if next hop is a full lot (try alternative first)
-            // REPLAY_MODE: Skip all capacity gates — kinematic movement only
-            // ─────────────────────────────────────────────────────────────────
-            if (!REPLAY_MODE && p.state === STATE.ROAD && regionMap[nh] === REGION.LOT) {
-                const lotIdx = cellToLotIndex[nh];
-                if (lotIdx >= 0) {
-                    const fill = lotMass[lotIdx] / lotCapacity[lotIdx];
-                    if (fill >= _lotAdmissionCutoff) {
-                        // Try alternative neighbor toward different lot (forward)
-                        const currentPhi = phi_lots[cellIdx];
-
-                        let altNh = -1;
-                        let altPhi = currentPhi;
-                        let backtrackNh = -1;
-                        let backtrackPhi = Infinity;
-                        const neighbors = getNeighbors4(cellIdx, N);
-
-                        for (const ni of neighbors) {
-                            if (ni === nh) continue;  // Skip the full lot
-                            if (Kxx[ni] < K_THRESHOLD && Kyy[ni] < K_THRESHOLD) continue;  // Must be traversable
-                            if (phi_lots[ni] >= PHI_LARGE) continue;  // Skip unreachable cells
-                            // Skip if neighbor is also a full lot
-                            if (regionMap[ni] === REGION.LOT) {
-                                const niLotIdx = cellToLotIndex[ni];
-                                if (niLotIdx >= 0 && lotMass[niLotIdx] / lotCapacity[niLotIdx] >= _lotAdmissionCutoff) continue;
-                            }
-
-                            if (phi_lots[ni] < currentPhi) {
-                                // Forward alternative: lower phi (toward a different lot)
-                                if (phi_lots[ni] < altPhi) {
-                                    altPhi = phi_lots[ni];
-                                    altNh = ni;
-                                }
-                            } else {
-                                // Backtrack candidate: higher phi (retreat toward main network)
-                                // Pick the one with lowest phi among backtrack options
-                                if (phi_lots[ni] < backtrackPhi) {
-                                    backtrackPhi = phi_lots[ni];
-                                    backtrackNh = ni;
-                                }
-                            }
-                        }
-
-                        if (altNh >= 0) {
-                            nh = altNh;
-                        } else if (backtrackNh >= 0) {
-                            // No forward alternative — backtrack toward main network
-                            // Pairwise cancellation handles congestion with oncoming traffic
-                            nh = backtrackNh;
-                            p.stallReason = 'backtrack';  // Visual indicator
-                        } else {
-                            // LINEAGE: Track when stall began
-                            if (p.stallStartVersion < 0) {
-                                p.stallStartVersion = _routingVersion;
-                                p.lastRouteCell = cellIdx;
-                                p.lastRouteNh = nh;
-                            }
-                            // INVARIANT: If routing was rebuilt since stall started, we should have found a route
-                            if (_routingVersion > p.stallStartVersion) {
-                                console.error(`[REROUTE FAILURE] Particle ${p.id} stalled at v${p.stallStartVersion}, now v${_routingVersion}`,
-                                    `cell=${cellIdx} nh=${nh} phi=${phi_lots[cellIdx]?.toFixed(1)} nhPhi=${phi_lots[nh]?.toFixed(1)}`);
-                            }
-                            p.renderStalled = true;
-                            p.stallReason = 'lot_full';
-                            p.routingVersion = _routingVersion;
-                            _truckHoursLostThisTick += dt;        // c=0 → loss=1
-                            _truckHoursLostLotWaitTick += dt;     // attribute to lot wait
-                            continue;
-                        }
-                    }
-                }
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // CAPACITY GATE: Check if next hop road cell is at gridlock
-            // For ROAD particles, try alternative neighbors before stalling
-            // EXCEPTION: Skip capacity check near sink (prevents funnel bottleneck)
-            // REPLAY_MODE: Skip — kinematic movement only
-            // ─────────────────────────────────────────────────────────────────
-            const nearSink = isCellInBridgeApproach(nh);
-            const nhCap = nearSink ? ROAD_CELL_CAP_KG * SINK_CAP_MULT : ROAD_CELL_CAP_KG;
-            if (!REPLAY_MODE && regionMap[nh] === REGION.ROAD && cellMass[nh] >= nhCap) {
-                // ROAD particles can seek alternatives (multiple lots available)
-                // CLEARED particles must wait (single destination)
-                if (p.state === STATE.ROAD) {
-                    // Industrial parks are source-only, not destinations
-                    const currentPhi = phi_lots[cellIdx];
-
-                    // Check 4 neighbors for less congested alternative
-                    let altNh = -1;
-                    let altCongestion = Infinity;
-                    const neighbors = getNeighbors4(cellIdx, N);
-
-                    for (const ni of neighbors) {
-                        if (ni === nh) continue;  // Skip the blocked one
-                        if (phi_lots[ni] >= currentPhi) continue;  // Must still lead to destination
-                        if (Kxx[ni] < K_THRESHOLD && Kyy[ni] < K_THRESHOLD) continue;  // Must be traversable
-                        const niNearSink = isCellInBridgeApproach(ni);
-                        const niCap = niNearSink ? ROAD_CELL_CAP_KG * SINK_CAP_MULT : ROAD_CELL_CAP_KG;
-                        if (regionMap[ni] === REGION.ROAD && cellMass[ni] >= niCap) continue;  // Must have room
-
-                        const neighborCongestion = cellMass[ni];
-                        if (neighborCongestion < altCongestion) {
-                            altCongestion = neighborCongestion;
-                            altNh = ni;
-                        }
-                    }
-
-                    if (altNh >= 0) {
-                        nh = altNh;  // Use alternative route
-                    } else {
-                        p.renderStalled = true;
-                        p.stallReason = 'road_full';
-                        _truckHoursLostThisTick += dt;        // c=0 → loss=1
-                        _truckHoursLostCongestionTick += dt;  // attribute to congestion
-                        continue;
-                    }
-                } else {
-                    p.renderStalled = true;
-                    p.stallReason = 'road_full';
-                    _truckHoursLostThisTick += dt;        // c=0 → loss=1
-                    _truckHoursLostCongestionTick += dt;  // attribute to congestion
-                    continue;  // CLEARED must wait
-                }
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // CONTINUOUS DRIFT toward next hop (with congestion scaling)
-            // ─────────────────────────────────────────────────────────────────
-            const targetX = cellCenterX[nh];
-            const targetY = cellCenterY[nh];
-
-            const dx = targetX - p.x;
-            const dy = targetY - p.y;
-            const dist2 = dx * dx + dy * dy;
-            if (dist2 < 0.000001) continue;  // 0.001^2
-
-            // CONGESTION: Scale velocity by DOWNSTREAM density + commuter friction (anticipation)
-            // Drivers slow when they see congestion ahead, not when sitting in it
-            // Commuter friction adds effective mass without adding particles
-            // Exempt from congestion:
-            //   - Lots (explicitly parked)
-            //   - Source cells (entrance ramps - trucks spawn here, should flow freely)
-            //   - Loop particles (bridge/overpass - no 2D intersection with roads below)
-            // PAIRWISE CANCELLATION: O(1) lookup of opposing traffic (trucks in nh headed back toward us)
-            const dirAB = dirFromTo(cellIdx, nh);
-            let opposingMass = 0;
-            if (dirAB >= 0) {
-                const dirBA = oppositeDir(dirAB);
-                opposingMass = outCount4[nh * 4 + dirBA] * TRUCK_KG;
-            }
-
-            // DEBUG: Compare O(1) lookup vs O(P²) scan for 1-in-200 particles
-            if (DEBUG_PAIRWISE_CANCELLATION && (p.id % 200 === 0)) {
-                let opposingMass_old = 0;
-                for (const other of cellParticles[nh]) {
-                    let otherNh = -1;
-                    const otherLoopNh = getLoopNextHop(other);
-                    if (otherLoopNh >= 0) {
-                        otherNh = otherLoopNh;
-                    } else if (other.state === STATE.ROAD) {
-                        otherNh = nextHop_lots[other.cellIdx];
-                    } else if (other.state === STATE.CLEARED) {
-                        if (!isBridgeOpen() && nextHop_sleepLots[other.cellIdx] >= 0) {
-                            otherNh = nextHop_sleepLots[other.cellIdx];
-                        } else if (other.useTwinSpan && _twinSpanActive && nextHop_pharr_twin[other.cellIdx] >= 0) {
-                            otherNh = nextHop_pharr_twin[other.cellIdx];
-                        } else {
-                            otherNh = nextHop_pharr[other.cellIdx];
-                        }
-                    } else {
-                        continue;
-                    }
-                    if (otherNh === cellIdx) {
-                        opposingMass_old += TRUCK_KG;
-                    }
-                }
-                // Tolerance: loop particles are excluded from outCount4, so old may be higher
-                const diff = Math.abs(opposingMass_old - opposingMass);
-                if (diff > TRUCK_KG * 2) {
-                    console.warn(`[PAIRWISE] p=${p.id} cell=${cellIdx} nh=${nh} old=${opposingMass_old} new=${opposingMass} diff=${diff}`);
-                }
-            }
-
-            const rho = Math.max(0, cellMass[nh] - opposingMass);
-            const commuterFriction = COMMUTER_EQUIV_KG * commuterLoad[nh];
-            const rho_eff = rho + commuterFriction;
-            const isSourceCell = sourceField[cellIdx] > 0;
-            const isOnLoop = p.loopTargetIdx !== undefined && p.loopTargetIdx >= 0;
-            // REPLAY_MODE: Force c=1.0 — no congestion slowdown during kinematic replay
-            // Loop particles exempt: bridge/overpass in 3D, appears as overlap in 2D
-            const c = REPLAY_MODE ? 1.0 : ((regionMap[nh] === REGION.LOT || isSourceCell || isOnLoop) ? 1.0 : congestionFactor(rho_eff));
-
-            // Track stalled mass (moving particles slowed below cutoff)
-            // Weight by dt so accumulation is time-integrated, not per-substep
-            if (c < STALL_CUTOFF) {
-                _stalledMassKg += TRUCK_KG * dt;  // kg·s (time-weighted)
-            }
-
-            // Track truck-hours lost vs free-flow
-            // Each particle == one truck; c=1 → 0 loss, c=0 → 1 hr lost per hr
-            // INVARIANT: loss = (1 - c), where c ∈ [0,1]
-            // Weight by dt so accumulation is time-integrated, not per-substep
-            const loss = 1 - c;
-            if (loss < 0 || loss > 1) {
-                console.error(`[INVARIANT VIOLATION] truck-hours loss=${loss} out of bounds, c=${c}`);
-            }
-            _truckHoursLostThisTick += loss * dt;  // truck·s (time-weighted)
-
-            // INSTRUMENTATION: Split by cause (no behavior change)
-            if (p.stallReason === 'lot_full') {
-                _truckHoursLostLotWaitTick += loss * dt;
-            } else {
-                _truckHoursLostCongestionTick += loss * dt;
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // LAYER C: Intersection stop-go waves (physical effect)
-            // At high-commuter intersections, sin-wave blocking creates phantom queues
-            // EVENT-BASED HOLD: Compute hold-until time once, release when simTime exceeds it
-            // This ensures dt-invariance (blocking duration doesn't change with timestep)
-            // REPLAY_MODE: Skip — kinematic movement only
-            // ─────────────────────────────────────────────────────────────────
-            const cellLoad = commuterLoad[cellIdx];
-            if (!REPLAY_MODE && isIntersection[cellIdx] && cellLoad > 0.6) {
-                // Check if already held from previous substep/tick
-                if (p._intersectionHoldUntil !== undefined) {
-                    if (simTime < p._intersectionHoldUntil) {
-                        _truckHoursLostThisTick += dt;        // c=0 → loss=1
-                        _truckHoursLostCongestionTick += dt;  // attribute to congestion
-                        continue;  // Still held
-                    } else {
-                        p._intersectionHoldUntil = undefined;  // Release
-                    }
-                } else {
-                    // Check if entering a new blocking window
-                    const phase = (cellIdx * 7919) % 1000 / 1000 * Math.PI * 2;  // Per-cell phase
-                    const theta = simTime * 0.3 + phase;
-                    const sinVal = Math.sin(theta);
-                    if (sinVal > 0.85) {
-                        // Compute hold duration: time until sin drops below 0.85
-                        // sin(x) = 0.85 at x = asin(0.85) and x = π - asin(0.85)
-                        // We're in blocking zone, exit point is at θ = π - asin(0.85) + 2πk
-                        const ASIN_085 = 1.0160;  // asin(0.85)
-                        const exitAngle = Math.PI - ASIN_085;  // ≈ 2.126 rad
-                        // Find time until theta reaches exitAngle (mod 2π)
-                        const thetaMod = theta % (2 * Math.PI);
-                        let timeToExit;
-                        if (thetaMod < exitAngle) {
-                            timeToExit = (exitAngle - thetaMod) / 0.3;
-                        } else {
-                            // Wrapped past exit, wait for next cycle exit
-                            timeToExit = (2 * Math.PI - thetaMod + exitAngle) / 0.3;
-                        }
-                        p._intersectionHoldUntil = simTime + timeToExit;
-                        _intersectionBlockCount++;
-                        _truckHoursLostThisTick += dt;        // c=0 → loss=1
-                        _truckHoursLostCongestionTick += dt;  // attribute to congestion
-                        continue;  // Block this substep
-                    }
-                }
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // LAYER B: Velocity jitter (stop-go hesitation from commuter chaos)
-            // dt-INVARIANT: Use deterministic seed from particle ID + sim-second
-            // Changes once per second, not per substep, ensuring same jitter at any dt
-            // ─────────────────────────────────────────────────────────────────
-            const jitterSeed = ((p.id * 7919) ^ Math.floor(simTime)) % 1000;
-            const velJitter = cellLoad > 0
-                ? Math.min(1.0, (1 - COMMUTER_SPEED_PENALTY * cellLoad) * (0.95 + jitterSeed * 0.0001))
-                : 1.0;
-
-            // Move toward target (speed scaled by congestion + commuter jitter)
-            // Use speed limit if defined, otherwise default
-            // REPLAY_MODE: Apply time scale for accelerated kinematic motion
-            const baseSpeed = speedLimitMS[cellIdx] > 0 ? speedLimitMS[cellIdx] : VISUAL_SPEED_MS;
-            const moveDistance = baseSpeed * c * velJitter * dt * (REPLAY_MODE ? REPLAY_TIME_SCALE : 1.0);
-
-            // CFL assertion: substeps guarantee this never fires
-            // REPLAY_MODE: Skip CFL check — kinematic animation doesn't require physics stability
-            if (!REPLAY_MODE && moveDistance > 0.9 * roi.cellSize) {
-                throw new Error(`[CFL] moveDistance=${moveDistance.toFixed(1)}m > limit=${(0.9 * roi.cellSize).toFixed(1)}m — substep logic broken`);
-            }
-
-            p.px = p.x;
-            p.py = p.y;
-
-            if (moveDistance * moveDistance >= dist2) {
-                p.x = targetX;
-                p.y = targetY;
-            } else {
-                const dist = Math.sqrt(dist2);  // Only compute sqrt when lerping
-                p.x += (dx / dist) * moveDistance;
-                p.y += (dy / dist) * moveDistance;
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // EXIT ZONE CHECK: Remove DEPARTING particles that reached exit or timed out
-            // ─────────────────────────────────────────────────────────────────
-            if (p.state === STATE.DEPARTING) {
-                const edx = p.x - EXIT_ZONE.x;
-                const edy = p.y - EXIT_ZONE.y;
-                const exitDist2 = edx * edx + edy * edy;
-                const exitRadiusM = EXIT_ZONE.radiusCells * roi.cellSize;
-                const timedOut = (simTime - p.departureTime) > EXIT_ZONE.maxTimeS;
-                if (exitDist2 < exitRadiusM * exitRadiusM || timedOut) {
-                    transfers.push({ p, from: cellIdx, to: -1, action: 'departed' });
-                    continue;
-                }
-            }
-
-            // ─────────────────────────────────────────────────────────────────
-            // BOUNDARY CHECK: Did particle cross into a new cell?
-            // ─────────────────────────────────────────────────────────────────
-            const newCellX = Math.floor(worldToFieldX(p.x));
-            const newCellY = Math.floor(worldToFieldY(p.y));
-
-            // Bounds check
-            if (newCellX < 0 || newCellX >= N || newCellY < 0 || newCellY >= N) {
-                transfers.push({ p, from: cellIdx, to: -1, action: 'oob' });
-                continue;
-            }
-
-            const newIdx = newCellY * N + newCellX;
-            if (newIdx !== p.cellIdx) {
-                // Skip routing validation for particles on the hardcoded loop
-                if (p.loopTargetIdx !== undefined && p.loopTargetIdx >= 0) {
-                    transfers.push({ p, from: cellIdx, to: newIdx });
-                } else if (p.state === STATE.DEPARTING) {
-                    // DEPARTING: Accept any conductive cell (climbing phi gradient)
-                    if (Kxx[newIdx] > 0 || Kyy[newIdx] > 0) {
-                        transfers.push({ p, from: cellIdx, to: newIdx });
-                    }
-                } else {
-                    // Validate: does new cell have routing?
-                    const hasRoute = (p.state === STATE.CLEARED)
-                        ? ((p.useTwinSpan && _twinSpanActive ? nextHop_pharr_twin[newIdx] >= 0 : nextHop_pharr[newIdx] >= 0) || regionMap[newIdx] === REGION.SINK)
-                        : (nextHop_lots[newIdx] >= 0 || regionMap[newIdx] === REGION.LOT);
-
-                    if (hasRoute) {
-                        transfers.push({ p, from: cellIdx, to: newIdx });
-                    } else if (nh >= 0 && nh !== p.cellIdx) {
-                        // Diagonal drift to bad cell - snap to intended next hop
-                        transfers.push({ p, from: cellIdx, to: nh });
-                    }
-                    // else: stay put (shouldn't happen if routing is good)
-                }
-            }
-    }
-
-    // Apply all transfers (deferred to avoid concurrent modification)
+    // Build transfer context and apply transfers
+    buildTransferContext();
     for (const t of transfers) {
         applyTransfer(t);
     }
+    finalizeTransfers();
 
-    // Reset outflow counts for next substep (sparse reset — only touched cells)
-    for (let k = 0; k < touchedCells.length; k++) {
-        const c = touchedCells[k];
-        const base = c * 4;
-        outCount4[base] = outCount4[base + 1] = outCount4[base + 2] = outCount4[base + 3] = 0;
-        touchedMark[c] = 0;
-    }
-    touchedCells.length = 0;
+    // Update module-level accumulators
+    _truckHoursLostThisTick += accumulators.truckHoursLost;
+    _truckHoursLostBridgeServiceTick += accumulators.truckHoursLostBridgeService;
+    _truckHoursLostBridgeQueueTick += accumulators.truckHoursLostBridgeQueue;
+    _truckHoursLostCongestionTick += accumulators.truckHoursLostCongestion;
+    _truckHoursLostLotWaitTick += accumulators.truckHoursLostLotWait;
+    _stalledMassKg += accumulators.stalledMassKg;
+    _intersectionBlockCount += accumulators.intersectionBlockCount;
 }
 
-function applyTransfer({ p, from, to, action }) {
-    // Remove from old cell - O(1) swap-and-pop
-    const arr = cellParticles[from];
-    if (arr.length > 0 && p.slotIdx >= 0 && p.slotIdx < arr.length) {
-        const lastP = arr[arr.length - 1];
-        arr[p.slotIdx] = lastP;
-        lastP.slotIdx = p.slotIdx;
-        arr.pop();
-        cellMass[from] -= particleMass();
-        if (arr.length === 0) {
-            activeCells.delete(from);
-        }
-    }
+// Transfer context built once per stepDriftAndTransferInner call, reused for all transfers
+let _transferContext = null;
+let _transferCounters = { departedCount: 0 };
 
-    // Handle out-of-bounds
-    if (action === 'oob') {
-        console.warn(`[TRANSFER] Particle ${p.id} went OOB`);
-        metrics.violations++;
-        removeFromActiveParticles(p);
-        removeFromMovingParticles(p);
-        removeParticleTrail(p.id);
-        return;
-    }
+/**
+ * Build transfer context for extracted applyTransfer function.
+ * Call at start of stepDriftAndTransferInner, before processing transfers.
+ */
+function buildTransferContext() {
+    _transferCounters.departedCount = 0;
+    _transferContext = {
+        N, simTime,
+        cellParticles, cellMass, activeCells, regionMap,
+        cellToLotIndex, lotToCellIndices, lotMass, lotCapacity,
+        lotAdmissionCutoff: _lotAdmissionCutoff,
+        cellToParkIndex, parkMass, parkCapacity,
+        sinkQueue, conversionQueue, sleepingParticles, parkReleaseQueue,
+        counters: _transferCounters,
+        metrics,
+        STATE, REGION, WAKE_OFFSETS, ROAD_CELL_CAP_KG, SINK_CAP_MULT,
+        particleMass, removeFromActiveParticles, removeFromMovingParticles, removeParticleTrail,
+        isCellInBridgeApproach, isBridgeOpen, isSleepLot,
+        fieldToWorldX, fieldToWorldY, sampleDwellSeconds, rng,
+    };
+}
 
-    // Handle departed particles (DEPARTING state reached exit zone)
-    if (action === 'departed' || to < 0) {
-        _departedCount++;
-        removeFromActiveParticles(p);
-        removeFromMovingParticles(p);
-        removeParticleTrail(p.id);
-        return;
-    }
+/**
+ * Apply transfer and update module-level departed count.
+ * Wrapper around extracted applyTransfer from physics/transfer.js.
+ */
+function applyTransfer(transfer) {
+    applyTransferExtracted(transfer, _transferContext);
+}
 
-    const region = regionMap[to];
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // SINK: Queue particle for CBP lane service
-    // Particle stays visible until service completion (stepCBPCompletion)
-    // DEPARTING particles are exiting through sink - don't re-queue them
-    // ─────────────────────────────────────────────────────────────────────────
-    if (region === REGION.SINK && p.state !== STATE.DEPARTING) {
-        // Add particle to sink cell (stays visible until CBP service complete)
-        p.cellIdx = to;
-        p.slotIdx = cellParticles[to].length;
-        cellParticles[to].push(p);
-        activeCells.add(to);
-        cellMass[to] += particleMass();
-
-        // Queue for CBP lane assignment
-        sinkQueue.push(p);
-        return;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // LOT ENTRY: Capacity-gated, triggers state change
-    // ─────────────────────────────────────────────────────────────────────────
-    if (region === REGION.LOT && p.state === STATE.ROAD) {
-        const lotIdx = cellToLotIndex[to];
-        if (lotIdx < 0) {
-            throw new Error(`[INVARIANT:LOT] Cell ${to} is REGION.LOT but cellToLotIndex=${lotIdx}`);
-        }
-        if (lotIdx >= 0) {
-            const fill = lotMass[lotIdx] / lotCapacity[lotIdx];
-            const canAdmit = fill < _lotAdmissionCutoff && (lotCapacity[lotIdx] - lotMass[lotIdx]) >= particleMass();
-            if (canAdmit) {
-                // Enter lot - scatter to random cell within lot (physics position, not just render)
-                const cells = lotToCellIndices[lotIdx];
-                const targetCell = (cells && cells.length > 0)
-                    ? cells[Math.floor(rng() * cells.length)]
-                    : to;
-
-                p.cellIdx = targetCell;
-                p.state = STATE.LOT;
-                removeFromMovingParticles(p);
-                p.lotIdx = lotIdx;
-                p.lotArrivalTime = simTime;
-                p.dwellEnd = simTime + sampleDwellSeconds(rng);
-                p.renderStalled = false;  // Clear stall - now waiting normally
-                p.stallReason = null;     // Clear lot_full stall (instrumentation)
-                p.slotIdx = cellParticles[targetCell].length;
-                cellParticles[targetCell].push(p);
-                activeCells.add(targetCell);
-                cellMass[targetCell] += particleMass();
-                lotMass[lotIdx] += particleMass();
-                // Assert capacity not exceeded
-                if (lotMass[lotIdx] > lotCapacity[lotIdx]) {
-                    throw new Error(`[INVARIANT:LOT] lot=${lotIdx} mass=${lotMass[lotIdx]} > capacity=${lotCapacity[lotIdx]}`);
-                }
-                conversionQueue.push(p);
-                metrics.enteredLots += particleMass();
-                // Set render position to match physics cell
-                const cx = targetCell % N;
-                const cy = Math.floor(targetCell / N);
-                p.x = fieldToWorldX(cx + 0.3 + rng() * 0.4);
-                p.y = fieldToWorldY(cy + 0.3 + rng() * 0.4);
-                p.lotParked = true;
-                return;
-            } else {
-                // Lot full - bounce back (shouldn't happen if gate works, but safety)
-                p.x = p.px;
-                p.y = p.py;
-                p.slotIdx = cellParticles[from].length;
-                cellParticles[from].push(p);
-                activeCells.add(from);
-                cellMass[from] += particleMass();
-                p.renderStalled = true;
-                p.stallReason = 'lot_full';
-                return;
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // SLEEP LOT ENTRY: CLEARED particles entering designated lots when bridge closed
-    // ─────────────────────────────────────────────────────────────────────────
-    if (region === REGION.LOT && p.state === STATE.CLEARED && !isBridgeOpen()) {
-        const lotIdx = cellToLotIndex[to];
-        if (lotIdx >= 0 && isSleepLot(lotIdx)) {
-            const fill = lotMass[lotIdx] / lotCapacity[lotIdx];
-            const canAdmit = fill < _lotAdmissionCutoff && (lotCapacity[lotIdx] - lotMass[lotIdx]) >= particleMass();
-            if (canAdmit) {
-                // Enter sleep lot - scatter to random cell within lot (physics position)
-                const cells = lotToCellIndices[lotIdx];
-                const targetCell = (cells && cells.length > 0)
-                    ? cells[Math.floor(rng() * cells.length)]
-                    : to;
-
-                p.cellIdx = targetCell;
-                p.state = STATE.SLEEPING;
-                removeFromMovingParticles(p);
-                p.sleepLotIdx = lotIdx;
-                p.sleepArrivalTime = simTime;
-                p.wakeOffset = WAKE_OFFSETS[Math.floor(rng() * 4)];  // Random wave: 1hr, 45min, 30min, 0
-                p.renderStalled = false;
-                p.slotIdx = cellParticles[targetCell].length;
-                cellParticles[targetCell].push(p);
-                activeCells.add(targetCell);
-                cellMass[targetCell] += particleMass();
-                lotMass[lotIdx] += particleMass();
-                sleepingParticles.push(p);
-                // Set render position to match physics cell
-                const cx = targetCell % N;
-                const cy = Math.floor(targetCell / N);
-                p.x = fieldToWorldX(cx + 0.3 + rng() * 0.4);
-                p.y = fieldToWorldY(cy + 0.3 + rng() * 0.4);
-                p.lotParked = true;
-                return;
-            } else {
-                // Sleep lot full - fall back to sink queue
-                // Continue to sink entry below
-            }
-        }
-        // Not a sleep lot or full - continue routing to sink (fall through)
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PARK ENTRY: Similar to lot but different state
-    // ─────────────────────────────────────────────────────────────────────────
-    if (region === REGION.PARK && p.state === STATE.ROAD) {
-        const parkIdx = cellToParkIndex[to];
-        if (parkIdx >= 0) {
-            const available = parkCapacity[parkIdx] - parkMass[parkIdx];
-            if (available >= particleMass()) {
-                // Scatter within 3-cell radius of entry (physics position)
-                const entryCx = to % N;
-                const entryCy = Math.floor(to / N);
-                const offsetX = Math.floor(rng() * 7) - 3;  // -3 to +3
-                const offsetY = Math.floor(rng() * 7) - 3;
-                const cx = Math.max(0, Math.min(N - 1, entryCx + offsetX));
-                const cy = Math.max(0, Math.min(N - 1, entryCy + offsetY));
-                const targetCell = cy * N + cx;
-
-                p.cellIdx = targetCell;
-                p.state = STATE.PARK;
-                removeFromMovingParticles(p);
-                p.parkIdx = parkIdx;
-                p.parkArrivalTime = simTime;
-                p.slotIdx = cellParticles[targetCell].length;
-                cellParticles[targetCell].push(p);
-                activeCells.add(targetCell);
-                cellMass[targetCell] += particleMass();
-                parkMass[parkIdx] += particleMass();
-                parkReleaseQueue.push(p);
-                metrics.enteredParks = (metrics.enteredParks || 0) + particleMass();
-                // Set render position to match physics cell
-                p.x = fieldToWorldX(cx + 0.4 + rng() * 0.2);
-                p.y = fieldToWorldY(cy + 0.4 + rng() * 0.2);
-                p.lotParked = true;
-                return;
-            }
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // ROAD CAPACITY GATE: Handle deferred-transfer race condition
-    // Pre-check passed for multiple particles, first transfer filled cell
-    // EXCEPTION: Skip near sink (prevents funnel bottleneck)
-    // ─────────────────────────────────────────────────────────────────────────
-    const toNearSink = isCellInBridgeApproach(to);
-    const toCap = toNearSink ? ROAD_CELL_CAP_KG * SINK_CAP_MULT : ROAD_CELL_CAP_KG;
-    if (regionMap[to] === REGION.ROAD && cellMass[to] >= toCap) {
-        // Race condition: cell filled by earlier transfer this tick — stall
-        p.x = p.px;
-        p.y = p.py;
-        p.slotIdx = cellParticles[from].length;
-        cellParticles[from].push(p);
-        activeCells.add(from);
-        cellMass[from] += particleMass();
-        p.renderStalled = true;
-        p.stallReason = 'road_full';
-        return;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // NORMAL MOVE: Road-to-road or cleared-to-road
-    // ─────────────────────────────────────────────────────────────────────────
-    p.cellIdx = to;
-    p.slotIdx = cellParticles[to].length;
-    cellParticles[to].push(p);
-    activeCells.add(to);
-    cellMass[to] += particleMass();
-    metrics.moved += particleMass();
+/**
+ * Finalize transfers - read back counters to module-level state.
+ * Call after processing all transfers.
+ */
+function finalizeTransfers() {
+    _departedCount += _transferCounters.departedCount;
 }
 
 /**
@@ -3982,7 +3254,7 @@ function getParticleSourceColorRGB(p) {
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-let state = OverlayState.OFF;
+let _overlayState = OverlayState.OFF;
 let rendererContext = null;
 
 export function reset() {
@@ -4489,8 +3761,26 @@ async function computeRoutingAsync(sinkIndices, phiOutput, nextHopOutput, label,
 
     // Try worker, fall back to sync if unavailable
     if (!(await initRoutingWorker())) {
-        const reachable = computePotential(sinkIndices, phiOutput, label, sinkBias, biasWeight, KxxSource, KyySource);
-        buildNextHop(phiOutput, nextHopOutput, label);
+        // Build config object for extracted module (same structure as worker)
+        const config = {
+            sinkIndices: Array.from(sinkIndices),
+            N, N2,
+            edgeCost: roi.cellSize,
+            Kxx: KxxSource,
+            Kyy: KyySource,
+            regionMap,
+            cellToLotIndex,
+            drainingLots: Array.from(lotDraining),
+            lotCapacity,
+            lotMass,
+            label,
+            sinkBias,
+            biasWeight,
+        };
+        const { phi, reachable } = computePotentialExtracted(config);
+        phiOutput.set(phi);
+        const nextHop = buildNextHopExtracted(phi, N, N2, regionMap, label);
+        nextHopOutput.set(nextHop);
         return reachable;
     }
 
@@ -4877,14 +4167,14 @@ async function initializeFromGeometry(geometry) {
     stampSpeedLimits();
 
     // ACTIVATE THE OVERLAY
-    state = OverlayState.ON;
+    _overlayState = OverlayState.ON;
 
     log('[INIT] Complete - overlay ACTIVE');
 }
 
 export function onDetach() {
     reset();
-    state = OverlayState.OFF;
+    _overlayState = OverlayState.OFF;
     rendererContext = null;
     // Clear cached paths
     _roadPath = null;
@@ -4907,7 +4197,7 @@ export async function onBundleReady(bundle) {
 }
 
 export function update(realDt, camera) {
-    if (state === OverlayState.OFF) return;
+    if (_overlayState === OverlayState.OFF) return;
 
     // Track frame DT for metrics panel (convert to ms)
     _dtMs = realDt * 1000;
@@ -5208,7 +4498,7 @@ const _drawSubTiming = {
 };
 
 export function draw(ctx, camera) {
-    if (state === OverlayState.OFF) return;
+    if (_overlayState === OverlayState.OFF) return;
 
     const t0 = performance.now();
 
@@ -5337,11 +4627,11 @@ export function draw(ctx, camera) {
 }
 
 export function getState() {
-    return state;
+    return _overlayState;
 }
 
 export function setState(newState) {
-    state = newState;
+    _overlayState = newState;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5907,6 +5197,13 @@ async function loadAndStampLots(lotsJsonPath) {
         lotCooldownEndSimS = new Float64Array(capacities.length);
         lotDraining.clear();
 
+        // Sync state.js
+        state.lots.capacity = lotCapacity;
+        state.lots.mass = lotMass;
+        state.lots.cooldownEndSimS = lotCooldownEndSimS;
+        state.lots.lotToCellIndices = lotToCellIndices;
+        state.cellIndices.lot = lotCellIndices;
+
         log(`[LOTS] Stamped ${conversionLots.length} lots, ${lotCellIndices.length} cells`);
 
         // ─────────────────────────────────────────────────────────────────────
@@ -5980,6 +5277,12 @@ async function loadAndStampLots(lotsJsonPath) {
 
             parkCapacity = new Float32Array(parkCaps);
             parkMass = new Float32Array(parkMasses);
+
+            // Sync state.js
+            state.parks.capacity = parkCapacity;
+            state.parks.mass = parkMass;
+            state.parks.parkToCellIndices = parkToCellIndices;
+            state.cellIndices.park = parkCellIndices;
 
             log(`[PARKS] Stamped ${parkZones.length} parks, ${parkCellIndices.length} cells`);
         }
@@ -6069,6 +5372,10 @@ async function loadAndStampLots(lotsJsonPath) {
                 currentMasses.push(0);
                 parkCapacity = new Float32Array(currentCaps);
                 parkMass = new Float32Array(currentMasses);
+
+                // Sync state.js
+                state.parks.capacity = parkCapacity;
+                state.parks.mass = parkMass;
             }
 
             log(`[INDUSTRIAL] Stamped ${industrialParkZones.length} industrial parks as parks, ${industrialParkCellIndices.length} cells`);
@@ -7050,6 +6357,33 @@ const MANUAL_CONNECTOR_COORDS = [
     { x: -234, y: -12790.75 },
     { x: -221, y: -12791.19 },
     { x: -208, y: -12791.62 },
+    // Road segment (interpolated 13m)
+    { x: -209.8885060454595, y: -5304.315134582494 },
+    { x: -209.80228491843286, y: -5291.8130711636295 },
+    { x: -209.7160637914062, y: -5279.311007744765 },
+    { x: -209.62984266437957, y: -5266.808944325902 },
+    { x: -209.54362153735292, y: -5254.306880907038 },
+    { x: -209.45740041032627, y: -5241.804817488174 },
+    { x: -209.37117928329963, y: -5229.30275406931 },
+    { x: -209.28495815627298, y: -5216.800690650447 },
+    { x: -209.19873702924633, y: -5204.298627231583 },
+    { x: -209.11251590221968, y: -5191.796563812719 },
+    { x: -209.02629477519304, y: -5179.294500393855 },
+    { x: -208.9400736481664, y: -5166.792436974992 },
+    { x: -208.85385252113974, y: -5154.290373556128 },
+    { x: -208.7676313941131, y: -5141.788310137264 },
+    { x: -208.68141026708645, y: -5129.2862467183995 },
+    { x: -208.5951891400598, y: -5116.784183299536 },
+    { x: -208.50896801303315, y: -5104.282119880672 },
+    { x: -208.4227468860065, y: -5091.780056461808 },
+    { x: -208.33652575897986, y: -5079.277993042944 },
+    { x: -208.2503046319532, y: -5066.775929624081 },
+    { x: -208.16408350492657, y: -5054.273866205217 },
+    { x: -208.07786237789992, y: -5041.771802786353 },
+    { x: -207.99164125087327, y: -5029.269739367489 },
+    { x: -207.90542012384662, y: -5016.767675948626 },
+    { x: -207.81919899681998, y: -5004.265612529762 },
+    { x: -207.73297786979333, y: -4991.763549110898 },
 ];
 
 // Inovus-only road stamps (south access to FASE lots)
@@ -8595,6 +7929,13 @@ export function runPressureTest() {
     lotMass = new Float32Array([0]);
     lotCooldownEndSimS = new Float64Array(1);
     lotDraining.clear();
+
+    // Sync state.js
+    state.lots.lotToCellIndices = lotToCellIndices;
+    state.lots.capacity = lotCapacity;
+    state.lots.mass = lotMass;
+    state.lots.cooldownEndSimS = lotCooldownEndSimS;
+    state.cellIndices.lot = lotCellIndices;
 
     // Create sink at corner
     const sinkIdx = (N - 1) * N + (N - 1);
@@ -10256,7 +9597,7 @@ async function onFrame(camera, time, realDeltaSeconds) {
         simTime = time.simTimeSeconds;
     }
 
-    if (state === OverlayState.OFF) return;
+    if (_overlayState === OverlayState.OFF) return;
 
     // Skip physics when paused (but still allow rendering)
     if (time && time.paused) {
